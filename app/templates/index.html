@@ -53,7 +53,7 @@
                          0 0 10px #00cfff, 
                          0 0 20px #0077ff, 
                          0 0 35px #0055ff;
-            animation: deslizarMarquesina 12s linear infinite;
+            animation: deslizarMarquesina 20s linear infinite; /* Animación más lenta (20s) */
         }
 
         @keyframes deslizarMarquesina {
@@ -150,17 +150,17 @@
 </head>
 <body>
 
-    <!-- Header / Navbar Fija (Fondo Ladrillo + Neón Deslizante Blanco) -->
+    <!-- Header / Navbar Fija (Fondo Ladrillo + Neón Deslizante Blanco, Lento y con Maracas y Congas) -->
     <nav class="navbar">
         <!-- Columna Izquierda: Logotipo -->
         <div class="navbar-logo" id="navbar-logo-container">🎷 SALSOTECA CARLOS ALBERTO</div>
         
-        <!-- Columna Derecha: Fila Superior (Texto Neón Blanco en Movimiento + Carrito) y Fila Inferior (Menú Neón) -->
+        <!-- Columna Derecha: Fila Superior (Texto Neón Blanco con Maracas y Congas en Movimiento Lento + Carrito) y Fila Inferior (Menú Neón) -->
         <div class="navbar-right-container">
             <div class="navbar-top-row">
-                <!-- Mensaje Neón Blanco que recorre la barra -->
+                <!-- Mensaje Neón Blanco único con maracas y congas -->
                 <div class="marquee-container">
-                    <span class="marquee-text">✨ La Salsa is my life ✨ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 🎶 Siente el Ritmo & Sabor 🎶</span>
+                    <span class="marquee-text">🪇 🛢️ La Salsa is my life 🛢️ 🪇</span>
                 </div>
                 <!-- Botón de Carrito al extremo derecho -->
                 <button class="btn-carrito-top" onclick="abrirModalCarrito(); return false;">
