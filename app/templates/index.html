@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salsoteca Carlos Alberto - Guayaquil</title>
+    <!-- CSS Estilo Tienda & Salsoteca -->
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: #0b0c10; color: #ffffff; font-family: 'Segoe UI', Arial, sans-serif; }
+
+        /* 1. Header & Navbar Fija */
+        .navbar {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            background: rgba(15, 16, 26, 0.95); backdrop-filter: blur(8px);
+            border-bottom: 2px solid #d4af37; padding: 12px 30px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .navbar-logo { font-size: 20px; font-weight: 900; color: #d4af37; letter-spacing: 1px; }
+        .nav-links { display: flex; gap: 20px; list-style: none; align-items: center; }
+        .nav-links a { color: #fff; text-decoration: none; font-weight: 600; font-size: 14px; transition: 0.3s; }
+        .nav-links a:hover { color: #d4af37; }
+
+        /* Dropdown Submenú */
+        .dropdown { position: relative; }
+        .dropdown-menu {
+            display: none; position: absolute; top: 100%; left: 0;
+            background: #121420; border: 1px solid #d4af37; border-radius: 6px;
+            min-width: 220px; list-style: none; padding: 10px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        .dropdown:hover .dropdown-menu { display: block; }
+        .dropdown-menu a { padding: 8px 15px; display: block; color: #ddd; }
+        .dropdown-menu a:hover { background: #d4af37; color: #000; }
+
+        .cart-badge { background: #d4af37; color: #000; padding: 2px 8px; border-radius: 12px; font-weight: bold; margin-left: 5px; }
+
+        /* Contenedor Principal */
+        .container { max-width: 1200px; margin: 80px auto 40px auto; padding: 0 20px; }
+
+        /* Sección 1: Slider Hero (Dinámico) */
+        .slider-section { position: relative; width: 100%; height: 420px; border-radius: 14px; overflow: hidden; border: 1px solid rgba(212,175,55,0.4); margin-bottom: 40px; background: #121420; }
+        .slider-img { width: 100%; height: 100%; object-fit: cover; transition: opacity 0.5s ease-in-out; }
+        .slider-caption { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.9)); padding: 20px; color: #d4af37; font-size: 24px; font-weight: bold; text-align: center; }
+
+        /* Sección Títulos */
+        .section-title { font-size: 22px; color: #d4af37; border-bottom: 2px solid rgba(212,175,55,0.3); padding-bottom: 8px; margin-bottom: 20px; }
+
+        /* Grid 3 por Fila */
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-bottom: 40px; }
+        .event-card { background: #121420; border: 1px solid rgba(212, 175, 55, 0.25); border-radius: 12px; padding: 15px; text-align: center; transition: 0.3s; display: flex; flex-direction: column; justify-content: space-between; }
+        .event-card:hover { transform: translateY(-5px); border-color: #d4af37; box-shadow: 0 8px 20px rgba(212,175,55,0.3); }
+        .event-card img { width: 100%; height: 220px; object-fit: cover; border-radius: 8px; margin-bottom: 12px; }
+        .event-title { font-size: 18px; font-weight: bold; margin-bottom: 6px; }
+        .event-artist { color: #d4af37; font-size: 14px; margin-bottom: 10px; }
+        .btn-reservar { background: linear-gradient(135deg, #d4af37, #996515); color: #000; border: none; padding: 10px 18px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; transition: 0.2s; }
+        .btn-reservar:hover { opacity: 0.9; }
+
+        /* Modales Interactivos */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-content { background: #121420; border: 1px solid #d4af37; border-radius: 12px; width: 90%; max-width: 550px; padding: 25px; position: relative; max-height: 90vh; overflow-y: auto; }
+        .close-modal { position: absolute; top: 15px; right: 15px; font-size: 20px; color: #fff; cursor: pointer; }
+        .form-group { margin-bottom: 15px; text-align: left; }
+        .form-group label { display: block; font-size: 13px; margin-bottom: 5px; color: #d4af37; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; background: #0b0c10; border: 1px solid #444; border-radius: 6px; color: #fff; font-size: 13px; }
+
+        /* Carrito Items UI */
+        .cart-item { background: rgba(255,255,255,0.04); border: 1px solid rgba(212,175,55,0.2); border-radius: 8px; padding: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .btn-remove-item { background: #e53e3e; color: #fff; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+
+        /* Responsivo Móvil */
+        @media (max-width: 768px) {
+            .grid-3 { grid-template-columns: 1fr; }
+            .navbar { padding: 10px 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header / Navbar Fija -->
+    <nav class="navbar">
+        <div class="navbar-logo">🎷 SALSOTECA CARLOS ALBERTO</div>
+        <ul class="nav-links">
+            <li><a href="#inicio">Inicio</a></li>
+            <li class="dropdown">
+                <a href="#">Reservaciones ▾</a>
+                <ul class="dropdown-menu">
+                    <li><a href="#eventos-activos">Eventos Activos</a></li>
+                    <li><a href="#" onclick="abrirModalCreaTuEvento(); return false;">🎉 Crea Tu Evento Personalizado</a></li>
+                </ul>
+            </li>
+            <li><a href="#historia">Historia</a></li>
+            <li><a href="#" onclick="abrirModalCarrito(); return false;">🛒 Carrito <span class="cart-badge" id="cart-count">0</span></a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <!-- Sección 1: Slider Hero Dinámico -->
+        <section id="inicio">
+            <div class="slider-section">
+                <img id="slider-img" class="slider-img" src="" alt="Salsoteca Carlos Alberto">
+                <div id="slider-caption" class="slider-caption">Noches Legendarias de Salsa Live</div>
+            </div>
+        </section>
+
+        <!-- Banner Promocional: Crea tu propio Evento -->
+        <section id="banner-crea-evento" style="margin-bottom: 40px;">
+            <div style="background: linear-gradient(135deg, rgba(212,175,55,0.2), rgba(121,40,202,0.3)); border: 2px solid #d4af37; border-radius: 14px; padding: 30px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+                <h2 style="font-size: 24px; color: #d4af37; margin-bottom: 10px;">🎂 ¿Celebras tu Cumpleaños, Aniversario o Reunión?</h2>
+                <p style="color: #ddd; max-width: 700px; margin: 0 auto 20px auto; font-size: 14px; line-height: 1.6;">
+                    ¡Crea tu propio evento personalizado en la Salsoteca! Sube tu foto, selecciona la fecha, aparta tus pases o mesas y añade al carrito para procesar tus accesos QR directos a WhatsApp.
+                </p>
+                <button class="btn-reservar" style="width: auto; padding: 12px 30px; font-size: 15px;" onclick="abrirModalCreaTuEvento()">🎉 Crear Mi Celebración Ahora</button>
+            </div>
+        </section>
+
+        <!-- Sección 2: Historia (Eventos Pasados) -->
+        <section id="historia">
+            <h2 class="section-title">📜 Historia - Eventos Pasados</h2>
+            <div class="grid-3" id="container-historia"></div>
+        </section>
+
+        <!-- Sección 3: Cartelera Vigente (3 por fila) -->
+        <section id="eventos-activos">
+            <h2 class="section-title">🎷 Cartelera Oficial (Eventos Activos de la Semana)</h2>
+            <div class="grid-3" id="container-cartelera"></div>
+        </section>
+
+        <!-- Sección 4: Publicidad -->
+        <section id="publicidad">
+            <h2 class="section-title">📢 Promociones & Auspiciantes</h2>
+            <div style="background: #121420; border: 1px dashed #d4af37; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 40px;">
+                <h3 style="color:#d4af37;">🍸 Promo Coctelería 2x1</h3>
+                <p>Disfruta de nuestros mambos y mojitazos salseros antes de las 10:00 PM.</p>
+            </div>
+        </section>
+    </div>
+
+    <!-- Sección 5: Pie de Página -->
+    <footer style="background: #090a10; text-align: center; padding: 30px; border-top: 1px solid rgba(212,175,55,0.2); color: #888;">
+        <p style="color: #d4af37; font-weight: bold;">SALSOTECA CARLOS ALBERTO - GUAYAQUIL</p>
+        <p>📍 Guayaquil, Ecuador | 📞 Reservas & WhatsApp: +593 99 999 9999</p>
+    </footer>
+
+    <!-- Modal 1: Agregar Evento de Cartelera al Carrito -->
+    <div id="modal-reserva" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="cerrarModal()">&times;</span>
+            <h3 id="modal-titulo" style="color: #d4af37; margin-bottom: 10px;">Añadir Reserva al Carrito</h3>
+            
+            <div id="modal-detalles-tarifas" style="background: rgba(0,0,0,0.4); border: 1px solid rgba(212,175,55,0.3); padding: 10px; border-radius: 8px; margin-bottom: 12px; font-size: 12.5px;">
+            </div>
+
+        <form id="form-reserva" onsubmit="agregarItemAlCarritoDesdeModal(event)">
+            <input type="hidden" id="reserva-evento-id" value="">
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-group">
+                    <label>🎟️ Cantidad Covers:</label>
+                    <input type="number" id="input-cant-cover" value="1" min="0" oninput="calcularTotalReserva()">
+                </div>
+                
+                <!-- AQUI ENVUELVES EL CAMPO DE MESAS CON EL ID NUEVO -->
+                <div id="contenedor-input-mesas" class="form-group" style="display: none;">
+                    <label>🍾 Cantidad Mesas:</label>
+                    <input type="number" id="input-cant-mesas" value="0" min="0" oninput="calcularTotalReserva()">
+                </div>
+            </div>
+
+            <div style="background: rgba(52, 211, 153, 0.1); border: 1px solid rgba(52, 211, 153, 0.3); padding: 10px; border-radius: 6px; margin-bottom: 15px; text-align: center;">
+                <span style="font-size: 13px; color: #d6d5df;">Subtotal de este ítem:</span>
+                <div id="display-total-pagar" style="font-size: 20px; font-weight: 800; color: #34d399;">$0.00</div>
+                <input type="hidden" id="reserva-monto-total" value="0">
+            </div>
+            
+            <button type="submit" class="btn-reservar">🛒 Agregar al Carrito</button>
+        </form>
+        </div>
+    </div>
+
+    <!-- Modal 2: Formulario Crea Tu Evento Personalizado -->
+    <div id="modal-crea-tu-evento" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="close-modal" onclick="cerrarModalCreaTuEvento()">&times;</span>
+            <h3 style="color: #d4af37; margin-bottom: 5px;">🎉 Crea tu Celebración Personalizada</h3>
+            <p style="color: #aaa; font-size: 12px; margin-bottom: 18px;">Publica tu festejo (Cumpleaños, Aniversario, etc.), configura tus pases y añádelo a tu pedido.</p>
+
+            <form id="form-crea-tu-evento" onsubmit="agregarEventoPersonalizadoAlCarrito(event)">
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(212,175,55,0.2); padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+                    <h4 style="font-size: 13px; color: #d4af37; margin-bottom: 10px;">🎈 Datos de la Noche / Festejo</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label>Nombre de tu Evento *</label>
+                            <input type="text" id="custom-nombre-evento" placeholder="Ej: Cumpleaños 50 de Carlos" required>
+                        </div>
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label>Tipo de Celebración</label>
+                            <select id="custom-tipo-celebracion">
+                                <option value="Cumpleaños">🎂 Cumpleaños</option>
+                                <option value="Aniversario">💍 Aniversario</option>
+                                <option value="Reunión de Amigos">🍻 Reunión de Amigos</option>
+                                <option value="Despedida">🎉 Despedida / Festejo</option>
+                                <option value="Otro">🎷 Otro Motivo</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label>Fecha y Hora Deseada *</label>
+                            <input type="datetime-local" id="custom-fecha-hora" required>
+                        </div>
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label>Foto / Póster (Opcional)</label>
+                            <input type="file" id="custom-flyer-file" accept="image/*">
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(212,175,55,0.2); padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+                    <h4 style="font-size: 13px; color: #d4af37; margin-bottom: 10px;">🎟️ Reserva de Pases y Mesas</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label id="label-cover-precio">Covers ($10.00 c/u):</label>
+                            <input type="number" id="custom-cant-personas" value="2" min="1" oninput="calcularTotalCustom()">
+                        </div>
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label id="label-mesa-precio">Mesas ($50.00 c/u):</label>
+                            <input type="number" id="custom-cant-mesas" value="1" min="0" oninput="calcularTotalCustom()">
+                        </div>
+                    </div>
+
+                    <div style="background: rgba(52, 211, 153, 0.1); border: 1px solid rgba(52, 211, 153, 0.3); padding: 8px; border-radius: 6px; margin: 10px 0; text-align: center;">
+                        <span style="font-size: 12px; color: #d6d5df;">Subtotal Celebración:</span>
+                        <div id="display-custom-total" style="font-size: 22px; font-weight: 800; color: #34d399;">$70.00</div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-reservar" style="padding: 12px; font-size: 15px;">🛒 Agregar Festejo al Carrito</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts del Slider y Modales -->
+    <script>
+        let listaBanners = [];
+        let currentIndex = 0;
+        let sliderInterval = null;
+        let PRECIO_COVER_PLANTILLA = 10.00;
+        let PRECIO_MESA_PLANTILLA = 50.00;
+
+        async function cargarBannersDinamicos() {
+            try {
+                let response = await fetch(window.location.origin + '/api/slider/'); 
+                if (response.ok) {
+                    listaBanners = await response.json();
+                    if (listaBanners.length > 0) {
+                        mostrarBannerActual();
+                        if (sliderInterval) clearInterval(sliderInterval);
+                        sliderInterval = setInterval(siguienteBanner, 4000);
+                    }
+                }
+            } catch (error) {
+                console.error("Error al conectar con la API de banners:", error);
+            }
+        }
+
+        async function cargarPlantillaBaseConfig() {
+            try {
+                let res = await fetch(window.location.origin + '/api/admin/plantilla-celebracion/');
+                if (res.ok) {
+                    let data = await res.json();
+                    PRECIO_COVER_PLANTILLA = Number(data.precio_cover_defecto) || 10.00;
+                    PRECIO_MESA_PLANTILLA = Number(data.precio_mesa_defecto) || 50.00;
+                    
+                    const lblCover = document.getElementById('label-cover-precio');
+                    if (lblCover) lblCover.innerText = `Covers ($${PRECIO_COVER_PLANTILLA.toFixed(2)} c/u):`;
+
+                    const lblMesa = document.getElementById('label-mesa-precio');
+                    if (lblMesa) lblMesa.innerText = `Mesas ($${PRECIO_MESA_PLANTILLA.toFixed(2)} c/u):`;
+
+                    calcularTotalCustom();
+                }
+            } catch (err) {
+                console.error("Error al cargar la plantilla base:", err);
+            }
+        }
+
+        function mostrarBannerActual() {
+            if (listaBanners.length === 0) return;
+            const banner = listaBanners[currentIndex];
+            const imgEl = document.getElementById('slider-img');
+            const captionEl = document.getElementById('slider-caption');
+
+            imgEl.src = banner.imagen_url;
+            captionEl.innerText = banner.caption || `Noches Legendarias de Salsa Live`;
+        }
+
+        function siguienteBanner() {
+            if (listaBanners.length === 0) return;
+            currentIndex = (currentIndex + 1) % listaBanners.length;
+            mostrarBannerActual();
+        }
+
+        function abrirModalCreaTuEvento() {
+            document.getElementById('modal-crea-tu-evento').style.display = 'flex';
+            cargarPlantillaBaseConfig();
+            calcularTotalCustom();
+        }
+
+        function cerrarModalCreaTuEvento() {
+            document.getElementById('modal-crea-tu-evento').style.display = 'none';
+        }
+
+        function calcularTotalCustom() {
+            const personas = parseInt(document.getElementById('custom-cant-personas').value) || 0;
+            const mesas = parseInt(document.getElementById('custom-cant-mesas').value) || 0;
+            const total = (personas * PRECIO_COVER_PLANTILLA) + (mesas * PRECIO_MESA_PLANTILLA);
+            document.getElementById('display-custom-total').innerText = `$${total.toFixed(2)}`;
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            cargarBannersDinamicos();
+            cargarPlantillaBaseConfig();
+        });
+    </script>
+
+    <!-- JS de la Tienda y Carrito -->
+    <script src="/static/tienda.js"></script>
+
+ <!-- MODAL DE CARRITO Y CHECKOUT UNIFICADO -->
+<div id="modal-carrito" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); display: none; justify-content: center; align-items: center; z-index: 99999;">
+    <div class="modal-card" style="background: #141625; border: 1px solid rgba(150, 55, 255, 0.25); border-radius: 12px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; padding: 25px; box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8);">
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="color: var(--accent-yellow, #fbbf24); font-size: 18px; margin: 0;">🛒 Mi Carrito de Compras</h3>
+            <button onclick="cerrarModalCarrito()" style="background: none; border: none; color: #fff; font-size: 18px; cursor: pointer;">✕</button>
+        </div>
+
+        <!-- VISTA 1: LISTA DE ÍTEMS Y TOTAL -->
+        <div id="vista-carrito-items">
+            <div id="carrito-items-container" style="max-height: 250px; overflow-y: auto; margin-bottom: 15px;">
+                <!-- Los ítems se cargan dinámicamente aquí -->
+            </div>
+
+            <div style="background: rgba(20,22,37,0.9); border: 1px solid rgba(150, 55, 255, 0.25); padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 20px;">
+                <span style="font-size: 12px; color: #d6d5df; text-transform: uppercase;">Total General a Pagar:</span>
+                <div id="carrito-total-monto" style="font-size: 24px; font-weight: 800; color: #34d399;">$0.00</div>
+            </div>
+
+            <button type="button" class="btn" style="width: 100%; padding: 12px; font-size: 15px; font-weight: 700;" onclick="mostrarFormularioCheckout()">💳 Finalizar Compra</button>
+        </div>
+
+        <!-- VISTA 2: FORMULARIO DE DATOS Y PAGO (Oculto al inicio) -->
+        <div id="vista-carrito-form" style="display: none;">
+            <form onsubmit="enviarCheckoutCarrito(event)">
+                <div style="background: rgba(121, 40, 202, 0.15); border: 1px solid #00cfff; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 13px; color: #d6d5df;">
+                    👤 Ingresa tus datos para generar tus accesos QR y el enlace de confirmación.
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                    <div>
+                        <label style="font-size: 11px; color: #d6d5df; display: block; margin-bottom: 4px;">Tu Cédula *</label>
+                        <input type="text" id="checkout-cedula" placeholder="Ej: 0912345678" required style="width: 100%;">
+                    </div>
+                    <div>
+                        <label style="font-size: 11px; color: #d6d5df; display: block; margin-bottom: 4px;">Nombre Completo *</label>
+                        <input type="text" id="checkout-nombre" placeholder="Ej: Carlos Arboleda" required style="width: 100%;">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                    <div>
+                        <label style="font-size: 11px; color: #d6d5df; display: block; margin-bottom: 4px;">WhatsApp / Teléfono *</label>
+                        <input type="text" id="checkout-telefono" placeholder="Ej: 0999999999" required style="width: 100%;">
+                    </div>
+                    <div>
+                        <label style="font-size: 11px; color: #d6d5df; display: block; margin-bottom: 4px;">Correo Electrónico (Opcional)</label>
+                        <input type="email" id="checkout-email" placeholder="ejemplo@correo.com" style="width: 100%;">
+                    </div>
+                </div>
+
+                <div class="upload-box" style="margin-bottom: 20px;">
+                    <label style="font-size: 12px; color: #fbbf24; font-weight: 600; display: block; margin-bottom: 6px;">📄 Adjuntar Voucher / Comprobante de Pago *</label>
+                    <input type="file" id="checkout-comprobante" accept="image/*,.pdf" required>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" class="btn" style="background: #333; flex: 1;" onclick="volverAlCarritoItems()">⬅️ Volver</button>
+                    <button type="submit" class="btn btn-success" style="flex: 2; padding: 12px; font-weight: 700;">🚀 Procesar Pago y Generar QR</button>
+                </div>
+            </form>
+        </div>
+
+    </div>
+</div>   
+
+<!-- ========================================== -->
+<!-- CARRITO LATERAL DERECHO Y MODAL CENTRADO   -->
+<!-- ========================================== -->
+
+<!-- Fondo oscuro traslúcido para el panel lateral -->
+<div id="cart-overlay" onclick="cerrarPanelCarrito()" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.7); display: none; z-index: 9998;"></div>
+
+<!-- Panel lateral derecho (Drawer tipo tienda) -->
+<div id="cart-sidebar" style="position: fixed; top: 0; right: -420px; width: 380px; max-width: 90vw; height: 100vh; background: #141625; border-left: 1px solid rgba(150, 55, 255, 0.25); box-shadow: -10px 0 30px rgba(0,0,0,0.8); z-index: 9999; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; transition: right 0.3s ease-in-out;">
+    
+    <!-- Cabecera del panel -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px;">
+        <h3 style="color: #fbbf24; font-size: 18px; margin: 0;">🛒 Tu Carrito de Compras</h3>
+        <button onclick="cerrarPanelCarrito()" style="background: none; border: none; color: #fff; font-size: 18px; cursor: pointer;">✕</button>
+    </div>
+
+    <!-- Lista de ítems (crece hacia abajo con scroll) -->
+    <div id="carrito-items-container" style="flex: 1; overflow-y: auto; margin-bottom: 15px; padding-right: 5px;">
+        <!-- Se llena dinámicamente -->
+    </div>
+
+    <!-- Total General y Botón de Checkout al pie -->
+    <div style="background: rgba(20,22,37,0.9); border: 1px solid rgba(150, 55, 255, 0.25); padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 15px;">
+        <span style="font-size: 12px; color: #d6d5df; text-transform: uppercase;">Total General a Pagar:</span>
+        <div id="carrito-total-monto" style="font-size: 22px; font-weight: 800; color: #34d399;">$0.00</div>
+    </div>
+
+    <button type="button" class="btn" style="width: 100%; padding: 14px; font-size: 15px; font-weight: 700;" onclick="abrirModalCheckoutDesdePanel()">💳 Finalizar Compra</button>
+</div>
+
+
+<!-- Modal de Registro y Pago (Centrado en medio de la pantalla, solo aparece al dar click en Finalizar Compra) -->
+<div id="modal-checkout-centro" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); justify-content: center; align-items: center; z-index: 10000;">
+    <div style="background: #141625; border: 1px solid rgba(150, 55, 255, 0.25); border-radius: 12px; width: 90%; max-width: 550px; max-height: 90vh; overflow-y: auto; padding: 25px; box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8);">
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 style="color: #fbbf24; font-size: 18px; margin: 0;">📋 Datos para Acceso QR y Pago</h3>
+            <button onclick="cerrarModalCheckoutCentro()" style="background: none; border: none; color: #fff; font-size: 18px; cursor: pointer;">✕</button>
+        </div>
+
+        <form onsubmit="enviarCheckoutCarrito(event)">
+            <div style="background: rgba(121, 40, 202, 0.15); border: 1px solid #00cfff; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 12px; color: #d6d5df;">
+                👤 Ingresa tus datos personales para generar tus entradas y validación por WhatsApp.
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                <div>
+                    <label style="font-size: 11px; color: #d6d5df; display: block; margin-bottom: 4px;">Tu Cédula *</label>
+                    <input type="text" id="checkout-cedula" placeholder="Ej: 0912345678" required style="width: 100%;">
+                </div>
+                <div>
+                    <label style="font-size: 11px; color: #d6d5df; display: block; margin-bottom: 4px;">Nombre Completo *</label>
+                    <input type="text" id="checkout-nombre" placeholder="Ej: Carlos Arboleda" required style="width: 100%;">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                <div>
+                    <label style="font-size: 11px; color: #d6d5df; display: block; margin-bottom: 4px;">WhatsApp / Teléfono *</label>
+                    <input type="text" id="checkout-telefono" placeholder="Ej: 0999999999" required style="width: 100%;">
+                </div>
+                <div>
+                    <label style="font-size: 11px; color: #d6d5df; display: block; margin-bottom: 4px;">Correo (Opcional)</label>
+                    <input type="email" id="checkout-email" placeholder="ejemplo@correo.com" style="width: 100%;">
+                </div>
+            </div>
+
+            <div class="upload-box" style="margin-bottom: 20px;">
+                <label style="font-size: 12px; color: #fbbf24; font-weight: 600; display: block; margin-bottom: 6px;">📄 Adjuntar Voucher / Comprobante de Pago *</label>
+                <input type="file" id="checkout-comprobante" accept="image/*,.pdf" required>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button type="button" class="btn" style="background: #333; flex: 1;" onclick="volverAlPanelCarrito()">⬅️ Volver</button>
+                <button type="submit" class="btn btn-success" style="flex: 2; padding: 12px; font-weight: 700;">🚀 Procesar y Generar QR</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<!-- MODAL CENTRADO DE REGISTRO Y CHECKOUT -->
+<div id="modal-checkout-centro" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); justify-content: center; align-items: center; z-index: 10000;">
+    <div class="modal-card" style="background: #141625; border: 1px solid rgba(150, 55, 255, 0.25); border-radius: 12px; width: 90%; max-width: 550px; padding: 25px; box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8);">
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 style="color: #fbbf24; font-size: 18px; margin: 0;">📋 Datos para Acceso QR y Pago</h3>
+            <button onclick="cerrarModalCheckoutCentro()" style="background: none; border: none; color: #fff; font-size: 18px; cursor: pointer;">✕</button>
+        </div>
+
+        <form onsubmit="enviarCheckoutCarrito(event)">
+            <div style="background: rgba(121, 40, 202, 0.15); border: 1px solid #00cfff; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 12px; color: #d6d5df;">
+                👤 Ingresa tus datos personales para generar tus entradas y validación por WhatsApp.
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                <div>
+                    <label style="font-size: 11px; color: #d6d5df; display: block; margin-bottom: 4px;">Tu Cédula *</label>
+                    <input type="text" id="checkout-cedula" placeholder="Ej: 0912345678" required style="width: 100%;">
+                </div>
+                <div>
+                    <label style="font-size: 11px; color: #d6d5df; display: block; margin-bottom: 4px;">Nombre Completo *</label>
+                    <input type="text" id="checkout-nombre" placeholder="Ej: Carlos Arboleda" required style="width: 100%;">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                <div>
+                    <label style="font-size: 11px; color: #d6d5df; display: block; margin-bottom: 4px;">WhatsApp / Teléfono *</label>
+                    <input type="text" id="checkout-telefono" placeholder="Ej: 0999999999" required style="width: 100%;">
+                </div>
+                <div>
+                    <label style="font-size: 11px; color: #d6d5df; display: block; margin-bottom: 4px;">Correo (Opcional)</label>
+                    <input type="email" id="checkout-email" placeholder="ejemplo@correo.com" style="width: 100%;">
+                </div>
+            </div>
+
+            <div class="upload-box" style="margin-bottom: 20px;">
+                <label style="font-size: 12px; color: #fbbf24; font-weight: 600; display: block; margin-bottom: 6px;">📄 Adjuntar Voucher / Comprobante de Pago *</label>
+                <input type="file" id="checkout-comprobante" accept="image/*,.pdf" required>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button type="button" class="btn" style="background: #333; flex: 1;" onclick="volverAlPanelCarrito()">⬅️ Volver</button>
+                <button type="submit" class="btn btn-success" style="flex: 2; padding: 12px; font-weight: 700;">🚀 Procesar y Generar QR</button>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- JS de la Tienda y Carrito -->
+    <script src="/static/tienda.js"></script>
+</body>
+</html>

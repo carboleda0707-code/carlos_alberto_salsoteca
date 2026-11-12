@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - Salsoteca Carlos Alberto</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/diseno.css">
+</head>
+<body onload="cargarDashboardAdmin()">
+
+    <aside>
+        <h2>Salsoteca C.A.</h2>
+        <nav>
+            <a onclick="verPestana('dashboard')" id="nav-dashboard" class="active">📊 Resumen y Dashboard</a>
+            <a onclick="verPestana('locales-config')" id="nav-locales-config">🏢 Sucursales y Negocio</a>
+            <a onclick="verPestana('home-config')" id="nav-home-config">🌐 Control del Sitio Web</a>
+            <a onclick="verPestana('eventos-config')" id="nav-eventos-config">📅 Cartelera de Eventos</a>
+            <a onclick="verPestana('dashboard')" id="nav-reservas">📋 Gestión de Reservas</a>
+            <a onclick="verPestana('checkin-config')" id="nav-checkin">🎟️ Control de Acceso QR</a>
+            <a onclick="verPestana('zonas-config')" id="nav-zonas">🛠️ Distribución de Mesas</a>
+        </nav>
+    </aside>
+
+    <main>
+        <header>
+            <h1 id="titulo-panel">Panel General de Administración</h1>
+            <div class="header-actions">
+                <a href="/" target="_blank" class="btn-web-discreto">🌐 Ver Sitio Web</a>
+                <div class="local-badge" id="nombre-local">🏢 Salsoteca Carlos Alberto</div>
+            </div>
+        </header>
+
+        <!-- DASHBOARD & AUDITORÍA DE RESERVAS -->
+        <div id="vista-dashboard" class="tab-content active">
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <h3>Reservas Totales</h3>
+                    <div class="value" id="val-reservas">0</div>
+                </div>
+                <div class="metric-card">
+                    <h3>Ingresos Estimados</h3>
+                    <div class="value" id="val-ingresos">$0.00</div>
+                </div>
+                <div class="metric-card">
+                    <h3>Mesas Ocupadas</h3>
+                    <div class="value" id="val-mesas">0</div>
+                </div>
+                <div class="metric-card">
+                    <h3>Pases Validados en Puerta</h3>
+                    <div class="value" id="val-pases">0</div>
+                </div>
+            </div>
+
+            <div class="section-card">
+                <h2>📋 Solicitudes de Reservas Recientes (Auditoría de Pagos)</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Cliente</th>
+                            <th>Evento / Paquete</th>
+                            <th>Detalle (Pases / Mesas)</th>
+                            <th>Total ($)</th>
+                            <th>Comprobante</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-reservas-body">
+                        <tr>
+                            <td colspan="8">Cargando solicitudes...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- PESTAÑA: LOCALES Y PROPIETARIOS -->
+        <div id="vista-locales-config" class="tab-content">
+            <div class="section-card">
+                <h2>👤 Registrar Administrador / Propietario</h2>
+                <form id="form-crear-propietario" onsubmit="crearPropietario(event)">
+                    <div class="grid-forms">
+                        <div class="upload-box">
+                            <label>Nombre del Propietario</label>
+                            <input type="text" id="prop-nombre" placeholder="Ej: Carlos Alberto" required>
+                        </div>
+                        <div class="upload-box">
+                            <label>Teléfono</label>
+                            <input type="text" id="prop-telefono" placeholder="Ej: 0999999999">
+                        </div>
+                        <div class="upload-box">
+                            <label>Correo Electrónico</label>
+                            <input type="email" id="prop-correo" placeholder="ejemplo@correo.com" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-success full-width">💾 Guardar Propietario</button>
+                </form>
+            </div>
+
+            <div class="section-card">
+                <h2>🏢 Registrar Local / Sucursal</h2>
+                <form id="form-crear-local" onsubmit="crearLocal(event)">
+                    <div class="grid-forms">
+                        <div class="upload-box">
+                            <label>Seleccionar Propietario</label>
+                            <select id="local-propietario-id" required>
+                                <option value="">Cargando propietarios...</option>
+                            </select>
+                        </div>
+                        <div class="upload-box">
+                            <label>Nombre del Local / Sucursal</label>
+                            <input type="text" id="local-nombre" placeholder="Ej: Salsoteca Principal" required>
+                        </div>
+                        <div class="upload-box">
+                            <label>Tipo de Establecimiento</label>
+                            <input type="text" id="local-tipo" value="Salsoteca / Bar VIP">
+                        </div>
+                        <div class="upload-box">
+                            <label>Ciudad</label>
+                            <input type="text" id="local-ciudad" value="Guayaquil">
+                        </div>
+                    </div>
+                    <div class="form-group-full">
+                        <label>Dirección Física</label>
+                        <input type="text" id="local-direccion" placeholder="Ej: Av. Principal y Calle E">
+                    </div>
+                    <button type="submit" class="btn btn-success full-width">🚀 Registrar Local / Sucursal</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- CONTROL WEB (BANNERS) -->
+        <div id="vista-home-config" class="tab-content">
+            <div class="section-card">
+                <h2>🖼️ Banners del Slider Automático (Home)</h2>
+                <div class="grid-forms">
+                    <div class="upload-box">
+                        <label>Banner Principal #1</label>
+                        <input type="file" id="banner-file-1" accept="image/*">
+                        <div class="time-control-group">
+                            <label>⏱️ Duración (s):</label>
+                            <input type="number" id="banner-time-1" value="5" min="1" max="60">
+                        </div>
+                        <input type="text" id="banner-caption-1" placeholder="Leyenda / Título del banner" value="Noches Legendarias de Salsa Live">
+                        <button class="btn full-width" onclick="subirBannerSlider(1)">Actualizar #1</button>
+                    </div>
+
+                    <div class="upload-box">
+                        <label>Banner Principal #2</label>
+                        <input type="file" id="banner-file-2" accept="image/*">
+                        <div class="time-control-group">
+                            <label>⏱️ Duración (s):</label>
+                            <input type="number" id="banner-time-2" value="5" min="1" max="60">
+                        </div>
+                        <input type="text" id="banner-caption-2" placeholder="Leyenda / Título del banner" value="Las Mejores Orquestas en Vivo">
+                        <button class="btn full-width" onclick="subirBannerSlider(2)">Actualizar #2</button>
+                    </div>
+
+                    <div class="upload-box">
+                        <label>Banner Principal #3</label>
+                        <input type="file" id="banner-file-3" accept="image/*">
+                        <div class="time-control-group">
+                            <label>⏱️ Duración (s):</label>
+                            <input type="number" id="banner-time-3" value="5" min="1" max="60">
+                        </div>
+                        <input type="text" id="banner-caption-3" placeholder="Leyenda / Título del banner" value="Ambiente VIP y Coctelería de Clase Mundial">
+                        <button class="btn full-width" onclick="subirBannerSlider(3)">Actualizar #3</button>
+                    </div>
+
+                    <div class="upload-box">
+                        <label>Banner Principal #4</label>
+                        <input type="file" id="banner-file-4" accept="image/*">
+                        <div class="time-control-group">
+                            <label>⏱️ Duración (s):</label>
+                            <input type="number" id="banner-time-4" value="5" min="1" max="60">
+                        </div>
+                        <input type="text" id="banner-caption-4" placeholder="Leyenda / Título del banner" value="Reserva tu Mesa Exclusiva y Siente el Ritmo">
+                        <button class="btn full-width" onclick="subirBannerSlider(4)">Actualizar #4</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- EVENTOS -->
+        <div id="vista-eventos-config" class="tab-content">
+            <div class="section-card">
+                <h2>🎉 Crear Nuevo Evento o Cartelera</h2>
+                <form id="form-crear-evento" onsubmit="crearNuevoEvento(event)">
+                    <div class="grid-forms">
+                        <div class="upload-box">
+                            <label>Seleccionar Local / Sucursal</label>
+                            <select id="nuevo-local-id" required>
+                                <option value="1">Cargando locales...</option>
+                            </select>
+                        </div>
+                        <div class="upload-box">
+                            <label>Nombre del Evento</label>
+                            <input type="text" id="nuevo-nombre-evento" placeholder="Ej: Viernes de Salsa Brava" required>
+                        </div>
+                        <div class="upload-box">
+                            <label>Artista / Orquesta</label>
+                            <input type="text" id="nuevo-artista" placeholder="Ej: Orquesta Sabor Son">
+                        </div>
+                        <div class="upload-box">
+                            <label>📅 Fecha del Evento</label>
+                            <input type="date" id="nuevo-fecha" required>
+                        </div>
+                        <div class="upload-box">
+                            <label>⏰ Hora del Evento</label>
+                            <input type="time" id="nuevo-hora" value="21:00" required>
+                        </div>
+                        <div class="upload-box">
+                            <label>Flyer / Póster del Evento</label>
+                            <input type="file" id="nuevo-flyer" accept="image/*" required>
+                        </div>
+                    </div>
+
+                    <div class="grid-forms">
+                        <div class="upload-box">
+                            <label>🎟️ Cover / General ($)</label>
+                            <input type="number" step="0.01" id="nuevo-precio-cover" placeholder="Ej: 15.00 (Opcional)">
+                        </div>
+
+                        <div class="upload-box">
+                            <label>🍾 Reserva de Mesa ($)</label>
+                            <input type="number" step="0.01" id="nuevo-precio-mesa" placeholder="Ej: 60.00 (Opcional)">
+                            <input type="text" id="nuevo-desc-mesa" placeholder="Detalle: Incluye botella, piqueo...">
+                        </div>
+
+                        <div class="upload-box">
+                            <label>🎉 Promo Grupo ($)</label>
+                            <input type="number" step="0.01" id="nuevo-precio-promocion" placeholder="Ej: 100.00 (Opcional)">
+                            <input type="text" id="nuevo-desc-promocion" placeholder="Detalle: Paquete especial...">
+                        </div>
+                    </div>
+
+                    <div class="form-group-full">
+                        <label>Descripción General del Evento</label>
+                        <textarea id="nuevo-descripcion" placeholder="Detalles de la noche, preventa, sorpresas..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success full-width">🚀 Publicar Evento en Cartelera</button>
+                </form>
+            </div>
+
+            <div class="section-card">
+                <h2>📅 Cartelera de Eventos Activos</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Póster</th>
+                            <th>Evento</th>
+                            <th>Artista</th>
+                            <th>Tarifas</th>
+                            <th>Fecha y Hora</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-eventos-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- MÓDULO CHECKIN-QR -->
+        <div id="vista-checkin-config" class="tab-content">
+            <div class="section-card checkin-card">
+                <h2>🎟️ Terminal Interactiva de Control de Acceso en Puerta</h2>
+                <p class="section-description">Escanea con pistola láser o introduce manualmente el código QR de acceso emitido en la reserva aprobada para validar el ingreso inmediato de clientes a la Salsoteca.</p>
+                
+                <div class="checkin-search-bar">
+                    <input type="text" id="input-codigo-qr" placeholder="🔍 Escanea o ingresa el código QR del pase..." onkeypress="if(event.key === 'Enter') validarCodigoQRManual()">
+                    <button class="btn btn-success btn-large" onclick="validarCodigoQRManual()">⚡ Validar Acceso</button>
+                </div>
+
+                <!-- Tarjeta de Resultado de Escaneo Dinámica -->
+                <div id="resultado-checkin" class="result-box">
+                    <div class="result-header">
+                        <span id="checkin-icono-estado" class="status-icon">✅</span>
+                        <div>
+                            <h3 id="checkin-titulo"></h3>
+                            <span id="checkin-subtitulo" class="subtitle"></span>
+                        </div>
+                    </div>
+                    <div id="checkin-detalles" class="result-details"></div>
+                </div>
+            </div>
+
+            <!-- Panel de Estadísticas y Últimos Ingresos en Puerta -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <h3>Pases Totales Emitidos</h3>
+                    <div class="value" id="checkin-total-pases">0</div>
+                </div>
+                <div class="metric-card">
+                    <h3>Pases Validados (Ingresados)</h3>
+                    <div class="value status-green" id="checkin-pases-usados">0</div>
+                </div>
+                <div class="metric-card">
+                    <h3>Pendientes por Ingresar</h3>
+                    <div class="value status-yellow" id="checkin-pases-pendientes">0</div>
+                </div>
+            </div>
+
+            <div class="section-card">
+                <h2>📋 Historial de Accesos Recientes en Puerta</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Hora de Ingreso</th>
+                            <th>Código QR / Token</th>
+                            <th>Cliente</th>
+                            <th>Cédula</th>
+                            <th>Evento</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-historial-checkin">
+                        <tr>
+                            <td colspan="6">No hay registros de escaneo recientes en esta sesión.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- MÓDULO ZONAS Y MESAS -->
+        <div id="vista-zonas-config" class="tab-content">
+            <div class="section-card">
+                <h2>🛠️ Configuración de Zonas y Distribución de Mesas</h2>
+                <form id="form-crear-zona" onsubmit="crearZona(event)">
+                    <div class="grid-forms">
+                        <div class="upload-box">
+                            <label>Nombre de Zona</label>
+                            <input type="text" id="zona-nombre" placeholder="Ej: Zona VIP / Pista Principal" required>
+                        </div>
+                        <div class="upload-box">
+                            <label>Capacidad de Mesas</label>
+                            <input type="number" id="zona-mesas" placeholder="Ej: 10" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-success full-width">💾 Registrar Zona</button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!-- 🔍 MODAL VISUALIZADOR DE COMPROBANTE DE PAGO -->
+    <div id="modal-comprobante" class="modal-overlay">
+        <div class="modal-card modal-center">
+            <h3>🔍 Ver Comprobante de Pago</h3>
+            <img id="img-comprobante-preview" src="" alt="Voucher de pago" class="voucher-preview">
+            <button class="btn btn-danger" onclick="cerrarModalComprobante()">Cerrar Ventana</button>
+        </div>
+    </div>
+
+    <!-- ✏️ MODAL DE EDICIÓN DE EVENTOS -->
+    <div id="modal-editar-evento" class="modal-overlay">
+        <div class="modal-card">
+            <h2>✏️ Editar Evento #<span id="edit-id-label"></span></h2>
+            <form id="form-editar-evento" onsubmit="guardarEdicionEvento(event)">
+                <input type="hidden" id="edit-evento-id">
+                <div class="grid-forms">
+                    <div class="upload-box">
+                        <label>Nombre del Evento</label>
+                        <input type="text" id="edit-nombre-evento" required>
+                    </div>
+                    <div class="upload-box">
+                        <label>Artista / Orquesta</label>
+                        <input type="text" id="edit-artista">
+                    </div>
+                    <div class="upload-box">
+                        <label>📅 Fecha</label>
+                        <input type="date" id="edit-fecha" required>
+                    </div>
+                    <div class="upload-box">
+                        <label>⏰ Hora</label>
+                        <input type="time" id="edit-hora" required>
+                    </div>
+                    <div class="upload-box grid-span-2">
+                        <label>Cambiar Flyer / Póster (Opcional)</label>
+                        <input type="file" id="edit-flyer" accept="image/*">
+                    </div>
+                </div>
+
+                <div class="grid-forms">
+                    <div class="upload-box">
+                        <label>🎟️ Cover ($)</label>
+                        <input type="number" step="0.01" id="edit-precio-cover">
+                    </div>
+                    <div class="upload-box">
+                        <label>🍾 Mesa ($)</label>
+                        <input type="number" step="0.01" id="edit-precio-mesa">
+                        <input type="text" id="edit-desc-mesa" placeholder="Detalle mesa">
+                    </div>
+                    <div class="upload-box">
+                        <label>🎉 Promo ($)</label>
+                        <input type="number" step="0.01" id="edit-precio-promocion">
+                        <input type="text" id="edit-desc-promocion" placeholder="Detalle promo">
+                    </div>
+                </div>
+
+                <div class="form-group-full">
+                    <label>Descripción</label>
+                    <textarea id="edit-descripcion"></textarea>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="submit" class="btn btn-success flex-1">💾 Guardar Cambios</button>
+                    <button type="button" class="btn btn-danger flex-1" onclick="cerrarModalEditar()">❌ Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+    const API_URL = window.location.origin;
+    let cacheEventos = [];
+    let cacheReservas = [];
+    let historialAccesos = [];
+
+    function verPestana(tab) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('aside nav a').forEach(el => el.classList.remove('active'));
+        
+        if(tab === 'dashboard') {
+            document.getElementById('vista-dashboard').classList.add('active');
+            document.getElementById('nav-dashboard').classList.add('active');
+            document.getElementById('titulo-panel').innerText = 'Panel General de Administración';
+            cargarDashboardAdmin();
+        } else if(tab === 'locales-config') {
+            document.getElementById('vista-locales-config').classList.add('active');
+            document.getElementById('nav-locales-config').classList.add('active');
+            document.getElementById('titulo-panel').innerText = 'Gestión de Propietarios y Locales';
+            cargarPropietariosSelect();
+        } else if(tab === 'home-config') {
+            document.getElementById('vista-home-config').classList.add('active');
+            document.getElementById('nav-home-config').classList.add('active');
+            document.getElementById('titulo-panel').innerText = 'Gestión de Secciones del Home (Sitio Web)';
+        } else if(tab === 'eventos-config') {
+            document.getElementById('vista-eventos-config').classList.add('active');
+            document.getElementById('nav-eventos-config').classList.add('active');
+            document.getElementById('titulo-panel').innerText = 'Gestión de Eventos y Cartelera';
+            cargarLocalesSelect();
+            cargarEventosAdmin();
+        } else if(tab === 'checkin-config') {
+            document.getElementById('vista-checkin-config').classList.add('active');
+            document.getElementById('nav-checkin').classList.add('active');
+            document.getElementById('titulo-panel').innerText = 'Módulo CheckIn-QR en Puerta';
+        } else if(tab === 'zonas-config') {
+            document.getElementById('vista-zonas-config').classList.add('active');
+            document.getElementById('nav-zonas').classList.add('active');
+            document.getElementById('titulo-panel').innerText = 'Gestión de Zonas y Distribución de Mesas';
+        }
+    }
+
+    async function cargarDashboardAdmin() {
+        try {
+            let res = await fetch(`${API_URL}/api/admin/reservas/`);
+            if (res.ok) {
+                cacheReservas = await res.json();
+                renderizarTablaReservas(cacheReservas);
+                actualizarMetricas(cacheReservas);
+            }
+        } catch (err) {
+            console.error("Error al cargar reservas de administración:", err);
+        }
+    }
+
+    function renderizarTablaReservas(reservas) {
+        const tbody = document.getElementById('tabla-reservas-body');
+        if (!tbody) return;
+
+        if (!reservas || reservas.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8">No hay solicitudes de reserva recientes.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = reservas.map(r => `
+            <tr>
+                <td><code>${r.codigo || 'RES-' + (9000 + r.id)}</code></td>
+                <td><b>${r.cliente_nombre || 'Cliente'}</b><br><small class="text-muted">${r.cliente_telefono || ''}</small></td>
+                <td>${r.evento_nombre || 'Evento'}</td>
+                <td>👥 ${r.cantidad_personas || 0} pases<br>🍾 ${r.cantidad_mesas || 0} mesa(s)</td>
+                <td><b class="text-green">$${Number(r.monto_total || 0).toFixed(2)}</b></td>
+                <td>
+                    ${r.comprobante_pago ? `<a href="#" onclick="verComprobante('/static/uploads/comprobantes/${r.comprobante_pago}')" class="link-voucher">📄 Ver Voucher</a>` : 'Sin Comprobante'}
+                </td>
+                <td><span class="status-pill status-pending">${r.estado || 'Por Aprobar'}</span></td>
+                <td>
+                    <button class="btn btn-success btn-sm" onclick="cambiarEstadoReserva(${r.id}, 'Aprobado')">Aprobar</button>
+                    <button class="btn btn-danger btn-sm" onclick="cambiarEstadoReserva(${r.id}, 'Rechazado')">Rechazar</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function actualizarMetricas(reservas) {
+        document.getElementById('val-reservas').innerText = reservas.length;
+        let totalIngresos = reservas.filter(r => r.estado === 'Aprobado').reduce((acc, r) => acc + Number(r.monto_total || 0), 0);
+        document.getElementById('val-ingresos').innerText = `$${totalIngresos.toFixed(2)}`;
+        let totalMesas = reservas.filter(r => r.estado === 'Aprobado').reduce((acc, r) => acc + Number(r.cantidad_mesas || 0), 0);
+        document.getElementById('val-mesas').innerText = totalMesas;
+    }
+
+    function verComprobante(url) {
+        document.getElementById('img-comprobante-preview').src = url;
+        document.getElementById('modal-comprobante').style.display = 'flex';
+    }
+
+    function cerrarModalComprobante() {
+        document.getElementById('modal-comprobante').style.display = 'none';
+    }
+
+    async function cambiarEstadoReserva(id, nuevoEstado) {
+        if (!confirm(`¿Estás seguro de cambiar el estado de la reserva #${id} a '${nuevoEstado}'?`)) return;
+
+        try {
+            let res = await fetch(`${API_URL}/api/admin/reservas/${id}/estado`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ estado: nuevoEstado })
+            });
+            
+            if (res.ok) {
+                let data = await res.json();
+                alert(`✅ Reserva #${id} marcada como '${nuevoEstado}'. Se generaron los códigos QR.`);
+                
+                if (nuevoEstado === 'Aprobado' && data.whatsapp_url) {
+                    window.open(data.whatsapp_url, '_blank');
+                }
+
+                cargarDashboardAdmin();
+            } else {
+                alert("No se pudo actualizar el estatus de la reserva.");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Error de conexión con el servidor.");
+        }
+    }
+
+    async function crearPropietario(e) {
+        e.preventDefault();
+        const formData = new FormData();
+        formData.append("nombre", document.getElementById('prop-nombre').value);
+        formData.append("telefono", document.getElementById('prop-telefono').value);
+        formData.append("correo", document.getElementById('prop-correo').value);
+
+        try {
+            let res = await fetch(`${API_URL}/api/admin/propietarios/`, { method: "POST", body: formData });
+            if (res.ok) {
+                alert("✅ Propietario registrado exitosamente.");
+                document.getElementById('form-crear-propietario').reset();
+                cargarPropietariosSelect();
+            } else {
+                let errText = await res.text();
+                alert("Error al registrar propietario: " + errText);
+            }
+        } catch(err) {
+            alert("Error de conexión.");
+        }
+    }
+
+    async function cargarPropietariosSelect() {
+        try {
+            let res = await fetch(`${API_URL}/api/admin/propietarios/`);
+            let props = await res.json();
+            const select = document.getElementById('local-propietario-id');
+            if(!select) return;
+            if(props.length === 0) {
+                select.innerHTML = '<option value="">No hay propietarios. Registra uno primero.</option>';
+                return;
+            }
+            select.innerHTML = props.map(p => `<option value="${p.propietario_id || p.id}">${p.propietario_id || p.id} - ${p.nombre || p.nombre_propietario}</option>`).join('');
+        } catch(err) {
+            console.error("Error al cargar propietarios:", err);
+        }
+    }
+
+    async function crearLocal(e) {
+        e.preventDefault();
+        const propId = document.getElementById('local-propietario-id').value;
+        if(!propId) {
+            alert("Primero debes registrar o seleccionar un propietario.");
+            return;
+        }
+        const formData = new FormData();
+        formData.append("propietario_id", propId);
+        formData.append("nombre_local", document.getElementById('local-nombre').value);
+        formData.append("tipo_establecimiento", document.getElementById('local-tipo').value);
+        formData.append("ciudad", document.getElementById('local-ciudad').value);
+        formData.append("direccion", document.getElementById('local-direccion').value);
+
+        try {
+            let res = await fetch(`${API_URL}/api/admin/locales/`, { method: "POST", body: formData });
+            if (res.ok) {
+                alert("🎉 ¡Local o sucursal registrado con éxito!");
+                document.getElementById('form-crear-local').reset();
+            } else {
+                let errText = await res.text();
+                alert("Error al registrar el local: " + errText);
+            }
+        } catch(err) {
+            alert("Error de conexión.");
+        }
+    }
+
+    async function cargarLocalesSelect() {
+        try {
+            let res = await fetch(`${API_URL}/api/admin/locales/`);
+            let locales = await res.json();
+            const select = document.getElementById('nuevo-local-id');
+            if(!select) return;
+            if(locales.length === 0) {
+                select.innerHTML = '<option value="1">Local por Defecto (ID #1)</option>';
+                return;
+            }
+            select.innerHTML = locales.map(l => `<option value="${l.id}">${l.nombre || l.nombre_local} (${l.ciudad || ''})</option>`).join('');
+        } catch(err) {
+            console.error("Error al cargar locales:", err);
+        }
+    }
+
+    async function subirBannerSlider(posicion) {
+        const inputFile = document.getElementById(`banner-file-${posicion}`);
+        const inputTiempo = document.getElementById(`banner-time-${posicion}`);
+        const inputCaption = document.getElementById(`banner-caption-${posicion}`);
+        
+        if (!inputFile.files[0]) {
+            alert(`Por favor seleccione una imagen para el Banner #${posicion}.`);
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("file", inputFile.files[0]);
+        formData.append("duracion_segundos", inputTiempo.value);
+        formData.append("caption", inputCaption.value);
+
+        try {
+            let response = await fetch(`${API_URL}/api/admin/slider/${posicion}`, {
+                method: "POST",
+                body: formData
+            });
+
+            if (response.ok) {
+                alert(`¡Éxito! Banner #${posicion} actualizado correctamente.`);
+                inputFile.value = "";
+            } else {
+                alert("Error al actualizar el banner en el servidor.");
+            }
+        } catch (error) {
+            alert("Error de conexión.");
+        }
+    }
+
+    async function crearNuevoEvento(e) {
+        e.preventDefault();
+
+        const localId = document.getElementById('nuevo-local-id').value || 1;
+        const nombre = document.getElementById('nuevo-nombre-evento').value;
+        const artista = document.getElementById('nuevo-artista').value;
+        const fechaVal = document.getElementById('nuevo-fecha').value;
+        const horaVal = document.getElementById('nuevo-hora').value;
+        const descripcion = document.getElementById('nuevo-descripcion').value;
+        const flyerFile = document.getElementById('nuevo-flyer').files[0];
+
+        const cover = document.getElementById('nuevo-precio-cover').value;
+        const mesa = document.getElementById('nuevo-precio-mesa').value;
+        const descMesa = document.getElementById('nuevo-desc-mesa').value;
+        const promo = document.getElementById('nuevo-precio-promocion').value;
+        const descPromo = document.getElementById('nuevo-desc-promocion').value;
+
+        const fechaHoraCompleta = `${fechaVal}T${horaVal}:00`;
+
+        const formData = new FormData();
+        formData.append("local_id", localId);
+        formData.append("nombre_evento", nombre);
+        formData.append("artista_orquesta", artista || "Varios Artistas");
+        formData.append("fecha_hora", fechaHoraCompleta);
+        formData.append("descripcion", descripcion);
+
+        if (cover) formData.append("precio_cover", cover);
+        if (mesa) formData.append("precio_mesa", mesa);
+        if (descMesa) formData.append("descripcion_mesa", descMesa);
+        if (promo) formData.append("precio_promocion", promo);
+        if (descPromo) formData.append("descripcion_promocion", descPromo);
+
+        if (flyerFile) {
+            formData.append("file", flyerFile);
+        }
+
+        try {
+            let res = await fetch(`${API_URL}/api/reservas/eventos/`, {
+                method: "POST",
+                body: formData
+            });
+
+            if (res.ok) {
+                alert("🎉 ¡Evento publicado exitosamente en la cartelera!");
+                document.getElementById('form-crear-evento').reset();
+                cargarEventosAdmin();
+            } else {
+                let errData = await res.text();
+                alert("Error al publicar el evento: " + errData);
+            }
+        } catch (err) {
+            alert("Error de conexión.");
+        }
+    }
+
+    async function cargarEventosAdmin() {
+        const tbody = document.getElementById('tabla-eventos-body');
+        if (!tbody) return;
+
+        try {
+            let res = await fetch(`${API_URL}/api/reservas/eventos/?local_id=1`);
+            cacheEventos = await res.json();
+
+            if (!cacheEventos || cacheEventos.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7">No hay eventos registrados.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = cacheEventos.map(ev => {
+                let tarifasTxt = [];
+                if (ev.precio_cover) tarifasTxt.push(`Cover: $${ev.precio_cover}`);
+                if (ev.precio_mesa) tarifasTxt.push(`Mesa: $${ev.precio_mesa}`);
+                if (ev.precio_promocion) tarifasTxt.push(`Promo: $${ev.precio_promocion}`);
+                
+                return `
+                <tr>
+                    <td><code>#${ev.id}</code></td>
+                    <td><img src="${ev.imagen ? '/static/uploads/' + ev.imagen : 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=100&q=80'}" class="table-img"></td>
+                    <td><b>${ev.nombre_evento}</b></td>
+                    <td>🎤 ${ev.artista_orquesta || 'Varios'}</td>
+                    <td><small class="text-green">${tarifasTxt.length > 0 ? tarifasTxt.join('<br>') : 'Sin Tarifas'}</small></td>
+                    <td>📅 ${String(ev.fecha_hora).replace('T', ' ')}</td>
+                    <td>
+                        <button class="btn btn-warning btn-sm" onclick="abrirModalEditar(${ev.id})">✏️ Editar</button>
+                        <button class="btn btn-danger btn-sm" onclick="eliminarEvento(${ev.id})">🗑️ Borrar</button>
+                    </td>
+                </tr>
+                `;
+            }).join('');
+        } catch (error) {
+            console.error("Error al cargar eventos:", error);
+        }
+    }
+
+    function abrirModalEditar(id) {
+        const ev = cacheEventos.find(e => e.id === id);
+        if(!ev) return;
+
+        document.getElementById('edit-evento-id').value = ev.id;
+        document.getElementById('edit-id-label').innerText = ev.id;
+        document.getElementById('edit-nombre-evento').value = ev.nombre_evento || '';
+        document.getElementById('edit-artista').value = ev.artista_orquesta || '';
+        
+        if (ev.fecha_hora) {
+            const parts = String(ev.fecha_hora).split('T');
+            document.getElementById('edit-fecha').value = parts[0] || '';
+            document.getElementById('edit-hora').value = parts[1] ? parts[1].substring(0, 5) : '21:00';
+        }
+
+        document.getElementById('edit-precio-cover').value = ev.precio_cover || '';
+        document.getElementById('edit-precio-mesa').value = ev.precio_mesa || '';
+        document.getElementById('edit-desc-mesa').value = ev.descripcion_mesa || '';
+        document.getElementById('edit-precio-promocion').value = ev.precio_promocion || '';
+        document.getElementById('edit-desc-promocion').value = ev.descripcion_promocion || '';
+        document.getElementById('edit-descripcion').value = ev.descripcion || '';
+
+        document.getElementById('modal-editar-evento').style.display = 'flex';
+    }
+
+    function cerrarModalEditar() {
+        document.getElementById('modal-editar-evento').style.display = 'none';
+    }
+
+    async function guardarEdicionEvento(e) {
+        e.preventDefault();
+        const id = document.getElementById('edit-evento-id').value;
+        const nombre = document.getElementById('edit-nombre-evento').value;
+        const artista = document.getElementById('edit-artista').value;
+        const fechaVal = document.getElementById('edit-fecha').value;
+        const horaVal = document.getElementById('edit-hora').value;
+        const descripcion = document.getElementById('edit-descripcion').value;
+        const flyerFile = document.getElementById('edit-flyer').files[0];
+
+        const cover = document.getElementById('edit-precio-cover').value;
+        const mesa = document.getElementById('edit-precio-mesa').value;
+        const descMesa = document.getElementById('edit-desc-mesa').value;
+        const promo = document.getElementById('edit-precio-promocion').value;
+        const descPromo = document.getElementById('edit-desc-promocion').value;
+
+        const fechaHoraCompleta = `${fechaVal}T${horaVal}:00`;
+
+        const formData = new FormData();
+        formData.append("nombre_evento", nombre);
+        formData.append("artista_orquesta", artista);
+        formData.append("fecha_hora", fechaHoraCompleta);
+        formData.append("descripcion", descripcion);
+
+        if (cover) formData.append("precio_cover", cover);
+        if (mesa) formData.append("precio_mesa", mesa);
+        if (descMesa) formData.append("descripcion_mesa", descMesa);
+        if (promo) formData.append("precio_promocion", promo);
+        if (descPromo) formData.append("descripcion_promocion", descPromo);
+
+        if (flyerFile) formData.append("file", flyerFile);
+
+        try {
+            let res = await fetch(`${API_URL}/api/reservas/eventos/${id}`, {
+                method: "PUT",
+                body: formData
+            });
+
+            if (res.ok) {
+                alert("✅ Evento actualizado correctamente.");
+                cerrarModalEditar();
+                cargarEventosAdmin();
+            } else {
+                let errText = await res.text();
+                alert("Error al actualizar el evento: " + errText);
+            }
+        } catch(err) {
+            alert("Error de conexión.");
+        }
+    }
+
+    async function eliminarEvento(id) {
+        if (!confirm(`¿Estás seguro de eliminar el evento #${id}?`)) return;
+
+        try {
+            let res = await fetch(`${API_URL}/api/reservas/eventos/${id}`, {
+                method: "DELETE"
+            });
+
+            if (res.ok) {
+                alert("🗑️ Evento eliminado correctamente.");
+                cargarEventosAdmin();
+            } else {
+                alert("No se pudo eliminar el evento.");
+            }
+        } catch (err) {
+            alert("Error de conexión.");
+        }
+    }
+
+    async function validarCodigoQRManual() {
+        const codigoInput = document.getElementById('input-codigo-qr');
+        const codigo = codigoInput.value.trim();
+        const resBox = document.getElementById('resultado-checkin');
+        const iconoEstado = document.getElementById('checkin-icono-estado');
+        const titulo = document.getElementById('checkin-titulo');
+        const subtitulo = document.getElementById('checkin-subtitulo');
+        const detalles = document.getElementById('checkin-detalles');
+
+        if (!codigo) {
+            alert("Por favor ingresa o escanea un código de acceso.");
+            return;
+        }
+
+        try {
+            let res = await fetch(`${API_URL}/api/checkin/escanear/`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ codigo_qr: codigo })
+            });
+
+            let data = await res.json();
+            resBox.style.display = 'block';
+
+            const ahoraStr = new Date().toLocaleTimeString();
+
+            if (res.ok && data.valido) {
+                resBox.className = "result-box success";
+                iconoEstado.innerText = '✅';
+                titulo.innerHTML = data.mensaje;
+                subtitulo.innerText = `Validado exitosamente en puerta a las ${data.detalles?.hora_ingreso || ahoraStr}`;
+                detalles.innerHTML = `
+                    <b>Cliente:</b> ${data.detalles?.cliente_nombre || 'Cliente'} &nbsp;|&nbsp; <b>Cédula:</b> ${data.detalles?.cliente_cedula || 'S/C'}<br>
+                    <b>Evento:</b> ${data.detalles?.evento_nombre || 'Salsoteca'}<br>
+                    <b>Tipo:</b> ${data.detalles?.tipo_reserva || 'Cover'} &nbsp;|&nbsp; <b>Pases:</b> ${data.detalles?.pases || 1} &nbsp;|&nbsp; <b>Mesas:</b> ${data.detalles?.mesas || 0}
+                `;
+
+                historialAccesos.unshift({
+                    hora: data.detalles?.hora_ingreso || ahoraStr,
+                    codigo: codigo,
+                    cliente: data.detalles?.cliente_nombre || 'Cliente',
+                    cedula: data.detalles?.cliente_cedula || 'S/C',
+                    evento: data.detalles?.evento_nombre || 'Salsoteca',
+                    estado: '✅ Permitido'
+                });
+            } else {
+                resBox.className = "result-box error";
+                iconoEstado.innerText = '⚠️';
+                titulo.innerHTML = data.mensaje || "⚠️ Acceso No Válido";
+                subtitulo.innerText = "Alerta de seguridad en puerta";
+                detalles.innerHTML = `Cliente asociado: <b>${data.cliente || 'Desconocido'}</b>. Este código ya fue utilizado o no pertenece a ninguna reserva activa.`;
+
+                historialAccesos.unshift({
+                    hora: ahoraStr,
+                    codigo: codigo,
+                    cliente: data.cliente || 'Desconocido',
+                    cedula: 'N/A',
+                    evento: 'N/A',
+                    estado: '❌ Denegado / Usado'
+                });
+            }
+
+            renderizarHistorialCheckin();
+            codigoInput.value = "";
+            codigoInput.focus();
+        } catch (err) {
+            resBox.style.display = 'block';
+            resBox.className = "result-box warning";
+            iconoEstado.innerText = '❌';
+            titulo.innerHTML = "Error de Conexión";
+            subtitulo.innerText = "Fallo de red";
+            detalles.innerHTML = "No se pudo conectar con el servidor de validación.";
+        }
+    }
+
+    function renderizarHistorialCheckin() {
+        const tbody = document.getElementById('tabla-historial-checkin');
+        if (!tbody) return;
+
+        if (historialAccesos.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6">No hay registros de escaneo recientes en esta sesión.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = historialAccesos.map(h => `
+            <tr>
+                <td><code>${h.hora}</code></td>
+                <td><code>${h.codigo}</code></td>
+                <td><b>${h.cliente}</b></td>
+                <td>${h.cedula}</td>
+                <td>${h.evento}</td>
+                <td><span class="status-pill ${h.estado.includes('Permitido') ? 'status-confirmed' : 'status-pending'}">${h.estado}</span></td>
+            </tr>
+        `).join('');
+
+        const permitidos = historialAccesos.filter(h => h.estado.includes('Permitido')).length;
+        document.getElementById('checkin-pases-usados').innerText = permitidos;
+        document.getElementById('checkin-total-pases').innerText = historialAccesos.length;
+    }
+
+    async function crearZona(e) {
+        e.preventDefault();
+        const nombre = document.getElementById('zona-nombre').value;
+        const mesas = document.getElementById('zona-mesas').value;
+
+        const formData = new FormData();
+        formData.append("nombre_zona", nombre);
+        formData.append("cantidad_mesas", mesas);
+
+        try {
+            let res = await fetch(`${API_URL}/api/admin/zonas/`, {
+                method: "POST",
+                body: formData
+            });
+            if (res.ok) {
+                alert("✅ Zona y distribución de mesas registradas exitosamente.");
+                document.getElementById('form-crear-zona').reset();
+            } else {
+                alert("Error al registrar la zona.");
+            }
+        } catch (err) {
+            alert("Error de conexión.");
+        }
+    }
+    </script>
+</body>
+</html>
