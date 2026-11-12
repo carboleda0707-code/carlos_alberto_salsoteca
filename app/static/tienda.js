@@ -21,7 +21,7 @@ async function cargarBannersDinamicos() {
     imgElem.style.transition = `opacity ${TIEMPO_TRANSICION_FADE}ms ease-in-out`;
 
     try {
-        const res = await fetch(`${API_URL}/api/slider`);
+        const res = await fetch(`${API_URL}/api/slider/`);
         if (res.ok) {
             const data = await res.json();
             if (data && data.length > 0) {
