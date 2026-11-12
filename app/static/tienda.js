@@ -412,6 +412,46 @@ async function enviarCheckoutCarrito(event) {
     }
 }
 
+// ==========================================
+// 6. CREACIÓN DE EVENTO PERSONALIZADO (CLIENTE)
+// ==========================================
+async function agregarEventoPersonalizadoAlCarrito(event) {
+    event.preventDefault();
+
+    const nombreEvento = document.getElementById("custom-nombre-evento").value;
+    const tipoCelebracion = document.getElementById("custom-tipo-celebracion").value;
+    const fechaHora = document.getElementById("custom-fecha-hora").value;
+    const cantPersonas = parseInt(document.getElementById("custom-cant-personas").value) || 2;
+    const cantMesas = parseInt(document.getElementById("custom-cant-mesas").value) || 0;
+    const flyerFile = document.getElementById("custom-flyer-file").files[0];
+
+    if (!nombreEvento || !fechaHora) {
+        alert("Por favor completa los campos obligatorios del evento.");
+        return;
+    }
+
+    // Calculamos el subtotal utilizando las variables globales de precio
+    const subtotal = (cantPersonas * PRECIO_COVER_PLANTILLA) + (cantMesas * PRECIO_MESA_PLANTILLA);
+
+    // Guardamos temporalmente en el carrito local o enviamos directamente
+    const itemPersonalizado = {
+        titulo: `${tipoCelebracion}: ${nombreEvento}`,
+        tipo: 'personalizado',
+        nombre_evento: nombreEvento,
+        tipo_celebracion: tipoCelebracion,
+        fecha_hora: fechaHora,
+        cantidad_covers: cantPersonas,
+        cantidad_mesas: cantMesas,
+        subtotal: subtotal,
+        has_flyer: !!flyerFile
+    };
+
+    carrito.push(itemPersonalizado);
+    guardarYActualizarCarrito();
+    cerrarModalCreaTuEvento();
+    abrirModalCarrito();
+}
+
 // Inicialización general de la página
 document.addEventListener("DOMContentLoaded", () => {
     cargarBannersDinamicos();

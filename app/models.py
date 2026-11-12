@@ -50,7 +50,7 @@ class Empresa(Base):
 class Local(Base):
     __tablename__ = "lugares"
 
-    id = Column(Integer, primary_key=True, index=True) # <-- Cambiado a 'id' estándar
+    id = Column(Integer, primary_key=True, index=True)
     empresa_id = Column(BigInteger, ForeignKey("empresas.id", ondelete="CASCADE"), nullable=True)
     propietario_id = Column(Integer, nullable=True)
     nombre = Column(String, nullable=False)
@@ -211,10 +211,9 @@ class Reserva(Base):
     pago = relationship(
         "Pago", back_populates="reserva", uselist=False, cascade="all, delete"
     )
-    ingreso = relationship(
+    ingresos = relationship(
         "IngresoPuerta",
         back_populates="reserva",
-        uselist=False,
         cascade="all, delete",
     )
 
@@ -249,11 +248,12 @@ class IngresoPuerta(Base):
     id = Column(Integer, primary_key=True, index=True)
     reserva_id = Column(Integer, ForeignKey("reservas.id", ondelete="CASCADE"))
     codigo_qr = Column(String(50), unique=True, nullable=False, index=True)
-    estado_ingreso = Column(String(30), default="no_utilizado")
+    estado_ingreso = Column(String(30), default="PE")  # PE: Pendiente de Entrar, AL: Adentro Local
     fecha_ingreso = Column(DateTime, nullable=True)
     escaneado_por = Column(String(100), nullable=True)
     mesa_id = Column(Integer, ForeignKey("mesas.id"), nullable=True)
-    reserva = relationship("Reserva", back_populates="ingreso")
+    
+    reserva = relationship("Reserva", back_populates="ingresos")
 
 
 class Usuario(Base):

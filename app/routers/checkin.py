@@ -10,7 +10,7 @@ router = APIRouter(prefix="/api/checkin", tags=["Control de Puerta CheckIn"])
 def escanear_qr_puerta(data: dict, db: Session = Depends(get_db)):
     """
     Recibe el código QR escaneado en puerta, valida su existencia,
-    comprueba si ya fue usado y registra el acceso.
+    comprueba si ya ingresó al local y registra el acceso (PE -> AL).
     """
     codigo_qr = data.get("codigo_qr")
     if not codigo_qr:
@@ -21,16 +21,16 @@ def escanear_qr_puerta(data: dict, db: Session = Depends(get_db)):
     if not ingreso:
         raise HTTPException(status_code=404, detail="❌ Código QR no encontrado o inválido.")
 
-    # Verificar si ya fue utilizado
-    if ingreso.estado_ingreso == "utilizado":
+    # Verificar si ya fue utilizado (Estatus AL - Adentro Local)
+    if ingreso.estado_ingreso == "AL":
         return {
             "valido": False,
-            "mensaje": f"⚠️ ATENCIÓN: Este QR ya fue utilizado el {ingreso.fecha_ingreso.strftime('%Y-%m-%d %H:%M') if ingreso.fecha_ingreso else 'anteriormente'}.",
+            "mensaje": f"⚠️ ATENCIÓN: Este pase QR ya se encuentra Adentro Local (AL) desde el {ingreso.fecha_ingreso.strftime('%Y-%m-%d %H:%M') if ingreso.fecha_ingreso else 'anteriormente'}.",
             "cliente": ingreso.reserva.cliente.nombre if ingreso.reserva and ingreso.reserva.cliente else "Desconocido"
         }
 
-    # Marcar como utilizado y registrar la hora actual
-    ingreso.estado_ingreso = "utilizado"
+    # Marcar como Adentro Local (AL) y registrar la hora actual
+    ingreso.estado_ingreso = "AL"
     ingreso.fecha_ingreso = datetime.utcnow()
     db.commit()
 
@@ -41,7 +41,7 @@ def escanear_qr_puerta(data: dict, db: Session = Depends(get_db)):
 
     return {
         "valido": True,
-        "mensaje": "✅ ¡Acceso Autorizado con Éxito!",
+        "mensaje": "✅ ¡Acceso Autorizado con Éxito (Adentro Local)!",
         "detalles": {
             "cliente_nombre": cliente.nombre if cliente else "Cliente",
             "cliente_cedula": getattr(cliente, 'cedula', 'S/C'),

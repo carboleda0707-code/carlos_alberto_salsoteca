@@ -134,7 +134,6 @@
                 </form>
             </div>
 
-            <!-- TABLA DE LISTADO DE LOCALES -->
             <div class="section-card">
                 <h2>🏢 Sucursales y Locales Registrados</h2>
                 <table>
@@ -379,6 +378,17 @@
         </div>
     </div>
 
+    <!-- 🎟️ MODAL VISUALIZADOR DE QRS Y ESTATUS (PE / AL) -->
+    <div id="modal-qrs-overlay" class="modal-overlay" style="display: none; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000;">
+        <div class="modal-card" style="background: #121316; border: 1px solid #d4af37; padding: 25px; border-radius: 10px; width: 90%; max-width: 500px; color: #fff;">
+            <h3 style="color: #fbbf24; margin-top: 0; margin-bottom: 15px; border-bottom: 1px solid rgba(212,175,55,0.3); padding-bottom: 10px;">🎟️ Accesos QR de la Reserva</h3>
+            <div id="modal-body-qrs" style="max-height: 350px; overflow-y: auto; margin-bottom: 20px;">
+                <!-- Aquí se inyectan los pases dinámicamente -->
+            </div>
+            <button class="btn btn-danger full-width" onclick="cerrarModalQrs()">Cerrar Ventana</button>
+        </div>
+    </div>
+
     <!-- ✏️ MODAL DE EDICIÓN DE EVENTOS -->
     <div id="modal-editar-evento" class="modal-overlay">
         <div class="modal-card">
@@ -513,7 +523,7 @@
 
             return `
             <tr>
-                <td><code>${r.codigo || 'RES-' + (9000 + r.id)}</code></td>
+                <td><code style="cursor: pointer; color: #fbbf24;" onclick="verDetalleQrsReserva(${r.id})" title="Clic para ver códigos QR e ingresos">${r.codigo || 'RES-' + (9000 + r.id)}</code></td>
                 <td><b>${r.cliente_nombre || 'Cliente'}</b><br><small class="text-muted">${r.cliente_telefono || ''}</small></td>
                 <td>${r.evento_nombre || 'Evento'}</td>
                 <td>👥 ${r.cantidad_personas || 0} pases<br>🍾 ${r.cantidad_mesas || 0} mesa(s)</td>
@@ -523,7 +533,7 @@
                 </td>
                 <td><span class="status-pill status-pending">${r.estado || 'Por Aprobar'}</span></td>
                 <td>
-                    <button class="btn btn-success btn-sm" onclick="cambiarEstadoReserva(${r.id}, 'Aprobado')">Aprobar</button>
+                    <button class="btn btn-success btn-sm" onclick="aprobarReservaYEnviarWhatsApp(${r.id})">Aprobar</button>
                     <button class="btn btn-danger btn-sm" onclick="cambiarEstadoReserva(${r.id}, 'Rechazado')">Rechazar</button>
                 </td>
             </tr>
@@ -531,21 +541,81 @@
         }).join('');
     }
 
-    function actualizarMetricas(reservas) {
-        document.getElementById('val-reservas').innerText = reservas.length;
-        let totalIngresos = reservas.filter(r => r.estado === 'Aprobado').reduce((acc, r) => acc + Number(r.monto_total || 0), 0);
-        document.getElementById('val-ingresos').innerText = `$${totalIngresos.toFixed(2)}`;
-        let totalMesas = reservas.filter(r => r.estado === 'Aprobado').reduce((acc, r) => acc + Number(r.cantidad_mesas || 0), 0);
-        document.getElementById('val-mesas').innerText = totalMesas;
+    // Funcionalidad para abrir el modal de QRs individuales al hacer clic en el código de reserva
+    async function verDetalleQrsReserva(reservaId) {
+        try {
+            let response = await fetch(`${API_URL}/api/reservas/${reservaId}/qrs`);
+            if (response.ok) {
+                let data = await response.json();
+                
+                let contenedorHtml = `<div style="display: flex; flex-direction: column; gap: 10px;">`;
+                if (!data || data.length === 0) {
+                    contenedorHtml += `<p style="text-align: center; color: #aaa;">No hay códigos QR generados todavía. (Aprueba la reserva primero).</p>`;
+                } else {
+                    data.forEach((pase, index) => {
+                        let isAl = pase.estatus === 'AL';
+                        let badgeColor = isAl ? '#34d399' : '#fbbf24';
+                        let badgeTexto = isAl ? '🟢 ADENTRO LOCAL (AL)' : '🟡 PENDIENTE DE ENTRAR (PE)';
+                        
+                        contenedorHtml += `
+                            <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(212,175,55,0.2); padding: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <strong style="color: #fbbf24;">Pase #${index + 1}</strong>
+                                    <div style="font-size: 11px; color: #aaa; word-break: break-all;">Código: ${pase.codigo_qr}</div>
+                                    ${pase.fecha_ingreso ? `<div style="font-size: 10px; color: #34d399;">Ingreso: ${pase.fecha_ingreso}</div>` : ''}
+                                </div>
+                                <div style="text-align: right; min-width: 130px;">
+                                    <span style="background: ${badgeColor}20; color: ${badgeColor}; border: 1px solid ${badgeColor}; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; display: inline-block;">
+                                        ${badgeTexto}
+                                    </span>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+                contenedorHtml += `</div>`;
+                
+                document.getElementById('modal-body-qrs').innerHTML = contenedorHtml;
+                document.getElementById('modal-qrs-overlay').style.display = 'flex';
+            } else {
+                alert("No se pudieron cargar los códigos QR de esta reserva.");
+            }
+        } catch (error) {
+            console.error("Error al cargar los códigos QR:", error);
+            alert("Error de conexión al obtener los pases.");
+        }
     }
 
-    function verComprobante(url) {
-        document.getElementById('img-comprobante-preview').src = url;
-        document.getElementById('modal-comprobante').style.display = 'flex';
+    function cerrarModalQrs() {
+        document.getElementById('modal-qrs-overlay').style.display = 'none';
     }
 
-    function cerrarModalComprobante() {
-        document.getElementById('modal-comprobante').style.display = 'none';
+    async function aprobarReservaYEnviarWhatsApp(id) {
+        if (!confirm(`¿Estás seguro de aprobar la reserva #${id}, generar sus QR y abrir WhatsApp?`)) return;
+
+        try {
+            let res = await fetch(`${API_URL}/api/reservas/${id}/aprobar`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" }
+            });
+            
+            if (res.ok) {
+                let data = await res.json();
+                alert(`✨ ¡Reserva #${id} aprobada y códigos QR individuales generados con éxito!`);
+                
+                // Abrir automáticamente el chat de WhatsApp con el mensaje preparado y los QR
+                if (data.whatsapp_url) {
+                    window.open(data.whatsapp_url, '_blank');
+                }
+                
+                cargarDashboardAdmin();
+            } else {
+                alert("No se pudo aprobar la reserva.");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Error de conexión.");
+        }
     }
 
     async function cambiarEstadoReserva(id, nuevoEstado) {
@@ -559,11 +629,7 @@
             });
             
             if (res.ok) {
-                let data = await res.json();
                 alert(`✅ Reserva #${id} marcada como '${nuevoEstado}'.`);
-                if (nuevoEstado === 'Aprobado' && data.whatsapp_url) {
-                    window.open(data.whatsapp_url, '_blank');
-                }
                 cargarDashboardAdmin();
             } else {
                 alert("No se pudo actualizar el estatus de la reserva.");
@@ -572,6 +638,23 @@
             console.error(err);
             alert("Error de conexión.");
         }
+    }
+
+    function actualizarMetricas(reservas) {
+        document.getElementById('val-reservas').innerText = reservas.length;
+        let totalIngresos = reservas.filter(r => r.estado === 'APROBADO' || r.estado === 'Aprobado').reduce((acc, r) => acc + Number(r.monto_total || 0), 0);
+        document.getElementById('val-ingresos').innerText = `$${totalIngresos.toFixed(2)}`;
+        let totalMesas = reservas.filter(r => r.estado === 'APROBADO' || r.estado === 'Aprobado').reduce((acc, r) => acc + Number(r.cantidad_mesas || 0), 0);
+        document.getElementById('val-mesas').innerText = totalMesas;
+    }
+
+    function verComprobante(url) {
+        document.getElementById('img-comprobante-preview').src = url;
+        document.getElementById('modal-comprobante').style.display = 'flex';
+    }
+
+    function cerrarModalComprobante() {
+        document.getElementById('modal-comprobante').style.display = 'none';
     }
 
     async function crearPropietario(e) {
@@ -639,7 +722,6 @@
                 let dataLocal = await res.json();
                 let localId = dataLocal.id;
 
-                // Si se adjuntó logo, lo subimos inmediatamente utilizando el endpoint de logo
                 if (logoFile && localId) {
                     const logoData = new FormData();
                     logoData.append("local_id", localId);
@@ -982,14 +1064,14 @@
                     cliente: data.detalles?.cliente_nombre || 'Cliente',
                     cedula: data.detalles?.cliente_cedula || 'S/C',
                     evento: data.detalles?.evento_nombre || 'Salsoteca',
-                    estado: '✅ Permitido'
+                    estado: '✅ Permitido (AL)'
                 });
             } else {
                 resBox.className = "result-box error";
                 iconoEstado.innerText = '⚠️';
                 titulo.innerHTML = data.mensaje || "⚠️ Acceso No Válido";
                 subtitulo.innerText = "Alerta de seguridad en puerta";
-                detalles.innerHTML = `Cliente asociado: <b>${data.cliente || 'Desconocido'}</b>. Este código ya fue utilizado o no pertenece a ninguna reserva activa.`;
+                detalles.innerHTML = `Cliente asociado: <b>${data.cliente || 'Desconocido'}</b>. Este código ya fue utilizado (AL) o no pertenece a ninguna reserva activa.`;
 
                 historialAccesos.unshift({
                     hora: ahoraStr,

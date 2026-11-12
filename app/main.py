@@ -106,7 +106,6 @@ async def actualizar_logo_local(
         R2_PUBLIC_URL = os.getenv("R2_PUBLIC_URL", "https://pub-3244093a45bd47d9a30548ef0924bb49.r2.dev").rstrip('/')
         logo_url = f"{R2_PUBLIC_URL}/{filename_guardado}"
 
-        # Actualizamos directamente la columna 'imagen' en la tabla 'lugares'
         local = db.query(Local).filter(Local.id == local_id).first()
         if not local:
             local = Local(id=local_id, nombre="Salsoteca Carlos Alberto", imagen=logo_url)
@@ -633,17 +632,22 @@ def listar_reservas_admin(db: Session = Depends(get_db)):
     return resultado
 
 
+@app.post("/api/reservas/{reserva_id}/aprobar")
 @app.put("/api/admin/reservas/{reserva_id}/estado")
 def actualizar_estado_reserva(
     reserva_id: int, 
-    data: dict, 
+    data: Optional[dict] = None, 
     db: Session = Depends(get_db)
 ):
     reserva = db.query(Reserva).filter(Reserva.id == reserva_id).first()
     if not reserva:
         raise HTTPException(status_code=404, detail="Reserva no encontrada")
     
-    nuevo_estado = data.get("estado", "Aprobado")
+    nuevo_estado = "APROBADO"
+    if data and "estado" in data:
+        est_ingresado = data.get("estado")
+        nuevo_estado = "APROBADO" if est_ingresado.lower() in ["aprobado", "aprobada"] else est_ingresado
+
     reserva.estado_reserva = nuevo_estado
     
     qr_links = []
@@ -659,7 +663,7 @@ def actualizar_estado_reserva(
                 nuevo_ingreso = IngresoPuerta(
                     reserva_id=reserva.id,
                     codigo_qr=token_qr,
-                    estado_ingreso="no_utilizado"
+                    estado_ingreso="PE"  # PE: Pendiente de Entrar
                 )
                 db.add(nuevo_ingreso)
                 
@@ -693,24 +697,41 @@ def actualizar_estado_reserva(
         f"📋 *Código de Reserva:* `{reserva.codigo_reserva}`\n"
         f"• Pases: {reserva.cantidad_personas} | Mesas: {reserva.cantidad_mesas}\n"
         f"• Total Cancelado: ${reserva.monto_total}\n\n"
-        f"🎟️ *Tus códigos QR de acceso individual en puerta:*\n"
+        f"🎟️ *Tus códigos QR de acceso individual en puerta (Estatus: PE - Pendiente):*\n"
     )
 
     for idx, item in enumerate(qr_links, 1):
-        texto_whatsapp += f"Pase #{idx}: {item['qr_img']}\n"
+        texto_whatsapp += f"Pase #{idx}: `{item['token']}` - {item['qr_img']}\n"
 
     texto_whatsapp += (
         f"\n¡Muchas gracias por preferirnos! Presenta estos códigos QR al ingresar al local. ¡Te esperamos para disfrutar! 🎷🔥"
     )
 
-    whatsapp_url = f"https://wa.me/{telefono_limpio}?text={urllib.parse.quote(texto_whatsapp)}"
+    whatsapp_url = f"https://wa.me/{telefono_limpio}?text={urllib.parse.quote(texto_whatsapp)}" if telefono_limpio else ""
 
     return {
-        "mensaje": "Reserva aprobada, códigos QR de puerta generados y listos para enviar",
+        "exito": True,
+        "mensaje": "Reserva aprobada, códigos QR individuales generados (PE) y enlace de WhatsApp listo",
         "estado": reserva.estado_reserva,
         "whatsapp_url": whatsapp_url,
         "qr_codes": qr_links
     }
+
+
+@app.get("/api/reservas/{reserva_id}/qrs")
+def obtener_qrs_reserva(reserva_id: int, db: Session = Depends(get_db)):
+    """Endpoint para que el panel de administración consulte los pases de una reserva y sus estatus (PE / AL)"""
+    ingresos = db.query(IngresoPuerta).filter(IngresoPuerta.reserva_id == reserva_id).all()
+    
+    resultado = []
+    for ing in ingresos:
+        resultado.append({
+            "codigo_qr": ing.codigo_qr,
+            "estatus": ing.estado_ingreso,  # "PE" o "AL"
+            "fecha_ingreso": ing.fecha_ingreso.strftime('%Y-%m-%d %H:%M:%S') if ing.fecha_ingreso else None
+        })
+        
+    return resultado
     
 @app.delete("/api/admin/locales/{local_id}")
 def eliminar_local(local_id: int, db: Session = Depends(get_db)):

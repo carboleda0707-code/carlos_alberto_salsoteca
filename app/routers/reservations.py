@@ -1,6 +1,7 @@
 import os
 import re
 import uuid
+import urllib.parse
 from datetime import datetime
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
@@ -100,14 +101,12 @@ async def actualizar_evento(
     if descripcion is not None:
         evento.descripcion = descripcion
 
-    # Actualizar tarifas y descripciones de reservas
     evento.precio_cover = precio_cover
     evento.precio_mesa = precio_mesa
     evento.descripcion_mesa = descripcion_mesa
     evento.precio_promocion = precio_promocion
     evento.descripcion_promocion = descripcion_promocion
 
-    # Si se adjunta una nueva imagen de póster, se sube a R2
     if file and file.filename:
         file_extension = file.filename.split(".")[-1]
         imagen_nombre = f"evento_{uuid.uuid4()}.{file_extension}"
@@ -156,14 +155,12 @@ async def crear_reserva_con_comprobante(
     file_extension = file.filename.split(".")[-1]
     nombre_limpio = f"comprobante_{uuid.uuid4()}.{file_extension}"
 
-    # Subir comprobante a Cloudflare R2
     upload_file_to_r2(
         file_obj=file.file,
         filename=nombre_limpio,
         content_type=file.content_type
     )
 
-    # Verificar o registrar el cliente utilizando UsuarioFinal
     cliente = db.query(models.UsuarioFinal).filter(models.UsuarioFinal.telefono == cliente_telefono).first()
     if not cliente:
         cliente = models.UsuarioFinal(
@@ -201,3 +198,77 @@ async def crear_reserva_con_comprobante(
         "estado": nueva_reserva.estado_reserva,
         "comprobante": nombre_limpio
     }
+
+
+# ==========================================
+# APROBACIÓN, QR INDIVIDUALES Y WHATSAPP WA.ME
+# ==========================================
+
+@router.post("/{reserva_id}/aprobar")
+def aprobar_reserva_y_generar_qrs(reserva_id: int, db: Session = Depends(get_db)):
+    """Aprueba la reserva, genera códigos QR individuales por cada pase (Estatus PE) y arma el enlace de WhatsApp"""
+    reserva = db.query(models.Reserva).filter(models.Reserva.id == reserva_id).first()
+    if not reserva:
+        raise HTTPException(status_code=404, detail="Reserva no encontrada.")
+
+    # 1. Cambiar estatus a Aprobado
+    reserva.estado_reserva = "APROBADO"
+
+    # 2. Generar un código QR individual por cada pase (cantidad_personas)
+    pases_generados = []
+    total_pases = reserva.cantidad_personas or 1
+    
+    for i in range(total_pases):
+        codigo_qr_unico = f"QR-{reserva.codigo_reserva}-{i+1}-{uuid.uuid4().hex[:4]}"
+        
+        existe = db.query(models.IngresoPuerta).filter(models.IngresoPuerta.codigo_qr == codigo_qr_unico.strip()).first()
+        if not existe:
+            nuevo_ingreso = models.IngresoPuerta(
+                reserva_id=reserva.id,
+                codigo_qr=codigo_qr_unico,
+                estado_ingreso="PE"  # PE: Pendiente de Entrar
+            )
+            db.add(nuevo_ingreso)
+            pases_generados.append(codigo_qr_unico)
+
+    db.commit()
+
+    # 3. Construir mensaje preformateado para WhatsApp con wa.me
+    cliente_nombre = reserva.cliente.nombre if reserva.cliente else "Estimado Cliente"
+    telefono_cliente = reserva.cliente.telefono if reserva.cliente and reserva.cliente.telefono else ""
+    
+    lista_qrs_texto = "\n".join([f"🎟️ Pase #{i+1}: `{qr}`" for i, qr in enumerate(pases_generados)])
+    
+    mensaje_whatsapp = (
+        f"🎉 ¡Hola {cliente_nombre}! Tu reserva en la *Salsoteca Carlos Alberto* ({reserva.codigo_reserva}) ha sido *APROBADA*.\n\n"
+        f"Aquí tienes tus accesos QR individuales (Estatus: PE - Pendiente de Entrar) para presentarlos en puerta:\n"
+        f"{lista_qrs_texto}\n\n"
+        f"📍 ¡Te esperamos para vivir la mejor noche salsera en Guayaquil!"
+    )
+
+    telefono_limpio = "".join(filter(str.isdigit, telefono_cliente))
+    mensaje_codificado = urllib.parse.quote(mensaje_whatsapp)
+    whatsapp_url = f"https://wa.me/{telefono_limpio}?text={mensaje_codificado}" if telefono_limpio else ""
+
+    return {
+        "exito": True,
+        "mensaje": "Reserva aprobada con éxito, códigos QR generados.",
+        "whatsapp_url": whatsapp_url,
+        "total_pases": total_pases
+    }
+
+
+@router.get("/{reserva_id}/qrs")
+def obtener_qrs_reserva(reserva_id: int, db: Session = Depends(get_db)):
+    """Obtiene la lista de pases QR y sus estatus (PE / AL) para el modal de administración"""
+    ingresos = db.query(models.IngresoPuerta).filter(models.IngresoPuerta.reserva_id == reserva_id).all()
+    
+    resultado = []
+    for ing in ingresos:
+        resultado.append({
+            "codigo_qr": ing.codigo_qr,
+            "estatus": ing.estado_ingreso,  # "PE" o "AL"
+            "fecha_ingreso": ing.fecha_ingreso.strftime('%Y-%m-%d %H:%M:%S') if ing.fecha_ingreso else None
+        })
+        
+    return resultado
