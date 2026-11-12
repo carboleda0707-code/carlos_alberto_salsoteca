@@ -84,35 +84,34 @@ async function cargarCartelera() {
         cacheEventosPublicos = await res.json();
 
         if (!cacheEventosPublicos || cacheEventosPublicos.length === 0) {
-            container.innerHTML = `<p style="text-align:center; color:#888; grid-column: span 3;">No hay eventos activos en este momento.</p>`;
+            container.innerHTML = `<p style="text-align:center; color:#888; grid-column: span 3; padding: 20px;">No hay eventos activos en este momento.</p>`;
             return;
         }
 
         container.innerHTML = cacheEventosPublicos.map(ev => {
             let preciosHtml = '';
             if (ev.precio_cover && Number(ev.precio_cover) > 0) {
-                preciosHtml += `<div style="color: #34d399; font-size: 12px; font-weight: 600;">🎟️ Cover: $${Number(ev.precio_cover).toFixed(2)}</div>`;
+                preciosHtml += `<div style="color: #34d399; font-size: 13px; font-weight: 600;">🎟️ Cover: $${Number(ev.precio_cover).toFixed(2)}</div>`;
             }
             if (ev.precio_mesa && Number(ev.precio_mesa) > 0) {
-                preciosHtml += `<div style="color: #fbbf24; font-size: 12px; font-weight: 600;">🍾 Mesa: $${Number(ev.precio_mesa).toFixed(2)}</div>`;
+                preciosHtml += `<div style="color: #fbbf24; font-size: 13px; font-weight: 600;">🍾 Mesa: $${Number(ev.precio_mesa).toFixed(2)}</div>`;
             }
 
-            // Si ev.imagen ya trae la URL completa desde el backend o solo el nombre, lo manejamos limpiamente
             let imagenSrc = '';
             if (ev.imagen) {
                 imagenSrc = ev.imagen.startsWith('http') ? ev.imagen : `https://pub-3244093a45bd47d9a30548ef0924bb49.r2.dev/${ev.imagen}`;
             } else {
-                imagenSrc = '/static/images/default_evento.jpg'; // O una ruta local fija si prefieres
+                imagenSrc = '/static/images/default_evento.jpg';
             }
 
             return `
             <div class="event-card">
-                <img src="${imagenSrc}" alt="${ev.nombre_evento}">
+                <img src="${imagenSrc}" alt="${ev.nombre_evento}" loading="lazy">
                 <div class="event-title">${ev.nombre_evento}</div>
                 <div class="event-artist">🎤 ${ev.artista_orquesta || 'Varios Artistas'}</div>
                 <p style="font-size:12px; color:#aaa; margin-bottom:8px;">📅 ${String(ev.fecha_hora).replace('T', ' ')}</p>
-                <div style="background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; margin-bottom: 12px; min-height: 32px; display: flex; flex-direction: column; justify-content: center; gap: 2px;">
-                    ${preciosHtml || '<span style="color:#777; font-size:11px;">Entrada Libre / Consultar</span>'}
+                <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; margin-bottom: 14px; min-height: 36px; display: flex; flex-direction: column; justify-content: center; gap: 4px;">
+                    ${preciosHtml || '<span style="color:#777; font-size:12px;">Entrada Libre / Consultar</span>'}
                 </div>
                 <button class="btn-reservar" onclick="abrirModalReserva(${ev.id})">👉 Elegir</button>
             </div>
@@ -137,7 +136,7 @@ function cargarHistoria() {
 
     container.innerHTML = historicos.map(h => `
         <div class="event-card" style="opacity: 0.85;">
-            <img src="${h.img}" alt="${h.titulo}">
+            <img src="${h.img}" alt="${h.titulo}" loading="lazy">
             <div class="event-title">${h.titulo}</div>
             <p style="color:#d4af37; font-size:12px;">🗓️ ${h.fecha} — ¡Lleno Total!</p>
         </div>
