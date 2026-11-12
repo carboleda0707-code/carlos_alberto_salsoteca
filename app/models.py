@@ -35,14 +35,18 @@ reserva_mesas = Table(
 )
 
 
-class Empresa(Base):
-    __tablename__ = "empresas"
+class Local(Base):
+    __tablename__ = "lugares"
 
-    id = Column(BigInteger, primary_key=True, index=True)
-    nombre_comercial = Column(String(150), nullable=False)
-    ruc_nit = Column(String(20), unique=True, nullable=False, index=True)
-    activo = Column(Boolean, default=True)
-    creado_en = Column(DateTime, default=datetime.utcnow)
+    id = Column(Integer, primary_key=True, index=True)
+    empresa_id = Column(BigInteger, ForeignKey("empresas.id", ondelete="CASCADE"), nullable=True) # <-- AÑADE ESTA LÍNEA AQUí
+    propietario_id = Column(Integer, nullable=True)
+    nombre = Column(String, nullable=False)
+    tipo_establecimiento = Column(String, nullable=True)
+    direccion = Column(String, nullable=True)
+    ciudad = Column(String, nullable=True)
+    slug = Column(String, unique=True, index=True, nullable=True)
+    imagen = Column(String, nullable=True)
 
     # CORRECCIÓN: Apuntar correctamente a la tabla "lugares" especificando la clave foránea
     locales = relationship("Local", back_populates="empresa", cascade="all, delete", foreign_keys="[Local.empresa_id]")
