@@ -250,6 +250,7 @@
 
         async function cargarBannersDinamicos() {
             try {
+                // Asegúrate de incluir la barra diagonal al final '/'
                 let response = await fetch(window.location.origin + '/api/slider/'); 
                 if (response.ok) {
                     listaBanners = await response.json();
