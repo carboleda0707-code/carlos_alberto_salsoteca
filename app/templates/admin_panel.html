@@ -478,7 +478,16 @@
             return;
         }
 
-        tbody.innerHTML = reservas.map(r => `
+        tbody.innerHTML = reservas.map(r => {
+            // Manejo dinámico del voucher en R2 o local
+            let voucherUrl = '#';
+            if (r.comprobante_pago) {
+                voucherUrl = r.comprobante_pago.startsWith('http') 
+                    ? r.comprobante_pago 
+                    : `https://pub-3244093a45bd47d9a30548ef0924bb49.r2.dev/${r.comprobante_pago}`;
+            }
+
+            return `
             <tr>
                 <td><code>${r.codigo || 'RES-' + (9000 + r.id)}</code></td>
                 <td><b>${r.cliente_nombre || 'Cliente'}</b><br><small class="text-muted">${r.cliente_telefono || ''}</small></td>
@@ -486,7 +495,7 @@
                 <td>👥 ${r.cantidad_personas || 0} pases<br>🍾 ${r.cantidad_mesas || 0} mesa(s)</td>
                 <td><b class="text-green">$${Number(r.monto_total || 0).toFixed(2)}</b></td>
                 <td>
-                    ${r.comprobante_pago ? `<a href="#" onclick="verComprobante('/static/uploads/comprobantes/${r.comprobante_pago}')" class="link-voucher">📄 Ver Voucher</a>` : 'Sin Comprobante'}
+                    ${r.comprobante_pago ? `<a href="#" onclick="verComprobante('${voucherUrl}')" class="link-voucher">📄 Ver Voucher</a>` : 'Sin Comprobante'}
                 </td>
                 <td><span class="status-pill status-pending">${r.estado || 'Por Aprobar'}</span></td>
                 <td>
@@ -494,7 +503,8 @@
                     <button class="btn btn-danger btn-sm" onclick="cambiarEstadoReserva(${r.id}, 'Rechazado')">Rechazar</button>
                 </td>
             </tr>
-        `).join('');
+            `;
+        }).join('');
     }
 
     function actualizarMetricas(reservas) {
@@ -730,10 +740,18 @@
                 if (ev.precio_mesa) tarifasTxt.push(`Mesa: $${ev.precio_mesa}`);
                 if (ev.precio_promocion) tarifasTxt.push(`Promo: $${ev.precio_promocion}`);
                 
+                // Resolver URL de la imagen en R2 o usar fallback
+                let imgSrc = 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=100&q=80';
+                if (ev.imagen) {
+                    imgSrc = ev.imagen.startsWith('http') 
+                        ? ev.imagen 
+                        : `https://pub-3244093a45bd47d9a30548ef0924bb49.r2.dev/${ev.imagen}`;
+                }
+
                 return `
                 <tr>
                     <td><code>#${ev.id}</code></td>
-                    <td><img src="${ev.imagen ? '/static/uploads/' + ev.imagen : 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=100&q=80'}" class="table-img"></td>
+                    <td><img src="${imgSrc}" class="table-img"></td>
                     <td><b>${ev.nombre_evento}</b></td>
                     <td>🎤 ${ev.artista_orquesta || 'Varios'}</td>
                     <td><small class="text-green">${tarifasTxt.length > 0 ? tarifasTxt.join('<br>') : 'Sin Tarifas'}</small></td>
