@@ -24,22 +24,23 @@
             box-shadow: 0 4px 20px rgba(0,0,0,0.7);
         }
         
-        /* Logotipo Más Grande */
+        /* Logotipo Más Grande y Destacado */
         .navbar-logo { display: flex; align-items: center; }
-        .navbar-logo img { height: 52px; max-width: 170px; object-fit: contain; border-radius: 6px; border: 1px solid rgba(212,175,55,0.4); }
+        .navbar-logo img { height: 65px; max-width: 210px; object-fit: contain; border-radius: 6px; border: 1px solid rgba(212,175,55,0.4); }
         
         /* Contenedor derecho (Carrito + Menú de 3 Puntos) */
         .navbar-right-container { display: flex; align-items: center; gap: 12px; }
 
-        /* Menú Desplegable de 3 Puntos */
-        .menu-dropdown-container { position: relative; }
+        /* Menú Desplegable de 3 Puntos con Puente Anti-desaparición */
+        .menu-dropdown-container { position: relative; display: inline-block; padding-bottom: 12px; margin-bottom: -12px; }
+        
         .btn-menu-tres-puntos {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(212, 175, 55, 0.4);
             color: #fbbf24;
-            font-size: 22px;
+            font-size: 24px;
             font-weight: bold;
-            padding: 4px 12px;
+            padding: 4px 14px;
             border-radius: 8px;
             cursor: pointer;
             transition: 0.2s;
@@ -54,7 +55,7 @@
             position: absolute;
             top: 100%;
             right: 0;
-            margin-top: 10px;
+            margin-top: 2px;
             background: #121420;
             border: 1px solid #d4af37;
             border-radius: 8px;
@@ -64,7 +65,9 @@
             padding: 8px 0;
             z-index: 99999;
         }
+        
         .menu-dropdown-container:hover .dropdown-menu-content { display: block; }
+        
         .dropdown-menu-content li a {
             display: block;
             padding: 10px 16px;
@@ -78,7 +81,7 @@
 
         /* Botón de Carrito Superior */
         .btn-carrito-top {
-            background: #fbbf24; color: #121316; border: none; padding: 5px 12px;
+            background: #fbbf24; color: #121316; border: none; padding: 6px 14px;
             border-radius: 18px; font-size: 12px; font-weight: bold; cursor: pointer;
             display: flex; align-items: center; gap: 5px; text-decoration: none;
             box-shadow: 0 0 10px rgba(251, 191, 36, 0.4); white-space: nowrap; flex-shrink: 0;
@@ -86,7 +89,7 @@
         .cart-badge { background: #121316; color: #fbbf24; padding: 1px 6px; border-radius: 10px; font-size: 11px; }
 
         /* Contenedor Principal */
-        .container { max-width: 1200px; margin: 100px auto 40px auto; padding: 0 15px; }
+        .container { max-width: 1200px; margin: 105px auto 40px auto; padding: 0 15px; }
 
         /* SECCIÓN SUPERIOR: 2 Columnas */
         .top-dual-grid {
@@ -136,7 +139,8 @@
 
         .grid-compact img, 
         .event-card img, 
-        .event-card-compact img { 
+        .event-card-compact img,
+        .evento-imagen-principal { 
             width: 100% !important; 
             max-width: 100% !important;
             height: 200px !important; 
@@ -175,8 +179,8 @@
 
         @media (max-width: 768px) {
             .navbar { padding: 8px 12px; }
-            .navbar-logo img { height: 45px; }
-            .container { margin-top: 95px; }
+            .navbar-logo img { height: 50px; }
+            .container { margin-top: 100px; }
             .slider-section { height: 220px; }
             .grid-compact { grid-template-columns: 1fr; gap: 15px; }
         }
@@ -184,7 +188,7 @@
 </head>
 <body>
 
-    <!-- Header / Navbar Fija con Menú de Tres Puntos y Logo Grande -->
+    <!-- Header / Navbar Fija -->
     <nav class="navbar">
         <div class="navbar-logo" id="navbar-logo-container">🎷 SALSOTECA CARLOS ALBERTO</div>
         
@@ -194,7 +198,7 @@
                 🛒 Carrito <span class="cart-badge" id="cart-count">0</span>
             </button>
             
-            <!-- Menú Desplegable de 3 Puntos -->
+            <!-- Menú de 3 Puntos Corregido -->
             <div class="menu-dropdown-container">
                 <button class="btn-menu-tres-puntos">⋮</button>
                 <ul class="dropdown-menu-content">
