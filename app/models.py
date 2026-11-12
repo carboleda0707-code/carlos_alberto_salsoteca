@@ -53,34 +53,26 @@ class Local(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     empresa_id = Column(BigInteger, ForeignKey("empresas.id", ondelete="CASCADE"), nullable=True)
-    propietario_id = Column(Integer, nullable=True)
+    propietario_id = Column(Integer, ForeignKey("usuarios.propietario_id", ondelete="CASCADE"), nullable=True) # <-- Asegúrate de que tenga el ForeignKey hacia usuarios
     nombre = Column(String, nullable=False)
     tipo_establecimiento = Column(String, nullable=True)
     direccion = Column(String, nullable=True)
     ciudad = Column(String, nullable=True)
     slug = Column(String, unique=True, index=True, nullable=True)
-    imagen = Column(String, nullable=True) # Columna real del logotipo almacenado en R2
+    imagen = Column(String, nullable=True)
 
-    likes = Column(Integer, default=0, nullable=True)
-    aviso_reserva = Column(Text, nullable=True)
-
-    latitud = Column(Numeric(precision=10, scale=6), nullable=True)
-    longitud = Column(Numeric(precision=10, scale=6), nullable=True)
-    pais = Column(String(100), default="Ecuador", nullable=True)
-
-    email_contacto = Column(String(150), nullable=True)
-    telefono = Column(String(20), nullable=True)
-    telefono_contacto = Column(String(50), nullable=True)
-    tipo_plan = Column(String(20), default="Normal")
-    pagado = Column(Boolean, default=False)
-    activo = Column(Boolean, default=True)
-
-    creado_en = Column(DateTime, default=datetime.utcnow)
+    # ... (tus otros campos) ...
 
     empresa = relationship("Empresa", back_populates="locales")
+    
+    # RELACIÓN EXPLÍCITA Y SEGURA:
     propietario = relationship(
-        "Usuario", back_populates="locales", foreign_keys=[propietario_id]
+        "Usuario", 
+        back_populates="locales", 
+        foreign_keys=[propietario_id],
+        primaryjoin="Local.propietario_id == Usuario.propietario_id"
     )
+    
     zonas = relationship("Zona", back_populates="local", cascade="all, delete")
     eventos = relationship("Evento", back_populates="local", cascade="all, delete")
 
