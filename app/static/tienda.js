@@ -97,9 +97,17 @@ async function cargarCartelera() {
                 preciosHtml += `<div style="color: #fbbf24; font-size: 12px; font-weight: 600;">🍾 Mesa: $${Number(ev.precio_mesa).toFixed(2)}</div>`;
             }
 
+            // Si ev.imagen ya trae la URL completa desde el backend o solo el nombre, lo manejamos limpiamente
+            let imagenSrc = '';
+            if (ev.imagen) {
+                imagenSrc = ev.imagen.startsWith('http') ? ev.imagen : `https://pub-3244093a45bd47d9a30548ef0924bb49.r2.dev/${ev.imagen}`;
+            } else {
+                imagenSrc = '/static/images/default_evento.jpg'; // O una ruta local fija si prefieres
+            }
+
             return `
             <div class="event-card">
-                <img src="${ev.imagen ? '/static/uploads/' + ev.imagen : 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80'}" alt="${ev.nombre_evento}">
+                <img src="${imagenSrc}" alt="${ev.nombre_evento}">
                 <div class="event-title">${ev.nombre_evento}</div>
                 <div class="event-artist">🎤 ${ev.artista_orquesta || 'Varios Artistas'}</div>
                 <p style="font-size:12px; color:#aaa; margin-bottom:8px;">📅 ${String(ev.fecha_hora).replace('T', ' ')}</p>

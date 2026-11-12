@@ -1,18 +1,15 @@
-import shutil
 import os
 import re
+import uuid
 from datetime import datetime
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app import models, schemas
+from app.r2_storage import upload_file_to_r2
 
 router = APIRouter(prefix="/api/reservas", tags=["Reservas"])
-
-# Directorio de almacenamiento para comprobantes de pago
-COMPROBANTES_DIR = "app/static/uploads/comprobantes"
-os.makedirs(COMPROBANTES_DIR, exist_ok=True)
 
 # ==========================================
 # GESTIÓN DE EVENTOS Y CARTELERA
@@ -40,18 +37,19 @@ async def crear_evento(
     file: UploadFile = File(None),
     db: Session = Depends(get_db)
 ):
-    """Crea un nuevo evento con sus tarifas opcionales y guarda su flyer/póster en static/uploads"""
+    """Crea un nuevo evento con tarifas y sube su flyer/póster directamente a Cloudflare R2"""
     imagen_nombre = None
     
-    if file:
-        upload_dir = "app/static/uploads"
-        os.makedirs(upload_dir, exist_ok=True)
+    if file and file.filename:
+        file_extension = file.filename.split(".")[-1]
+        imagen_nombre = f"evento_{uuid.uuid4()}.{file_extension}"
         
-        imagen_nombre = file.filename
-        file_path = os.path.join(upload_dir, imagen_nombre)
-        
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+        # Subir a Cloudflare R2
+        upload_file_to_r2(
+            file_obj=file.file,
+            filename=imagen_nombre,
+            content_type=file.content_type
+        )
 
     nuevo_evento = models.Evento(
         local_id=local_id,
@@ -71,7 +69,7 @@ async def crear_evento(
     db.add(nuevo_evento)
     db.commit()
     db.refresh(nuevo_evento)
-    return {"mensaje": "Evento creado exitosamente con tarifas", "id": nuevo_evento.id}
+    return {"mensaje": "Evento creado exitosamente con tarifas y R2", "id": nuevo_evento.id}
 
 @router.put("/eventos/{evento_id}")
 async def actualizar_evento(
@@ -88,7 +86,7 @@ async def actualizar_evento(
     file: UploadFile = File(None),
     db: Session = Depends(get_db)
 ):
-    """Actualiza los datos, tarifas y flyer opcional de un evento existente"""
+    """Actualiza los datos, tarifas y el flyer en Cloudflare R2 de un evento existente"""
     evento = db.query(models.Evento).filter(models.Evento.id == evento_id).first()
     if not evento:
         raise HTTPException(status_code=404, detail="Evento no encontrado")
@@ -109,18 +107,21 @@ async def actualizar_evento(
     evento.precio_promocion = precio_promocion
     evento.descripcion_promocion = descripcion_promocion
 
-    # Si se adjunta una nueva imagen de póster
+    # Si se adjunta una nueva imagen de póster, se sube a R2
     if file and file.filename:
-        upload_dir = "app/static/uploads"
-        os.makedirs(upload_dir, exist_ok=True)
-        file_path = os.path.join(upload_dir, file.filename)
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-        evento.imagen = file.filename
+        file_extension = file.filename.split(".")[-1]
+        imagen_nombre = f"evento_{uuid.uuid4()}.{file_extension}"
+        
+        upload_file_to_r2(
+            file_obj=file.file,
+            filename=imagen_nombre,
+            content_type=file.content_type
+        )
+        evento.imagen = imagen_nombre
 
     db.commit()
     db.refresh(evento)
-    return {"mensaje": "Evento actualizado correctamente", "id": evento.id}
+    return {"mensaje": "Evento actualizado correctamente en R2", "id": evento.id}
 
 @router.delete("/eventos/{evento_id}")
 def eliminar_evento(evento_id: int, db: Session = Depends(get_db)):
@@ -151,12 +152,16 @@ async def crear_reserva_con_comprobante(
     file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
-    """Crea una nueva solicitud de reserva combinada con comprobante y estado 'Por Aprobar'"""
-    nombre_limpio = re.sub(r'[^a-zA-Z0-9_.-]', '_', file.filename)
-    file_path = os.path.join(COMPROBANTES_DIR, nombre_limpio)
-    
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    """Crea una nueva solicitud de reserva combinada enviando el comprobante directamente a Cloudflare R2"""
+    file_extension = file.filename.split(".")[-1]
+    nombre_limpio = f"comprobante_{uuid.uuid4()}.{file_extension}"
+
+    # Subir comprobante a Cloudflare R2
+    upload_file_to_r2(
+        file_obj=file.file,
+        filename=nombre_limpio,
+        content_type=file.content_type
+    )
 
     # Verificar o registrar el cliente utilizando UsuarioFinal
     cliente = db.query(models.UsuarioFinal).filter(models.UsuarioFinal.telefono == cliente_telefono).first()
@@ -190,8 +195,9 @@ async def crear_reserva_con_comprobante(
     db.refresh(nueva_reserva)
 
     return {
-        "mensaje": "Reserva combinada creada exitosamente con estatus Por Aprobar",
+        "mensaje": "Reserva combinada creada exitosamente con comprobante en R2",
         "reserva_id": nueva_reserva.id,
         "monto_total": float(nueva_reserva.monto_total),
-        "estado": nueva_reserva.estado_reserva
+        "estado": nueva_reserva.estado_reserva,
+        "comprobante": nombre_limpio
     }

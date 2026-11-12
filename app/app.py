@@ -219,21 +219,29 @@ if menu_sel == "🏠 Inicio":
     if not eventos_activos:
         # Fallback visual demo si la API local no devuelve datos
         eventos_activos = [
-            {"id": 101, "nombre_evento": "Viernes de Azúcar & Salsa", "artista_orquesta": "Orquesta Sabor Son", "fecha_hora": "2026-11-13T21:00:00", "descripcion": "Gran noche bailable con los mejores exponentes de la salsa brava."},
-            {"id": 102, "nombre_evento": "Sábado de Gala Salsera", "artista_orquesta": "Invitado Internacional", "fecha_hora": "2026-11-14T21:00:00", "descripcion": "El concierto salsero más esperado del mes en el corazón de Guayaquil."},
-            {"id": 103, "nombre_evento": "Domingo de Matinée & Gladys", "artista_orquesta": "DJ Carlos Alberto", "fecha_hora": "2026-11-15T18:00:00", "descripcion": "Tarde de salsa romántica, piqueos y la mejor atención."}
+            {"id": 101, "nombre_evento": "Viernes de Azúcar & Salsa", "artista_orquesta": "Orquesta Sabor Son", "fecha_hora": "2026-11-13T21:00:00", "descripcion": "Gran noche bailable con los mejores exponentes de la salsa brava.", "imagen": ""},
+            {"id": 102, "nombre_evento": "Sábado de Gala Salsera", "artista_orquesta": "Invitado Internacional", "fecha_hora": "2026-11-14T21:00:00", "descripcion": "El concierto salsero más esperado del mes en el corazón de Guayaquil.", "imagen": ""},
+            {"id": 103, "nombre_evento": "Domingo de Matinée & Gladys", "artista_orquesta": "DJ Carlos Alberto", "fecha_hora": "2026-11-15T18:00:00", "descripcion": "Tarde de salsa romántica, piqueos y la mejor atención.", "imagen": ""}
         ]
 
     # Renderizado en Filas de 3 Columnas
     cols_ev = st.columns(3)
     for i, ev in enumerate(eventos_activos):
         with cols_ev[i % 3]:
+            # Obtener la imagen desde R2 (si viene con URL completa o nombre de archivo)
+            img_val = ev.get('imagen')
+            if img_val:
+                img_src = img_val if img_val.startswith('http') else f"https://pub-3244093a45bd47d9a30548ef0924bb49.r2.dev/{img_val}"
+            else:
+                img_src = "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80"
+
             st.markdown(f"""
             <div class="event-card">
+                <img src="{img_src}" alt="{ev.get('nombre_evento')}">
                 <span class="event-badge">ACTIVO ESTA SEMANA</span>
                 <div class="event-title">{ev.get('nombre_evento')}</div>
                 <p style="color: #d4af37; font-weight: bold; font-size: 13px;">🎤 {ev.get('artista_orquesta', 'Varios Artistas')}</p>
-                <p style="color: #aaaaaa; font-size: 12px;">📅 {ev.get('fecha_hora', '').replace('T', ' ')}</p>
+                <p style="color: #aaaaaa; font-size: 12px;">📅 {str(ev.get('fecha_hora', '')).replace('T', ' ')}</p>
             </div>
             """, unsafe_allow_html=True)
             

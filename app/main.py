@@ -18,6 +18,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.database import engine, Base, get_db
 from app.models import Local, Evento, UsuarioFinal, Reserva, BannerSlider, Usuario, IngresoPuerta, PlantillaCelebracionBase
 from app.config import obtener_tarifas_sistema
+from app.r2_storage import upload_file_to_r2
 
 # Crear las tablas en la base de datos si no existen
 Base.metadata.create_all(bind=engine)
@@ -31,17 +32,7 @@ app.include_router(checkin.router)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Directorios de archivos locales / uploads
-UPLOAD_DIR = BASE_DIR / "app" / "static" / "uploads"
-UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
-
-COMPROBANTES_DIR = UPLOAD_DIR / "comprobantes"
-COMPROBANTES_DIR.mkdir(parents=True, exist_ok=True)
-
-BANNERS_DIR = UPLOAD_DIR / "banners"
-BANNERS_DIR.mkdir(parents=True, exist_ok=True)
-
-# Montar archivos estáticos
+# Montar archivos estáticos locales (si se requieren para assets fijos del diseño)
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "app" / "static")), name="static")
 
 # Configurar templates de Jinja2
@@ -132,7 +123,7 @@ def listar_locales(db: Session = Depends(get_db)):
 
 
 # ==========================================
-# ENDPOINTS SECCIÓN 1: SLIDER Y BANNERS
+# ENDPOINTS SECCIÓN 1: SLIDER Y BANNERS (Cloudflare R2)
 # ==========================================
 @app.post("/api/admin/slider/{posicion}")
 async def actualizar_banner_slider(
@@ -145,14 +136,17 @@ async def actualizar_banner_slider(
     if posicion not in [1, 2, 3, 4]:
         raise HTTPException(status_code=400, detail="La posición debe ser un número entre 1 y 4")
 
-    nombre_limpio = re.sub(r'[^a-zA-Z0-9_.-]', '_', file.filename)
-    filename_guardado = f"slider_{posicion}_{nombre_limpio}"
-    file_path = BANNERS_DIR / filename_guardado
+    file_extension = Path(file.filename).suffix
+    filename_guardado = f"slider_{posicion}_{uuid.uuid4().hex[:6]}{file_extension}"
     
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    # Subir directamente a Cloudflare R2
+    upload_file_to_r2(
+        file_obj=file.file,
+        filename=filename_guardado,
+        content_type=file.content_type
+    )
 
-    imagen_url = f"/static/uploads/banners/{filename_guardado}"
+    imagen_url = filename_guardado
 
     banner = db.query(BannerSlider).filter(BannerSlider.posicion == posicion).first()
     if banner:
@@ -171,7 +165,7 @@ async def actualizar_banner_slider(
     db.commit()
     db.refresh(banner)
     return {
-        "mensaje": f"Banner #{posicion} actualizado con éxito",
+        "mensaje": f"Banner #{posicion} actualizado con éxito en R2",
         "posicion": posicion,
         "imagen_url": banner.imagen_url
     }
@@ -188,7 +182,7 @@ def obtener_banners_slider(db: Session = Depends(get_db)):
 
 
 # ==========================================
-# ENDPOINTS: PLANTILLA BASE DE CELEBRACIÓN (AÑO 2099)
+# ENDPOINTS: PLANTILLA BASE DE CELEBRACIÓN (Cloudflare R2)
 # ==========================================
 @app.get("/api/admin/plantilla-celebracion/")
 def obtener_plantilla_base(db: Session = Depends(get_db)):
@@ -222,11 +216,14 @@ async def guardar_plantilla_base(
     
     imagen_nombre = plantilla.imagen_base if plantilla else "evento_default.jpg"
     if file_base and file_base.filename:
-        nombre_limpio = re.sub(r'[^a-zA-Z0-9_.-]', '_', file_base.filename)
-        imagen_nombre = f"plantilla_base_{int(datetime.utcnow().timestamp())}_{nombre_limpio}"
-        file_path = UPLOAD_DIR / imagen_nombre
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file_base.file, buffer)
+        file_extension = Path(file_base.filename).suffix
+        imagen_nombre = f"plantilla_base_{uuid.uuid4().hex[:6]}{file_extension}"
+        
+        upload_file_to_r2(
+            file_obj=file_base.file,
+            filename=imagen_nombre,
+            content_type=file_base.content_type
+        )
 
     if not plantilla:
         plantilla = PlantillaCelebracionBase(
@@ -247,7 +244,7 @@ async def guardar_plantilla_base(
 
     db.commit()
     db.refresh(plantilla)
-    return {"mensaje": "Plantilla maestra de celebración actualizada con éxito", "id": plantilla.id}
+    return {"mensaje": "Plantilla maestra de celebración actualizada con éxito en R2", "id": plantilla.id}
 
 
 # --- ENDPOINT PARA LEER LAS TARIFAS DESDE CONFIG ---
@@ -257,12 +254,11 @@ def obtener_tarifas_config():
 
 
 # ==========================================
-# ENDPOINTS DE EVENTOS Y CARTELERA
+# ENDPOINTS DE EVENTOS Y CARTELERA (Cloudflare R2)
 # ==========================================
 @app.get("/api/reservas/eventos/")
 @app.get("/reservas/eventos/")
 def listar_eventos(local_id: int = 1, db: Session = Depends(get_db)):
-    # Excluye la plantilla 2099 o eventos marcados como plantilla maestra si aplica
     eventos = db.query(Evento).filter(
         Evento.local_id == local_id,
         Evento.estado != "plantilla_maestra"
@@ -287,12 +283,15 @@ async def crear_evento(
     db: Session = Depends(get_db)
 ):
     imagen_nombre = None
-    if file:
-        nombre_limpio = re.sub(r'[^a-zA-Z0-9_.-]', '_', file.filename)
-        imagen_nombre = f"evento_{nombre_limpio}"
-        file_path = UPLOAD_DIR / imagen_nombre
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+    if file and file.filename:
+        file_extension = Path(file.filename).suffix
+        imagen_nombre = f"evento_{uuid.uuid4().hex[:8]}{file_extension}"
+        
+        upload_file_to_r2(
+            file_obj=file.file,
+            filename=imagen_nombre,
+            content_type=file.content_type
+        )
 
     try:
         fecha_limpia = fecha_hora.replace('T', ' ')
@@ -325,7 +324,7 @@ async def crear_evento(
         db.rollback()
         raise HTTPException(status_code=400, detail=f"Error de BD: {str(e)}")
 
-    return {"mensaje": "Evento creado exitosamente con tarifas", "id": nuevo_evento.id}
+    return {"mensaje": "Evento creado exitosamente con tarifas en R2", "id": nuevo_evento.id}
 
 @app.put("/api/reservas/eventos/{evento_id}")
 @app.put("/reservas/eventos/{evento_id}")
@@ -371,16 +370,19 @@ async def actualizar_evento(
     evento.descripcion_promocion = descripcion_promocion
 
     if file and file.filename:
-        nombre_limpio = re.sub(r'[^a-zA-Z0-9_.-]', '_', file.filename)
-        imagen_nombre = f"evento_{nombre_limpio}"
-        file_path = UPLOAD_DIR / imagen_nombre
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+        file_extension = Path(file.filename).suffix
+        imagen_nombre = f"evento_{uuid.uuid4().hex[:8]}{file_extension}"
+        
+        upload_file_to_r2(
+            file_obj=file.file,
+            filename=imagen_nombre,
+            content_type=file.content_type
+        )
         evento.imagen = imagen_nombre
 
     db.commit()
     db.refresh(evento)
-    return {"mensaje": "Evento actualizado correctamente", "id": evento.id}
+    return {"mensaje": "Evento actualizado correctamente en R2", "id": evento.id}
 
 @app.delete("/api/reservas/eventos/{evento_id}")
 @app.delete("/reservas/eventos/{evento_id}")
@@ -394,7 +396,7 @@ def eliminar_evento(evento_id: int, db: Session = Depends(get_db)):
 
 
 # ==========================================
-# ENDPOINT DE CHECKOUT UNIFICADO (CARRITO DE COMPRAS)
+# ENDPOINT DE CHECKOUT UNIFICADO (Cloudflare R2)
 # ==========================================
 @app.post("/api/checkout/carrito")
 async def procesar_checkout_carrito(
@@ -402,7 +404,7 @@ async def procesar_checkout_carrito(
     nombre: str = Form(...),
     telefono: str = Form(...),
     email: Optional[str] = Form(None),
-    items_json: str = Form(...),  # JSON serializado con los ítems del carrito
+    items_json: str = Form(...),
     comprobante: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
@@ -411,15 +413,15 @@ async def procesar_checkout_carrito(
         if not items:
             raise HTTPException(status_code=400, detail="El carrito está vacío.")
 
-        # Guardar el comprobante de transferencia
+        # Subir comprobante directamente a Cloudflare R2
         file_extension = Path(comprobante.filename).suffix
-        file_name = f"comprobante_{cedula}_{os.urandom(4).hex()}{file_extension}"
-        file_path = COMPROBANTES_DIR / file_name
+        file_name = f"comprobante_{cedula}_{uuid.uuid4().hex[:6]}{file_extension}"
         
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(comprobante.file, buffer)
-        
-        comprobante_url = f"/static/uploads/comprobantes/{file_name}"
+        upload_file_to_r2(
+            file_obj=comprobante.file,
+            filename=file_name,
+            content_type=comprobante.content_type
+        )
 
         # Buscar o registrar el cliente final
         cliente = db.query(UsuarioFinal).filter(UsuarioFinal.cedula == cedula).first()
@@ -467,7 +469,7 @@ async def procesar_checkout_carrito(
             "mensaje": "¡Compra procesada con éxito! Tus reservas se encuentran en estatus 'Por Aprobar'.",
             "total_items": len(items),
             "monto_total": monto_total_global,
-            "comprobante": comprobante_url
+            "comprobante": file_name
         }
 
     except Exception as e:
@@ -477,7 +479,7 @@ async def procesar_checkout_carrito(
 
 
 # ==========================================
-# ENDPOINTS DE RESERVAS Y CONTROL EN PUERTA
+# ENDPOINTS DE RESERVAS Y CONTROL EN PUERTA (Cloudflare R2)
 # ==========================================
 @app.post("/reservas/con_comprobante/")
 async def crear_reserva_con_comprobante(
@@ -492,10 +494,14 @@ async def crear_reserva_con_comprobante(
     file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
-    nombre_limpio = re.sub(r'[^a-zA-Z0-9_.-]', '_', file.filename)
-    file_path = COMPROBANTES_DIR / nombre_limpio
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    file_extension = Path(file.filename).suffix
+    nombre_limpio = f"comprobante_{uuid.uuid4().hex[:6]}{file_extension}"
+    
+    upload_file_to_r2(
+        file_obj=file.file,
+        filename=nombre_limpio,
+        content_type=file.content_type
+    )
 
     cliente = db.query(UsuarioFinal).filter(UsuarioFinal.id == cliente_id).first()
     if not cliente:
@@ -528,7 +534,7 @@ async def crear_reserva_con_comprobante(
     db.refresh(nueva_reserva)
 
     return {
-        "mensaje": "Reserva combinada creada exitosamente con estatus Por Aprobar",
+        "mensaje": "Reserva combinada creada exitosamente con estatus Por Aprobar en R2",
         "reserva_id": nueva_reserva.id,
         "monto_total": float(nueva_reserva.monto_total),
         "estado": nueva_reserva.estado_reserva

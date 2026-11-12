@@ -1,5 +1,5 @@
-import shutil
 import re
+import uuid
 from datetime import datetime
 from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
@@ -7,12 +7,9 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import Evento, UsuarioFinal, Reserva
+from app.r2_storage import upload_file_to_r2
 
 router = APIRouter(prefix="/api/clientes/eventos", tags=["Eventos y Reservas Personalizadas del Cliente"])
-
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
-UPLOAD_DIR = BASE_DIR / "app" / "static" / "uploads"
-UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 @router.post("/crear/")
 async def crear_evento_y_reserva_personalizada(
@@ -32,22 +29,27 @@ async def crear_evento_y_reserva_personalizada(
     db: Session = Depends(get_db)
 ):
     try:
-        # 1. Guardar Flyer personalizado
+        # 1. Subir Flyer personalizado directamente a Cloudflare R2
         imagen_evento_nombre = "evento_default.jpg"
         if file_flyer and file_flyer.filename:
-            nombre_limpio = re.sub(r'[^a-zA-Z0-9_.-]', '_', file_flyer.filename)
-            imagen_evento_nombre = f"cliente_evento_{int(datetime.utcnow().timestamp())}_{nombre_limpio}"
-            file_path = UPLOAD_DIR / imagen_evento_nombre
-            with open(file_path, "wb") as buffer:
-                shutil.copyfileobj(file_flyer.file, buffer)
+            file_extension = Path(file_flyer.filename).suffix
+            imagen_evento_nombre = f"cliente_evento_{uuid.uuid4().hex[:8]}{file_extension}"
+            
+            upload_file_to_r2(
+                file_obj=file_flyer.file,
+                filename=imagen_evento_nombre,
+                content_type=file_flyer.content_type
+            )
 
-        # 2. Guardar Comprobante de pago
-        nombre_comp_limpio = re.sub(r'[^a-zA-Z0-9_.-]', '_', file_comprobante.filename)
-        comprobante_nombre = f"comp_per_{int(datetime.utcnow().timestamp())}_{nombre_comp_limpio}"
-        comp_path = UPLOAD_DIR / "comprobantes" / comprobante_nombre
-        comp_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(comp_path, "wb") as buffer:
-            shutil.copyfileobj(file_comprobante.file, buffer)
+        # 2. Subir Comprobante de pago directamente a Cloudflare R2
+        comp_extension = Path(file_comprobante.filename).suffix
+        comprobante_nombre = f"comp_per_{uuid.uuid4().hex[:8]}{comp_extension}"
+        
+        upload_file_to_r2(
+            file_obj=file_comprobante.file,
+            filename=comprobante_nombre,
+            content_type=file_comprobante.content_type
+        )
 
         # 3. Registrar o actualizar cliente
         cliente = db.query(UsuarioFinal).filter((UsuarioFinal.cedula == cliente_cedula) | (UsuarioFinal.email == cliente_email)).first()
@@ -105,7 +107,7 @@ async def crear_evento_y_reserva_personalizada(
 
         return {
             "exito": True,
-            "mensaje": "¡Tu evento y solicitud de reserva personalizada han sido enviados con éxito para aprobación!",
+            "mensaje": "¡Tu evento y solicitud de reserva personalizada han sido enviados con éxito a R2 para aprobación!",
             "codigo_reserva": codigo_reserva
         }
     except Exception as e:
