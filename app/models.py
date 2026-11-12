@@ -50,11 +50,11 @@ class Empresa(Base):
 class Local(Base):
     __tablename__ = "lugares"
 
-    id = Column("identificación", Integer, primary_key=True, index=True) # Mapeado a identificación
+    id = Column(Integer, primary_key=True, index=True) # <-- Cambiado a 'id' estándar
     empresa_id = Column(BigInteger, ForeignKey("empresas.id", ondelete="CASCADE"), nullable=True)
     propietario_id = Column(Integer, nullable=True)
     nombre = Column(String, nullable=False)
-    slug = Column("babosa", String, unique=True, index=True, nullable=True) # Mapeado a babosa
+    slug = Column("babosa", String, unique=True, index=True, nullable=True)
     tipo_establecimiento = Column(String, nullable=True)
     correo_envio = Column(String, nullable=True)
     direccion = Column(String, nullable=True)
@@ -70,7 +70,7 @@ class Local(Base):
     telefono = Column(String(20), nullable=True)
     telefono_contacto = Column(String(50), nullable=True)
     
-    imagen = Column(String, nullable=True) # Aquí guardará la URL de Cloudflare R2
+    imagen = Column(String, nullable=True)
     tipo_plan = Column(String(20), default="Normal")
     pagado = Column(Boolean, default=False)
     activo = Column(Boolean, default=True)
