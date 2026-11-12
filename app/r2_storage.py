@@ -1,0 +1,39 @@
+import os
+import boto3
+from botocore.config import Config
+from dotenv import load_dotenv
+
+load_dotenv()
+
+R2_ACCESS_KEY_ID = os.getenv("R2_ACCESS_KEY_ID")
+R2_SECRET_ACCESS_KEY = os.getenv("R2_SECRET_ACCESS_KEY")
+R2_ENDPOINT_URL = os.getenv("R2_ENDPOINT_URL")
+R2_BUCKET_NAME = os.getenv("R2_BUCKET_NAME", "carlosalberto-media")
+
+def get_r2_client():
+    """Retorna un cliente de S3 optimizado para Cloudflare R2."""
+    session = boto3.session.Session()
+    client = session.client(
+        's3',
+        endpoint_url=R2_ENDPOINT_URL,
+        aws_access_key_id=R2_ACCESS_KEY_ID,
+        aws_secret_access_key=R2_SECRET_ACCESS_KEY,
+        config=Config(signature_version='s3v4'),
+        region_name='auto'
+    )
+    return client
+
+def upload_file_to_r2(file_obj, filename: str, content_type: str) -> str:
+    """Sube un archivo a Cloudflare R2 y retorna el nombre de la clave."""
+    client = get_r2_client()
+    try:
+        client.upload_fileobj(
+            file_obj,
+            R2_BUCKET_NAME,
+            filename,
+            ExtraArgs={"ContentType": content_type}
+        )
+        return filename
+    except Exception as e:
+        print(f"Error al subir archivo a R2: {e}")
+        raise e
