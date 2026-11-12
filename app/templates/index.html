@@ -76,7 +76,7 @@
         /* Contenedor Principal */
         .container { max-width: 1200px; margin: 95px auto 40px auto; padding: 0 15px; }
 
-        /* SECCIÓN SUPERIOR: 2 Columnas (Banner compacto Izquierda + Cartelera Derecha) */
+        /* SECCIÓN SUPERIOR: 2 Columnas */
         .top-dual-grid {
             display: grid;
             grid-template-columns: 1.2fr 1fr;
@@ -85,7 +85,7 @@
         }
 
         @media (max-width: 768px) {
-            .top-dual-grid { grid-template-columns: 1fr; } /* En móvil se apilan ordenadamente */
+            .top-dual-grid { grid-template-columns: 1fr; }
         }
 
         /* Slider Hero Compacto */
@@ -93,14 +93,25 @@
         .slider-img { width: 100%; height: 100%; object-fit: cover; transition: opacity 0.5s ease-in-out; }
         .slider-caption { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.85)); padding: 12px; color: #d4af37; font-size: 16px; font-weight: bold; text-align: center; }
 
-        /* Tarjetas de Eventos / Cartelera compactos */
+        /* Tarjetas de Eventos / Cartelera */
         .section-title { font-size: 18px; color: #d4af37; border-bottom: 2px solid rgba(212,175,55,0.3); padding-bottom: 6px; margin-bottom: 15px; }
 
-        /* Grid de eventos inferiores más pequeños (4 por fila en desktop, 2 en móvil o carrusel) */
+        /* Grid de eventos inferiores compactos con estricto control de imagen */
         .grid-compact { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; margin-bottom: 30px; }
-        .event-card-compact { background: #121420; border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 10px; padding: 12px; text-align: center; transition: 0.3s; }
+        
+        .event-card-compact { background: #121420; border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 10px; padding: 12px; text-align: center; transition: 0.3s; display: flex; flex-direction: column; justify-content: space-between; }
         .event-card-compact:hover { border-color: #d4af37; transform: translateY(-3px); }
-        .event-card-compact img { width: 100%; height: 160px; object-fit: cover; border-radius: 6px; margin-bottom: 8px; }
+        
+        /* CORRECCIÓN CRÍTICA DE IMÁGENES DE EVENTOS (Evita que se sobredimensionen) */
+        .event-card-compact img { 
+            width: 100% !important; 
+            height: 180px !important; 
+            object-fit: cover !important; 
+            border-radius: 6px !important; 
+            margin-bottom: 8px !important;
+            display: block !important;
+        }
+
         .event-title { font-size: 15px; font-weight: bold; margin-bottom: 4px; }
         .event-artist { color: #d4af37; font-size: 12.5px; margin-bottom: 8px; }
         
@@ -121,6 +132,7 @@
             .marquee-text { font-size: 17px; }
             .container { margin-top: 110px; }
             .slider-section { height: 220px; }
+            .grid-compact { grid-template-columns: repeat(2, 1fr); gap: 10px; } /* 2 columnas compactas en móvil */
         }
     </style>
 </head>
@@ -153,9 +165,8 @@
     </nav>
 
     <div class="container">
-        <!-- SECCIÓN SUPERIOR: 2 Columnas (Slider Izquierda + Cartelera Destacada Derecha) -->
+        <!-- SECCIÓN SUPERIOR: 2 Columnas -->
         <div class="top-dual-grid">
-            <!-- Columna Izquierda: Slider Principal más compacto y elegante -->
             <section id="inicio">
                 <div class="slider-section">
                     <img id="slider-img" class="slider-img" src="" alt="Salsoteca Carlos Alberto">
@@ -163,7 +174,6 @@
                 </div>
             </section>
 
-            <!-- Columna Derecha: Tarjeta / Resumen de Cartelera o Acceso Rápido -->
             <div style="background: #121420; border: 1px solid rgba(212,175,55,0.3); border-radius: 10px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between;">
                 <div>
                     <h3 style="color: #d4af37; font-size: 17px; margin-bottom: 8px;">🎷 Cartelera de la Semana</h3>
@@ -179,7 +189,7 @@
             </div>
         </div>
 
-        <!-- Sección inferior: Eventos más pequeños / Slider de toda la semana -->
+        <!-- Sección inferior: Todos los Eventos de la Semana -->
         <section id="eventos-activos">
             <h2 class="section-title">📅 Todos los Eventos de la Semana</h2>
             <div class="grid-compact" id="container-cartelera"></div>
@@ -198,7 +208,7 @@
         <p>📍 Guayaquil, Ecuador | WhatsApp Reservas</p>
     </footer>
 
-    <!-- Modales (Misma lógica de carrito y formularios) -->
+    <!-- Modales -->
     <div id="modal-reserva" class="modal">
         <div class="modal-content">
             <span class="close-modal" onclick="cerrarModal()">&times;</span>
@@ -274,7 +284,7 @@
         </div>
     </div>
 
-    <!-- Scripts del Slider, Logotipo Dinámico y Carrito -->
+    <!-- Scripts -->
     <script>
         let listaBanners = [];
         let currentIndex = 0;
@@ -329,7 +339,7 @@
             const captionEl = document.getElementById('slider-caption');
             if (!imgEl) return;
             let imgUrl = banner.imagen_url || banner.imagen || '';
-            if (imgUrl && !imgUrl.startswith('http')) {
+            if (imgUrl && !imgUrl.startsWith('http')) {
                 imgUrl = `https://pub-3244093a45bd47d9a30548ef0924bb49.r2.dev/${imgUrl}`;
             }
             imgEl.src = imgUrl || 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=1200&q=80';
