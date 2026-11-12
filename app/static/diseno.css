@@ -30,7 +30,7 @@ body {
     min-height: 100vh;
 }
 
-/* --- BARRA DE NAVEGACIÓN PRINCIPAL (2 COLUMNAS / 2 FILAS A LA DERECHA) --- */
+/* --- BARRA DE NAVEGACIÓN PRINCIPAL (Logo Grande + 3 Puntitos) --- */
 .navbar {
     position: fixed;
     top: 0;
@@ -41,61 +41,92 @@ body {
     backdrop-filter: blur(8px);
     border-bottom: 2px solid #d4af37;
     padding: 10px 20px;
-    display: grid;
-    grid-template-columns: auto 1fr; /* Columna Izquierda (Logo) y Columna Derecha */
+    display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 15px;
 }
 
-/* Columna Izquierda: Solo el Logotipo */
+/* Columna Izquierda: Logotipo Más Grande */
 .navbar-logo {
     display: flex;
     align-items: center;
 }
 
 .navbar-logo img {
-    height: 45px;
-    max-width: 150px;
+    height: 55px; /* Logotipo ampliado */
+    max-width: 180px;
     object-fit: contain;
     border-radius: 6px;
-    border: 1px solid rgba(212, 175, 55, 0.3);
+    border: 1px solid rgba(212, 175, 55, 0.4);
 }
 
-/* Columna Derecha: Dividida en 2 filas (Arriba: Carrito | Abajo: Menú) */
+/* Contenedor derecho (Carrito + Menú de 3 Puntos) */
 .navbar-right-container {
     display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 6px;
-    width: 100%;
-}
-
-/* Fila Superior (Carrito a la derecha) */
-.navbar-top-row {
-    display: flex;
-    justify-content: flex-end;
-    width: 100%;
-}
-
-/* Fila Inferior (Menú de Enlaces) */
-.navbar-bottom-row {
-    display: flex;
-    gap: 15px;
     align-items: center;
-    justify-content: flex-end;
-    flex-wrap: wrap;
+    gap: 15px;
 }
 
-.navbar-bottom-row a {
+/* Menú Desplegable de 3 Puntos */
+.menu-dropdown-container {
+    position: relative;
+}
+
+.btn-menu-tres-puntos {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    color: var(--accent-yellow);
+    font-size: 20px;
+    font-weight: bold;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-menu-tres-puntos:hover {
+    background: rgba(212, 175, 55, 0.15);
+    border-color: #d4af37;
+}
+
+/* Lista del menú desplegable de 3 puntos */
+.dropdown-menu-content {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 8px;
+    background: #121420;
+    border: 1px solid #d4af37;
+    border-radius: 8px;
+    min-width: 200px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    list-style: none;
+    padding: 8px 0;
+    z-index: 99999;
+}
+
+.menu-dropdown-container:hover .dropdown-menu-content,
+.dropdown-menu-content.show {
+    display: block;
+}
+
+.dropdown-menu-content li a {
+    display: block;
+    padding: 10px 16px;
     color: var(--text-muted);
     text-decoration: none;
-    font-size: 13px;
+    font-size: 13.5px;
     font-weight: 600;
-    transition: color 0.2s;
+    transition: 0.2s;
 }
 
-.navbar-bottom-row a:hover {
-    color: var(--accent-yellow);
+.dropdown-menu-content li a:hover {
+    background: #d4af37;
+    color: #000;
 }
 
 aside {
@@ -283,7 +314,7 @@ tr:hover { background-color: var(--bg-card-hover); }
 .btn-success { background: linear-gradient(135deg, #059669, #10B981); }
 .btn-danger { background: linear-gradient(135deg, #DC2626, #EF4444); }
 
-/* Control de Pestañas (Ocultas por defecto) */
+/* Control de Pestañas */
 .tab-content { display: none; }
 .tab-content.active { display: block; }
 
@@ -312,16 +343,44 @@ tr:hover { background-color: var(--bg-card-hover); }
     box-shadow: 0 10px 30px rgba(0,0,0,0.6);
 }
 
-/* --- AJUSTE DE IMÁGENES Y PÓSTERS --- */
+/* ==============================================================================
+   CORRECCIÓN ESTRICTA DE LA CARTELERA AUTOMÁTICA Y TARJETAS DE EVENTOS
+   ============================================================================== */
+.grid-compact { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); 
+    gap: 20px; 
+    margin-bottom: 30px; 
+}
+
+.grid-compact > div, 
+.event-card, 
+.event-card-compact { 
+    background: #121420 !important; 
+    border: 1px solid rgba(212, 175, 55, 0.25) !important; 
+    border-radius: 10px !important; 
+    padding: 15px !important; 
+    text-align: center !important; 
+    display: flex !important; 
+    flex-direction: column !important; 
+    justify-content: space-between !important; 
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+}
+
+.grid-compact img, 
 .event-card img, 
-.evento-imagen-principal {
-    width: 100%;
-    max-width: 280px;
-    height: 380px;
-    object-fit: cover;
-    border-radius: 8px;
-    display: block;
-    margin: 0 auto 12px auto;
+.event-card-compact img,
+.evento-imagen-principal { 
+    width: 100% !important; 
+    max-width: 100% !important;
+    height: 200px !important; 
+    object-fit: cover !important; 
+    border-radius: 8px !important; 
+    margin-bottom: 12px !important;
+    display: block !important;
+    flex-shrink: 0 !important;
 }
 
 table img {
@@ -331,6 +390,33 @@ table img {
     border-radius: 6px !important;
     border: 1px solid var(--border-color);
 }
+
+.grid-compact h3, .grid-compact h4, .event-title { 
+    font-size: 16px !important; 
+    font-weight: bold !important; 
+    margin-bottom: 6px !important; 
+    color: #fff !important; 
+}
+.grid-compact p, .event-artist { 
+    color: #d4af37 !important; 
+    font-size: 13px !important; 
+    margin-bottom: 10px !important; 
+}
+
+.btn-reservar, .grid-compact button { 
+    background: linear-gradient(135deg, #d4af37, #996515) !important; 
+    color: #000 !important; 
+    border: none !important; 
+    padding: 9px 14px !important; 
+    font-weight: bold !important; 
+    border-radius: 6px !important; 
+    cursor: pointer !important; 
+    width: 100% !important; 
+    font-size: 12.5px !important; 
+    transition: 0.2s !important; 
+    margin-top: auto !important;
+}
+.btn-reservar:hover { opacity: 0.9; }
 
 /* --- PANEL LATERAL TIPO TIENDA (CARRITO) --- */
 .cart-sidebar-overlay {
@@ -369,14 +455,13 @@ table img {
 /* --- RESPONSIVO MÓVIL --- */
 @media (max-width: 768px) {
     .navbar {
-        padding: 10px 12px;
-        gap: 10px;
+        padding: 8px 12px;
     }
     .navbar-logo img {
-        height: 38px;
+        height: 45px; /* Logotipo visible y proporcionado en móvil */
     }
-    .navbar-bottom-row {
-        gap: 10px;
-        font-size: 12px;
+    .grid-compact {
+        grid-template-columns: 1fr;
+        gap: 15px;
     }
 }

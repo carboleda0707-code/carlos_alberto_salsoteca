@@ -19,62 +19,74 @@
                         url('https://images.unsplash.com/photo-1558445420-80a560dd4369?auto=format&fit=crop&w=1200&q=80');
             background-size: cover; background-position: center;
             backdrop-filter: blur(4px);
-            border-bottom: 2px solid #d4af37; padding: 8px 15px;
-            display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 10px;
+            border-bottom: 2px solid #d4af37; padding: 10px 20px;
+            display: flex; justify-content: space-between; align-items: center;
             box-shadow: 0 4px 20px rgba(0,0,0,0.7);
         }
         
+        /* Logotipo Más Grande */
         .navbar-logo { display: flex; align-items: center; }
-        .navbar-logo img { height: 38px; max-width: 140px; object-fit: contain; border-radius: 4px; border: 1px solid rgba(212,175,55,0.4); }
+        .navbar-logo img { height: 52px; max-width: 170px; object-fit: contain; border-radius: 6px; border: 1px solid rgba(212,175,55,0.4); }
         
-        .navbar-right-container { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; width: 100%; overflow: hidden; }
-        .navbar-top-row { display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 10px; }
-        
-        .marquee-container { flex: 1; overflow: hidden; white-space: nowrap; position: relative; }
-        .marquee-text {
-            display: inline-block;
-            font-family: 'Caveat', cursive, sans-serif;
-            font-size: 20px;
-            color: #ffffff;
-            letter-spacing: 1.5px;
-            text-shadow: 0 0 4px #ffffff, 0 0 8px #00cfff, 0 0 15px #0077ff;
-            animation: deslizarMarquesina 22s linear infinite;
-        }
+        /* Contenedor derecho (Carrito + Menú de 3 Puntos) */
+        .navbar-right-container { display: flex; align-items: center; gap: 12px; }
 
-        @keyframes deslizarMarquesina {
-            0% { transform: translateX(100%); }
-            100% { transform: translateX(-100%); }
+        /* Menú Desplegable de 3 Puntos */
+        .menu-dropdown-container { position: relative; }
+        .btn-menu-tres-puntos {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(212, 175, 55, 0.4);
+            color: #fbbf24;
+            font-size: 22px;
+            font-weight: bold;
+            padding: 4px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        
-        .navbar-bottom-row { display: flex; gap: 20px; list-style: none; align-items: center; justify-content: flex-end; position: relative; }
-        .navbar-bottom-row a {
-            color: #ffb347; text-decoration: none; font-weight: 700; font-size: 13px; text-transform: uppercase;
-            text-shadow: 0 0 4px rgba(255, 140, 0, 0.6); transition: all 0.3s ease;
-        }
-        .navbar-bottom-row a:hover { color: #fff; text-shadow: 0 0 8px #ff8c00; }
+        .btn-menu-tres-puntos:hover { background: rgba(212, 175, 55, 0.15); border-color: #d4af37; }
 
-        .btn-carrito-top {
-            background: #fbbf24; color: #121316; border: none; padding: 3px 10px;
-            border-radius: 15px; font-size: 11px; font-weight: bold; cursor: pointer;
-            display: flex; align-items: center; gap: 4px; text-decoration: none;
-            box-shadow: 0 0 8px rgba(251, 191, 36, 0.4); white-space: nowrap; flex-shrink: 0;
-        }
-        .cart-badge { background: #121316; color: #fbbf24; padding: 1px 5px; border-radius: 8px; font-size: 10px; }
-
-        /* Dropdown */
-        .dropdown { position: relative; }
-        .dropdown-menu {
-            display: none; position: absolute; top: 100%; right: 0;
-            background: #121420; border: 1px solid #d4af37; border-radius: 6px;
-            min-width: 200px; list-style: none; padding: 8px 0; box-shadow: 0 8px 25px rgba(0,0,0,0.9);
+        .dropdown-menu-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 10px;
+            background: #121420;
+            border: 1px solid #d4af37;
+            border-radius: 8px;
+            min-width: 210px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+            list-style: none;
+            padding: 8px 0;
             z-index: 99999;
         }
-        .dropdown:hover .dropdown-menu { display: block; }
-        .dropdown-menu a { padding: 8px 12px; display: block; color: #ffb347; text-shadow: none; font-size: 12px; text-transform: none; }
-        .dropdown-menu a:hover { background: #d4af37; color: #000; }
+        .menu-dropdown-container:hover .dropdown-menu-content { display: block; }
+        .dropdown-menu-content li a {
+            display: block;
+            padding: 10px 16px;
+            color: #d6d5df;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+        .dropdown-menu-content li a:hover { background: #d4af37; color: #000; }
+
+        /* Botón de Carrito Superior */
+        .btn-carrito-top {
+            background: #fbbf24; color: #121316; border: none; padding: 5px 12px;
+            border-radius: 18px; font-size: 12px; font-weight: bold; cursor: pointer;
+            display: flex; align-items: center; gap: 5px; text-decoration: none;
+            box-shadow: 0 0 10px rgba(251, 191, 36, 0.4); white-space: nowrap; flex-shrink: 0;
+        }
+        .cart-badge { background: #121316; color: #fbbf24; padding: 1px 6px; border-radius: 10px; font-size: 11px; }
 
         /* Contenedor Principal */
-        .container { max-width: 1200px; margin: 95px auto 40px auto; padding: 0 15px; }
+        .container { max-width: 1200px; margin: 100px auto 40px auto; padding: 0 15px; }
 
         /* SECCIÓN SUPERIOR: 2 Columnas */
         .top-dual-grid {
@@ -97,7 +109,7 @@
         .section-title { font-size: 18px; color: #d4af37; border-bottom: 2px solid rgba(212,175,55,0.3); padding-bottom: 6px; margin-bottom: 15px; }
 
         /* ==========================================================
-           CORRECCIÓN DEFINITIVA DE LA CARTELERA AUTOMÁTICA
+           CORRECCIÓN ESTRICTA DE LA CARTELERA AUTOMÁTICA
            ========================================================== */
         .grid-compact { 
             display: grid; 
@@ -106,7 +118,6 @@
             margin-bottom: 30px; 
         }
         
-        /* Contenedor estricto para cada tarjeta generada por la API */
         .grid-compact > div, 
         .event-card, 
         .event-card-compact { 
@@ -123,7 +134,6 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.4);
         }
 
-        /* Forzar que CUALQUIER imagen dentro de la cartelera se mantenga en su caja */
         .grid-compact img, 
         .event-card img, 
         .event-card-compact img { 
@@ -137,11 +147,9 @@
             flex-shrink: 0 !important;
         }
 
-        /* Tipografías y textos internos protegidos contra desbordamiento */
         .grid-compact h3, .grid-compact h4, .event-title { font-size: 16px !important; font-weight: bold !important; margin-bottom: 6px !important; color: #fff !important; }
         .grid-compact p, .event-artist { color: #d4af37 !important; font-size: 13px !important; margin-bottom: 10px !important; }
 
-        /* Botón de reserva uniforme */
         .btn-reservar, .grid-compact button { 
             background: linear-gradient(135deg, #d4af37, #996515) !important; 
             color: #000 !important; 
@@ -166,40 +174,36 @@
         .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px; background: #0b0c10; border: 1px solid #444; border-radius: 4px; color: #fff; font-size: 12px; }
 
         @media (max-width: 768px) {
-            .navbar { padding: 6px 10px; }
-            .navbar-logo img { height: 32px; }
-            .marquee-text { font-size: 17px; }
-            .container { margin-top: 110px; }
+            .navbar { padding: 8px 12px; }
+            .navbar-logo img { height: 45px; }
+            .container { margin-top: 95px; }
             .slider-section { height: 220px; }
-            .grid-compact { grid-template-columns: 1fr; gap: 15px; } /* Una columna ordenada en móvil para evitar solapes */
+            .grid-compact { grid-template-columns: 1fr; gap: 15px; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Header / Navbar Fija -->
+    <!-- Header / Navbar Fija con Menú de Tres Puntos y Logo Grande -->
     <nav class="navbar">
         <div class="navbar-logo" id="navbar-logo-container">🎷 SALSOTECA CARLOS ALBERTO</div>
+        
         <div class="navbar-right-container">
-            <div class="navbar-top-row">
-                <div class="marquee-container">
-                    <span class="marquee-text">La Salsa is my life</span>
-                </div>
-                <button class="btn-carrito-top" onclick="abrirModalCarrito(); return false;">
-                    🛒 Carrito <span class="cart-badge" id="cart-count">0</span>
-                </button>
-            </div>
+            <!-- Botón de Carrito -->
+            <button class="btn-carrito-top" onclick="abrirModalCarrito(); return false;">
+                🛒 Carrito <span class="cart-badge" id="cart-count">0</span>
+            </button>
             
-            <ul class="navbar-bottom-row">
-                <li><a href="#inicio">Inicio</a></li>
-                <li class="dropdown">
-                    <a href="#">Reservaciones ▾</a>
-                    <ul class="dropdown-menu">
-                        <li><a href="#eventos-activos">Eventos Activos</a></li>
-                        <li><a href="#" onclick="abrirModalCreaTuEvento(); return false;">🎉 Crea Tu Mi Rumba</a></li>
-                    </ul>
-                </li>
-            </ul>
+            <!-- Menú Desplegable de 3 Puntos -->
+            <div class="menu-dropdown-container">
+                <button class="btn-menu-tres-puntos">⋮</button>
+                <ul class="dropdown-menu-content">
+                    <li><a href="#inicio">🏠 Inicio</a></li>
+                    <li><a href="#eventos-activos">📅 Reservaciones</a></li>
+                    <li><a href="#" onclick="abrirModalCreaTuEvento(); return false;">🎉 Crear Tu Mi Rumba</a></li>
+                    <li><a href="#historia">📜 Historia</a></li>
+                </ul>
+            </div>
         </div>
     </nav>
 
