@@ -50,26 +50,15 @@ class Empresa(Base):
 
 class Local(Base):
     __tablename__ = "lugares"
-  
-    imagen = Column(String(255), nullable=True)  
-    id = Column(Integer, primary_key=True, index=True)
-    empresa_id = Column(
-        BigInteger, ForeignKey("empresas.id", ondelete="CASCADE"), nullable=True
-    )
-    propietario_id = Column(
-        Integer,
-        ForeignKey("usuarios.propietario_id", ondelete="CASCADE"),
-        nullable=True,
-    )
 
-    nombre = Column(String(100), nullable=False)
-    logo_url = Column(String, nullable=True)
-    slug = Column(String(100), unique=True, index=True, nullable=True)
-    tipo_establecimiento = Column(String(50), default="Salsoteca / Bar")
-    correo_envio = Column(String, nullable=True)
-    password_app = Column(String, nullable=True)
-    direccion = Column(Text, nullable=True)
-    ciudad = Column(String(100), nullable=True)
+    id = Column(Integer, primary_key=True, index=True)
+    propietario_id = Column(Integer, nullable=True)
+    nombre = Column(String, nullable=False)
+    tipo_establecimiento = Column(String, nullable=True)
+    direccion = Column(String, nullable=True)
+    ciudad = Column(String, nullable=True)
+    slug = Column(String, unique=True, index=True, nullable=True)
+    imagen = Column(String, nullable=True) # Columna real del logotipo almacenado en R2
 
     likes = Column(Integer, default=0, nullable=True)
     aviso_reserva = Column(Text, nullable=True)
@@ -99,7 +88,7 @@ class Zona(Base):
     __tablename__ = "zonas"
 
     id = Column(Integer, primary_key=True, index=True)
-    local_id = Column(Integer, ForeignKey("locales.id", ondelete="CASCADE"))
+    local_id = Column(Integer, ForeignKey("lugares.id", ondelete="CASCADE"))
     nombre_zona = Column(String(100), nullable=False)
     descripcion = Column(Text)
 
@@ -132,7 +121,7 @@ class Evento(Base):
     __tablename__ = "eventos"
 
     id = Column(Integer, primary_key=True, index=True)
-    local_id = Column(Integer, ForeignKey("locales.id", ondelete="CASCADE"))
+    local_id = Column(Integer, ForeignKey("lugares.id", ondelete="CASCADE"))
     nombre_evento = Column(String(150), nullable=False)
     artista_orquesta = Column(String(150), nullable=True)
 
@@ -164,7 +153,7 @@ class PlantillaCelebracionBase(Base):
     __tablename__ = "plantilla_celebracion_base"
 
     id = Column(Integer, primary_key=True, index=True)
-    local_id = Column(Integer, ForeignKey("locales.id", ondelete="CASCADE"), default=1)
+    local_id = Column(Integer, ForeignKey("lugares.id", ondelete="CASCADE"), default=1)
     titulo_base = Column(String(150), default="Gran Celebración en Salsoteca Carlos Alberto")
     imagen_base = Column(String(255), nullable=True)
     precio_cover_defecto = Column(Numeric(10, 2), default=10.00)
@@ -297,7 +286,7 @@ class UsuarioFinal(Base):
     __tablename__ = "usuarios_finales"
 
     id = Column(Integer, primary_key=True, index=True)
-    cedula = Column(String(20), unique=True, index=True, nullable=True) # <-- Campo de cédula integrado
+    cedula = Column(String(20), unique=True, index=True, nullable=True)
     nombre = Column(String(100), nullable=False)
     email = Column(String(150), unique=True, index=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
