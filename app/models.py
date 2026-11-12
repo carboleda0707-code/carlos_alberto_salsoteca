@@ -184,7 +184,7 @@ class Reserva(Base):
     __tablename__ = "reservas"
 
     id = Column(Integer, primary_key=True, index=True)
-    evento_id = Column(Integer, ForeignKey("eventos.id", ondelete="CASCADE"))
+    evento_id = Column(Integer, ForeignKey("eventos.id", ondelete="CASCADE"), nullable=True)
     cliente_id = Column(
         Integer, ForeignKey("usuarios_finales.id", ondelete="CASCADE")
     )
@@ -199,6 +199,12 @@ class Reserva(Base):
     codigo_reserva = Column(String(30), unique=True, nullable=False, index=True)
     comprobante_pago = Column(String(255), nullable=True)
     mensaje_personalizado = Column(Text, nullable=True)  
+    
+    # CAMPOS NUEVOS REQUERIDOS POR EL CHECKOUT DE MAIN.PY:
+    nombre_personalizado = Column(String(150), nullable=True)
+    fecha_personalizada = Column(String(100), nullable=True)
+    mostrar_en_cartelera = Column(Boolean, default=True)
+
     creado_en = Column(DateTime, default=datetime.utcnow)
 
     evento = relationship("Evento", back_populates="reservas")
