@@ -9,35 +9,49 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background-color: #0b0c10; color: #ffffff; font-family: 'Segoe UI', Arial, sans-serif; }
 
-        /* 1. Header & Navbar Fija */
+        /* 1. Header & Navbar Fija (2 Columnas: Izquierda Logo / Derecha 2 Filas) */
         .navbar {
             position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
             background: rgba(15, 16, 26, 0.95); backdrop-filter: blur(8px);
-            border-bottom: 2px solid #d4af37; padding: 10px 30px;
-            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 2px solid #d4af37; padding: 10px 20px;
+            display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 15px;
         }
-        .navbar-logo { font-size: 20px; font-weight: 900; color: #d4af37; letter-spacing: 1px; display: flex; align-items: center; }
+        
+        /* Columna Izquierda: Logotipo */
+        .navbar-logo { display: flex; align-items: center; }
         .navbar-logo img { height: 42px; max-width: 180px; object-fit: contain; border-radius: 4px; }
         
-        .nav-links { display: flex; gap: 20px; list-style: none; align-items: center; }
-        .nav-links a { color: #fff; text-decoration: none; font-weight: 600; font-size: 14px; transition: 0.3s; }
-        .nav-links a:hover { color: #d4af37; }
+        /* Columna Derecha: 2 Filas (Arriba: Carrito | Abajo: Menú) */
+        .navbar-right-container { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; width: 100%; }
+        .navbar-top-row { display: flex; justify-content: flex-end; width: 100%; }
+        
+        .navbar-bottom-row { display: flex; gap: 20px; list-style: none; align-items: center; justify-content: flex-end; flex-wrap: wrap; }
+        .navbar-bottom-row a { color: #fff; text-decoration: none; font-weight: 600; font-size: 13.5px; transition: 0.3s; }
+        .navbar-bottom-row a:hover { color: #d4af37; }
+
+        /* Botón de Carrito Superior */
+        .btn-carrito-top {
+            background: #fbbf24; color: #121316; border: none; padding: 4px 12px;
+            border-radius: 20px; font-size: 12px; font-weight: bold; cursor: pointer;
+            display: flex; align-items: center; gap: 5px; text-decoration: none;
+        }
+        .btn-carrito-top:hover { opacity: 0.9; }
+        .cart-badge { background: #121316; color: #fbbf24; padding: 1px 6px; border-radius: 10px; font-weight: bold; margin-left: 3px; font-size: 11px; }
 
         /* Dropdown Submenú */
         .dropdown { position: relative; }
         .dropdown-menu {
-            display: none; position: absolute; top: 100%; left: 0;
+            display: none; position: absolute; top: 100%; right: 0;
             background: #121420; border: 1px solid #d4af37; border-radius: 6px;
             min-width: 220px; list-style: none; padding: 10px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            z-index: 1001;
         }
         .dropdown:hover .dropdown-menu { display: block; }
         .dropdown-menu a { padding: 8px 15px; display: block; color: #ddd; }
         .dropdown-menu a:hover { background: #d4af37; color: #000; }
 
-        .cart-badge { background: #d4af37; color: #000; padding: 2px 8px; border-radius: 12px; font-weight: bold; margin-left: 5px; }
-
         /* Contenedor Principal */
-        .container { max-width: 1200px; margin: 90px auto 40px auto; padding: 0 20px; }
+        .container { max-width: 1200px; margin: 100px auto 40px auto; padding: 0 20px; }
 
         /* Sección 1: Slider Hero (Dinámico) */
         .slider-section { position: relative; width: 100%; height: 420px; border-radius: 14px; overflow: hidden; border: 1px solid rgba(212,175,55,0.4); margin-bottom: 40px; background: #121420; }
@@ -65,54 +79,41 @@
         .form-group label { display: block; font-size: 13px; margin-bottom: 5px; color: #d4af37; }
         .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; background: #0b0c10; border: 1px solid #444; border-radius: 6px; color: #fff; font-size: 13px; }
 
-        /* Responsivo Móvil: Logotipo arriba y opciones debajo */
+        /* Responsivo Móvil */
         @media (max-width: 768px) {
             .grid-3 { grid-template-columns: 1fr; }
-            .navbar {
-                flex-direction: column;
-                align-items: center;
-                padding: 12px 15px;
-                gap: 10px;
-            }
-            .navbar-logo {
-                font-size: 16px;
-                text-align: center;
-                line-height: 1.2;
-            }
-            .navbar-logo img {
-                height: 38px;
-            }
-            .nav-links {
-                width: 100%;
-                justify-content: center;
-                gap: 15px;
-                flex-wrap: wrap;
-            }
-            .nav-links a {
-                font-size: 13px;
-            }
-            .container {
-                margin-top: 140px;
-            }
+            .navbar { padding: 10px 12px; gap: 10px; }
+            .navbar-logo img { height: 38px; }
+            .navbar-bottom-row { gap: 12px; font-size: 12px; justify-content: flex-end; }
+            .container { margin-top: 120px; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Header / Navbar Fija -->
+    <!-- Header / Navbar Fija (2 Columnas / 2 Filas a la derecha) -->
     <nav class="navbar">
+        <!-- Columna Izquierda: Logotipo -->
         <div class="navbar-logo" id="navbar-logo-container">🎷 SALSOTECA CARLOS ALBERTO</div>
-        <ul class="nav-links">
-            <li><a href="#inicio">Inicio</a></li>
-            <li class="dropdown">
-                <a href="#">Reservaciones ▾</a>
-                <ul class="dropdown-menu">
-                    <li><a href="#eventos-activos">Eventos Activos</a></li>
-                    <li><a href="#" onclick="abrirModalCreaTuEvento(); return false;">🎉 Crea Tu Evento Personalizado</a></li>
-                </ul>
-            </li>
-            <li><a href="#" onclick="abrirModalCarrito(); return false;">🛒 Carrito <span class="cart-badge" id="cart-count">0</span></a></li>
-        </ul>
+        
+        <!-- Columna Derecha: Fila Superior (Carrito) y Fila Inferior (Menú) -->
+        <div class="navbar-right-container">
+            <div class="navbar-top-row">
+                <button class="btn-carrito-top" onclick="abrirModalCarrito(); return false;">
+                    🛒 Carrito <span class="cart-badge" id="cart-count">0</span>
+                </button>
+            </div>
+            <ul class="navbar-bottom-row">
+                <li><a href="#inicio">Inicio</a></li>
+                <li class="dropdown">
+                    <a href="#">Reservaciones ▾</a>
+                    <ul class="dropdown-menu">
+                        <li><a href="#eventos-activos">Eventos Activos</a></li>
+                        <li><a href="#" onclick="abrirModalCreaTuEvento(); return false;">🎉 Crea Tu Evento Personalizado</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
     </nav>
 
     <div class="container">
@@ -330,20 +331,14 @@
         }
 
         function mostrarBannerActual() {
-            if (!listaBanners || listaBanners.length === 0) {
-                console.warn("La lista de banners está vacía.");
-                return;
-            }
+            if (!listaBanners || listaBanners.length === 0) return;
             
             const banner = listaBanners[currentIndex];
-            console.log("Banner actual procesando:", banner); // <-- Esto nos dirá exactamente qué propiedades trae
-
             const imgEl = document.getElementById('slider-img');
             const captionEl = document.getElementById('slider-caption');
 
             if (!imgEl) return;
 
-            // Buscamos la imagen en cualquiera de los nombres posibles que pueda enviar la API
             let imgUrl = banner.imagen_url || banner.imagen || banner.url_imagen || '';
 
             if (imgUrl && imgUrl.trim() !== '') {
