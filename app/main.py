@@ -73,7 +73,7 @@ def crear_propietario(
         db.add(nuevo_usuario)
         db.commit()
         db.refresh(nuevo_usuario)
-        return {"mensaje": "Propietario/Administrador registrado con éxito", "id": getattr(nuevo_usuario, 'propietario_id', nuevo_usuario.id)}
+        return {"mensaje": "Propietario/Administrador registrado con éxito", "id": nuevo_usuario.propietario_id}
     except Exception as e:
         db.rollback()
         traceback.print_exc()
