@@ -13,10 +13,12 @@
         .navbar {
             position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
             background: rgba(15, 16, 26, 0.95); backdrop-filter: blur(8px);
-            border-bottom: 2px solid #d4af37; padding: 12px 30px;
+            border-bottom: 2px solid #d4af37; padding: 10px 30px;
             display: flex; justify-content: space-between; align-items: center;
         }
-        .navbar-logo { font-size: 20px; font-weight: 900; color: #d4af37; letter-spacing: 1px; }
+        .navbar-logo { font-size: 20px; font-weight: 900; color: #d4af37; letter-spacing: 1px; display: flex; align-items: center; }
+        .navbar-logo img { height: 42px; max-width: 180px; object-fit: contain; border-radius: 4px; }
+        
         .nav-links { display: flex; gap: 20px; list-style: none; align-items: center; }
         .nav-links a { color: #fff; text-decoration: none; font-weight: 600; font-size: 14px; transition: 0.3s; }
         .nav-links a:hover { color: #d4af37; }
@@ -35,7 +37,7 @@
         .cart-badge { background: #d4af37; color: #000; padding: 2px 8px; border-radius: 12px; font-weight: bold; margin-left: 5px; }
 
         /* Contenedor Principal */
-        .container { max-width: 1200px; margin: 80px auto 40px auto; padding: 0 20px; }
+        .container { max-width: 1200px; margin: 90px auto 40px auto; padding: 0 20px; }
 
         /* Sección 1: Slider Hero (Dinámico) */
         .slider-section { position: relative; width: 100%; height: 420px; border-radius: 14px; overflow: hidden; border: 1px solid rgba(212,175,55,0.4); margin-bottom: 40px; background: #121420; }
@@ -63,10 +65,6 @@
         .form-group label { display: block; font-size: 13px; margin-bottom: 5px; color: #d4af37; }
         .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; background: #0b0c10; border: 1px solid #444; border-radius: 6px; color: #fff; font-size: 13px; }
 
-        /* Carrito Items UI */
-        .cart-item { background: rgba(255,255,255,0.04); border: 1px solid rgba(212,175,55,0.2); border-radius: 8px; padding: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .btn-remove-item { background: #e53e3e; color: #fff; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; }
-
         /* Responsivo Móvil: Logotipo arriba y opciones debajo */
         @media (max-width: 768px) {
             .grid-3 { grid-template-columns: 1fr; }
@@ -81,6 +79,9 @@
                 text-align: center;
                 line-height: 1.2;
             }
+            .navbar-logo img {
+                height: 38px;
+            }
             .nav-links {
                 width: 100%;
                 justify-content: center;
@@ -91,7 +92,7 @@
                 font-size: 13px;
             }
             .container {
-                margin-top: 130px;
+                margin-top: 140px;
             }
         }
     </style>
@@ -307,18 +308,24 @@
 
         async function cargarLogotipoDinamico() {
             try {
-                let response = await fetch('/api/admin/local/info/'); // O la ruta de tu API que devuelva los datos del local
+                let response = await fetch('/api/admin/local/info/');
                 if (response.ok) {
                     let data = await response.json();
-                    if (data && data.logo_url) {
-                        const logoContainer = document.getElementById("navbar-logo-container");
-                        if (logoContainer) {
-                            logoContainer.innerHTML = `<img src="${data.logo_url}" alt="Salsoteca Carlos Alberto" style="height: 40px; object-fit: contain;">`;
+                    const logoContainer = document.getElementById("navbar-logo-container");
+                    if (logoContainer && data) {
+                        if (data.logo_url && data.logo_url.trim() !== "") {
+                            let logoUrl = data.logo_url.startsWith('http') 
+                                ? data.logo_url 
+                                : `https://pub-3244093a45bd47d9a30548ef0924bb49.r2.dev/${data.logo_url}`;
+                            
+                            logoContainer.innerHTML = `<img src="${logoUrl}" alt="Logotipo Local">`;
+                        } else if (data.nombre) {
+                            logoContainer.innerText = data.nombre;
                         }
                     }
                 }
             } catch (error) {
-                console.error("Error al cargar el logo:", error);
+                console.error("Error al cargar el logo dinámico:", error);
             }
         }
 
