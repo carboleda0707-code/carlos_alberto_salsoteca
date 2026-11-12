@@ -32,7 +32,7 @@ app.include_router(checkin.router)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Montar archivos estáticos locales (si se requieren para assets fijos del diseño)
+# Montar archivos estáticos locales
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "app" / "static")), name="static")
 
 # Configurar templates de Jinja2
@@ -77,6 +77,60 @@ def crear_propietario(
 @app.get("/api/admin/propietarios/")
 def listar_propietarios(db: Session = Depends(get_db)):
     return db.query(Usuario).filter(Usuario.rol == "propietario").all()
+
+
+# ==========================================
+# ENDPOINTS: LOGOTIPO DINÁMICO DEL LOCAL (Cloudflare R2)
+# ==========================================
+@app.post("/api/admin/local/logo")
+async def actualizar_logo_local(
+    local_id: int = Form(1),
+    logo: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    try:
+        file_extension = Path(logo.filename).suffix
+        filename_guardado = f"logo_local_{local_id}_{uuid.uuid4().hex[:6]}{file_extension}"
+        
+        upload_file_to_r2(
+            file_obj=logo.file,
+            filename=filename_guardado,
+            content_type=logo.content_type
+        )
+
+        R2_PUBLIC_URL = os.getenv("R2_PUBLIC_URL", "https://pub-3244093a45bd47d9a30548ef0924bb49.r2.dev").rstrip('/')
+        logo_url = f"{R2_PUBLIC_URL}/{filename_guardado}"
+
+        local = db.query(Local).filter(Local.id == local_id).first()
+        if not local:
+            local = Local(id=local_id, nombre="Salsoteca Carlos Alberto", logo_url=logo_url)
+            db.add(local)
+        else:
+            local.logo_url = logo_url
+
+        db.commit()
+        return {"mensaje": "¡Logotipo actualizado con éxito en la nube!", "logo_url": logo_url}
+    except Exception as e:
+        db.rollback()
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error al subir el logotipo: {str(e)}")
+
+@app.get("/api/admin/local/info/")
+def obtener_info_local(local_id: int = 1, db: Session = Depends(get_db)):
+    R2_PUBLIC_URL = os.getenv("R2_PUBLIC_URL", "https://pub-3244093a45bd47d9a30548ef0924bb49.r2.dev").rstrip('/')
+    local = db.query(Local).filter(Local.id == local_id).first()
+    logo_url = ""
+    if local and getattr(local, 'logo_url', None):
+        logo_url = local.logo_url
+        if logo_url and not logo_url.startswith("http"):
+            logo_url = f"{R2_PUBLIC_URL}/{logo_url}"
+            
+    return {
+        "id": local.id if local else local_id,
+        "nombre": local.nombre if local else "Salsoteca Carlos Alberto",
+        "logo_url": logo_url
+    }
+
 
 @app.post("/api/admin/locales/")
 def crear_local(
@@ -139,14 +193,12 @@ async def actualizar_banner_slider(
     file_extension = Path(file.filename).suffix
     filename_guardado = f"slider_{posicion}_{uuid.uuid4().hex[:6]}{file_extension}"
     
-    # Subir directamente a Cloudflare R2
     upload_file_to_r2(
         file_obj=file.file,
         filename=filename_guardado,
         content_type=file.content_type
     )
 
-    # Definir la URL pública absoluta de Cloudflare R2
     R2_PUBLIC_URL = "https://pub-3244093a45bd47d9a30548ef0924bb49.r2.dev"
     imagen_url = f"{R2_PUBLIC_URL}/{filename_guardado}"
 
@@ -258,7 +310,6 @@ async def guardar_plantilla_base(
     return {"mensaje": "Plantilla maestra de celebración actualizada con éxito en R2", "id": plantilla.id}
 
 
-# --- ENDPOINT PARA LEER LAS TARIFAS DESDE CONFIG ---
 @app.get("/api/config/tarifas")
 def obtener_tarifas_config():
     return obtener_tarifas_sistema()
@@ -424,7 +475,6 @@ async def procesar_checkout_carrito(
         if not items:
             raise HTTPException(status_code=400, detail="El carrito está vacío.")
 
-        # Subir comprobante directamente a Cloudflare R2
         file_extension = Path(comprobante.filename).suffix
         file_name = f"comprobante_{cedula}_{uuid.uuid4().hex[:6]}{file_extension}"
         
@@ -434,7 +484,6 @@ async def procesar_checkout_carrito(
             content_type=comprobante.content_type
         )
 
-        # Buscar o registrar el cliente final
         cliente = db.query(UsuarioFinal).filter(UsuarioFinal.cedula == cedula).first()
         if not cliente:
             cliente = UsuarioFinal(

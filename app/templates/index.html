@@ -67,18 +67,40 @@
         .cart-item { background: rgba(255,255,255,0.04); border: 1px solid rgba(212,175,55,0.2); border-radius: 8px; padding: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
         .btn-remove-item { background: #e53e3e; color: #fff; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; }
 
-        /* Responsivo Móvil */
+        /* Responsivo Móvil: Logotipo arriba y opciones debajo */
         @media (max-width: 768px) {
             .grid-3 { grid-template-columns: 1fr; }
-            .navbar { padding: 10px 15px; }
+            .navbar {
+                flex-direction: column;
+                align-items: center;
+                padding: 12px 15px;
+                gap: 10px;
+            }
+            .navbar-logo {
+                font-size: 16px;
+                text-align: center;
+                line-height: 1.2;
+            }
+            .nav-links {
+                width: 100%;
+                justify-content: center;
+                gap: 15px;
+                flex-wrap: wrap;
+            }
+            .nav-links a {
+                font-size: 13px;
+            }
+            .container {
+                margin-top: 130px;
+            }
         }
     </style>
 </head>
 <body>
 
-    <!-- Header / Navbar Fija (Sin Historia) -->
+    <!-- Header / Navbar Fija -->
     <nav class="navbar">
-        <div class="navbar-logo">🎷 SALSOTECA CARLOS ALBERTO</div>
+        <div class="navbar-logo" id="navbar-logo-container">🎷 SALSOTECA CARLOS ALBERTO</div>
         <ul class="nav-links">
             <li><a href="#inicio">Inicio</a></li>
             <li class="dropdown">
@@ -238,7 +260,7 @@
         </div>
     </div>
 
-    <!-- Scripts del Slider y Modales -->
+    <!-- Scripts del Slider, Logotipo Dinámico y Modales -->
     <script>
         let listaBanners = [];
         let currentIndex = 0;
@@ -280,6 +302,23 @@
                 }
             } catch (err) {
                 console.error("Error al cargar la plantilla base:", err);
+            }
+        }
+
+        async function cargarLogotipoDinamico() {
+            try {
+                let response = await fetch('/api/admin/local/info/'); // O la ruta de tu API que devuelva los datos del local
+                if (response.ok) {
+                    let data = await response.json();
+                    if (data && data.logo_url) {
+                        const logoContainer = document.getElementById("navbar-logo-container");
+                        if (logoContainer) {
+                            logoContainer.innerHTML = `<img src="${data.logo_url}" alt="Salsoteca Carlos Alberto" style="height: 40px; object-fit: contain;">`;
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error("Error al cargar el logo:", error);
             }
         }
 
@@ -328,6 +367,7 @@
         document.addEventListener("DOMContentLoaded", () => {
             cargarBannersDinamicos();
             cargarPlantillaBaseConfig();
+            cargarLogotipoDinamico();
         });
     </script>
 
