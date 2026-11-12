@@ -12,21 +12,58 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background-color: #0b0c10; color: #ffffff; font-family: 'Segoe UI', Arial, sans-serif; }
 
-        /* Navbar Fija Minimalista con Fondo de Ladrillo */
+        /* Navbar Fija Minimalista con Fondo de Ladrillo (Dos filas: Arriba marquesina, Abajo logo + carrito/menú) */
         .navbar {
             position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
             background: linear-gradient(rgba(15, 16, 26, 0.90), rgba(15, 16, 26, 0.96)), 
                         url('https://images.unsplash.com/photo-1558445420-80a560dd4369?auto=format&fit=crop&w=1200&q=80');
             background-size: cover; background-position: center;
             backdrop-filter: blur(4px);
-            border-bottom: 2px solid #d4af37; padding: 10px 20px;
-            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 2px solid #d4af37; padding: 8px 15px;
+            display: flex; flex-direction: column; gap: 6px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.7);
+        }
+
+        /* Fila Superior: Marquesina Neón Blanca Deslizante Lenta */
+        .navbar-marquee-row {
+            width: 100%;
+            overflow: hidden;
+            white-space: nowrap;
+            position: relative;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+            padding-bottom: 4px;
+        }
+
+        .marquee-text {
+            display: inline-block;
+            font-family: 'Caveat', cursive, sans-serif;
+            font-size: 22px;
+            color: #ffffff;
+            letter-spacing: 2px;
+            /* Efecto de Luz Neón Blanca Brillante con destello azul */
+            text-shadow: 0 0 4px #ffffff, 
+                         0 0 10px #00cfff, 
+                         0 0 20px #0077ff, 
+                         0 0 35px #0055ff;
+            animation: deslizarMarquesina 28s linear infinite; /* Animación lenta y fluida */
+        }
+
+        @keyframes deslizarMarquesina {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+
+        /* Fila Inferior: Logotipo Grande a la Izquierda y Controles a la Derecha */
+        .navbar-main-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
         }
         
         /* Logotipo Más Grande y Destacado */
         .navbar-logo { display: flex; align-items: center; }
-        .navbar-logo img { height: 65px; max-width: 210px; object-fit: contain; border-radius: 6px; border: 1px solid rgba(212,175,55,0.4); }
+        .navbar-logo img { height: 60px; max-width: 200px; object-fit: contain; border-radius: 6px; border: 1px solid rgba(212,175,55,0.4); }
         
         /* Contenedor derecho (Carrito + Menú de 3 Puntos) */
         .navbar-right-container { display: flex; align-items: center; gap: 12px; }
@@ -38,9 +75,9 @@
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(212, 175, 55, 0.4);
             color: #fbbf24;
-            font-size: 24px;
+            font-size: 22px;
             font-weight: bold;
-            padding: 4px 14px;
+            padding: 4px 12px;
             border-radius: 8px;
             cursor: pointer;
             transition: 0.2s;
@@ -88,8 +125,8 @@
         }
         .cart-badge { background: #121316; color: #fbbf24; padding: 1px 6px; border-radius: 10px; font-size: 11px; }
 
-        /* Contenedor Principal */
-        .container { max-width: 1200px; margin: 105px auto 40px auto; padding: 0 15px; }
+        /* Contenedor Principal (Ajustado para el header de 2 filas) */
+        .container { max-width: 1200px; margin: 125px auto 40px auto; padding: 0 15px; }
 
         /* SECCIÓN SUPERIOR: 2 Columnas */
         .top-dual-grid {
@@ -101,6 +138,8 @@
 
         @media (max-width: 768px) {
             .top-dual-grid { grid-template-columns: 1fr; }
+            .container { margin-top: 135px; }
+            .navbar-logo img { height: 48px; }
         }
 
         /* Slider Hero Compacto */
@@ -178,35 +217,43 @@
         .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px; background: #0b0c10; border: 1px solid #444; border-radius: 4px; color: #fff; font-size: 12px; }
 
         @media (max-width: 768px) {
-            .navbar { padding: 8px 12px; }
-            .navbar-logo img { height: 50px; }
-            .container { margin-top: 100px; }
-            .slider-section { height: 220px; }
             .grid-compact { grid-template-columns: 1fr; gap: 15px; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Header / Navbar Fija -->
+    <!-- Header / Navbar Fija de 2 Filas -->
     <nav class="navbar">
-        <div class="navbar-logo" id="navbar-logo-container">🎷 SALSOTECA CARLOS ALBERTO</div>
-        
-        <div class="navbar-right-container">
-            <!-- Botón de Carrito -->
-            <button class="btn-carrito-top" onclick="abrirModalCarrito(); return false;">
-                🛒 Carrito <span class="cart-badge" id="cart-count">0</span>
-            </button>
+        <!-- Fila Superior: Frase Neón Deslizante -->
+        <div class="navbar-marquee-row">
+            <div class="marquee-container" style="overflow: hidden; white-space: nowrap; position: relative; width: 100%;">
+                <span class="marquee-text">
+                    La salsa es mi vida &nbsp;&bull;&nbsp; Reservaciones instantáneas &nbsp;&bull;&nbsp; Crea tu evento para que compartas a tus invitados &nbsp;&bull;&nbsp; Aceptamos Transferencias, Depósitos y Pagos con Tarjetas
+                </span>
+            </div>
+        </div>
+
+        <!-- Fila Inferior: Logotipo Grande + Carrito + Menú de 3 Puntos -->
+        <div class="navbar-main-row">
+            <div class="navbar-logo" id="navbar-logo-container">🎷 SALSOTECA CARLOS ALBERTO</div>
             
-            <!-- Menú de 3 Puntos Corregido -->
-            <div class="menu-dropdown-container">
-                <button class="btn-menu-tres-puntos">⋮</button>
-                <ul class="dropdown-menu-content">
-                    <li><a href="#inicio">🏠 Inicio</a></li>
-                    <li><a href="#eventos-activos">📅 Reservaciones</a></li>
-                    <li><a href="#" onclick="abrirModalCreaTuEvento(); return false;">🎉 Crear Tu Mi Rumba</a></li>
-                    <li><a href="#historia">📜 Historia</a></li>
-                </ul>
+            <div class="navbar-right-container">
+                <!-- Botón de Carrito -->
+                <button class="btn-carrito-top" onclick="abrirModalCarrito(); return false;">
+                    🛒 Carrito <span class="cart-badge" id="cart-count">0</span>
+                </button>
+                
+                <!-- Menú de 3 Puntos -->
+                <div class="menu-dropdown-container">
+                    <button class="btn-menu-tres-puntos">⋮</button>
+                    <ul class="dropdown-menu-content">
+                        <li><a href="#inicio">🏠 Inicio</a></li>
+                        <li><a href="#eventos-activos">📅 Reservaciones</a></li>
+                        <li><a href="#" onclick="abrirModalCreaTuEvento(); return false;">🎉 Crear Tu Mi Rumba</a></li>
+                        <li><a href="#historia">📜 Historia</a></li>
+                    </ul>
+                </div>
             </div>
         </div>
     </nav>
