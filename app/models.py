@@ -44,7 +44,8 @@ class Empresa(Base):
     activo = Column(Boolean, default=True)
     creado_en = Column(DateTime, default=datetime.utcnow)
 
-    locales = relationship("Local", back_populates="empresa", cascade="all, delete")
+    # CORRECCIÓN: Apuntar correctamente a la tabla "lugares" especificando la clave foránea
+    locales = relationship("Local", back_populates="empresa", cascade="all, delete", foreign_keys="[Local.empresa_id]")
     usuarios = relationship("Usuario", back_populates="empresa", cascade="all, delete")
 
 
