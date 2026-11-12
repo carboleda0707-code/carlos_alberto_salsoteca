@@ -101,6 +101,7 @@ async def actualizar_logo_local(
         R2_PUBLIC_URL = os.getenv("R2_PUBLIC_URL", "https://pub-3244093a45bd47d9a30548ef0924bb49.r2.dev").rstrip('/')
         logo_url = f"{R2_PUBLIC_URL}/{filename_guardado}"
 
+        # Buscamos directamente en la tabla 'lugares'
         local = db.query(Local).filter(Local.id == local_id).first()
         if not local:
             local = Local(id=local_id, nombre="Salsoteca Carlos Alberto", logo_url=logo_url)

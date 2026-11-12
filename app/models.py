@@ -49,7 +49,7 @@ class Empresa(Base):
 
 
 class Local(Base):
-    __tablename__ = "locales"
+    __tablename__ = "lugares"
   
     imagen = Column(String(255), nullable=True)  
     id = Column(Integer, primary_key=True, index=True)
@@ -63,6 +63,7 @@ class Local(Base):
     )
 
     nombre = Column(String(100), nullable=False)
+    logo_url = Column(String, nullable=True)
     slug = Column(String(100), unique=True, index=True, nullable=True)
     tipo_establecimiento = Column(String(50), default="Salsoteca / Bar")
     correo_envio = Column(String, nullable=True)
