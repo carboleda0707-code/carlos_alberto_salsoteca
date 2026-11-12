@@ -330,13 +330,23 @@
         }
 
         function mostrarBannerActual() {
-            if (listaBanners.length === 0) return;
+            if (!listaBanners || listaBanners.length === 0) {
+                console.warn("La lista de banners está vacía.");
+                return;
+            }
+            
             const banner = listaBanners[currentIndex];
+            console.log("Banner actual procesando:", banner); // <-- Esto nos dirá exactamente qué propiedades trae
+
             const imgEl = document.getElementById('slider-img');
             const captionEl = document.getElementById('slider-caption');
 
-            let imgUrl = banner.imagen_url || '';
-            if (imgUrl) {
+            if (!imgEl) return;
+
+            // Buscamos la imagen en cualquiera de los nombres posibles que pueda enviar la API
+            let imgUrl = banner.imagen_url || banner.imagen || banner.url_imagen || '';
+
+            if (imgUrl && imgUrl.trim() !== '') {
                 imgUrl = imgUrl.startsWith('http') 
                     ? imgUrl 
                     : `https://pub-3244093a45bd47d9a30548ef0924bb49.r2.dev/${imgUrl}`;
@@ -345,7 +355,9 @@
             }
 
             imgEl.src = imgUrl;
-            captionEl.innerText = banner.caption || `Noches Legendarias de Salsa Live`;
+            if (captionEl) {
+                captionEl.innerText = banner.caption || banner.titulo || `Noches Legendarias de Salsa Live`;
+            }
         }
 
         function siguienteBanner() {
