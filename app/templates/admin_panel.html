@@ -100,7 +100,7 @@
             </div>
 
             <div class="section-card">
-                <h2>🏢 Registrar Local / Sucursal</h2>
+                <h2>🏢 Registrar Local / Sucursal y Logotipo</h2>
                 <form id="form-crear-local" onsubmit="crearLocal(event)">
                     <div class="grid-forms">
                         <div class="upload-box">
@@ -121,13 +121,38 @@
                             <label>Ciudad</label>
                             <input type="text" id="local-ciudad" value="Guayaquil">
                         </div>
+                        <div class="upload-box grid-span-2">
+                            <label>🖼️ Logotipo del Local (Cloudflare R2)</label>
+                            <input type="file" id="local-logo-file" accept="image/*">
+                        </div>
                     </div>
                     <div class="form-group-full">
                         <label>Dirección Física</label>
                         <input type="text" id="local-direccion" placeholder="Ej: Av. Principal y Calle E">
                     </div>
-                    <button type="submit" class="btn btn-success full-width">🚀 Registrar Local / Sucursal</button>
+                    <button type="submit" class="btn btn-success full-width">🚀 Registrar Local y Subir Logotipo</button>
                 </form>
+            </div>
+
+            <!-- TABLA DE LISTADO DE LOCALES -->
+            <div class="section-card">
+                <h2>🏢 Sucursales y Locales Registrados</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Logotipo</th>
+                            <th>Nombre del Local</th>
+                            <th>Tipo</th>
+                            <th>Ciudad / Dirección</th>
+                            <th>Slug</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-locales-body">
+                        <tr><td colspan="7">Cargando locales...</td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
 
@@ -275,7 +300,6 @@
                     <button class="btn btn-success btn-large" onclick="validarCodigoQRManual()">⚡ Validar Acceso</button>
                 </div>
 
-                <!-- Tarjeta de Resultado de Escaneo Dinámica -->
                 <div id="resultado-checkin" class="result-box">
                     <div class="result-header">
                         <span id="checkin-icono-estado" class="status-icon">✅</span>
@@ -288,7 +312,6 @@
                 </div>
             </div>
 
-            <!-- Panel de Estadísticas y Últimos Ingresos en Puerta -->
             <div class="metrics-grid">
                 <div class="metric-card">
                     <h3>Pases Totales Emitidos</h3>
@@ -419,6 +442,7 @@
     const API_URL = window.location.origin;
     let cacheEventos = [];
     let cacheReservas = [];
+    let cacheLocales = [];
     let historialAccesos = [];
 
     function verPestana(tab) {
@@ -435,6 +459,7 @@
             document.getElementById('nav-locales-config').classList.add('active');
             document.getElementById('titulo-panel').innerText = 'Gestión de Propietarios y Locales';
             cargarPropietariosSelect();
+            cargarLocalesAdmin();
         } else if(tab === 'home-config') {
             document.getElementById('vista-home-config').classList.add('active');
             document.getElementById('nav-home-config').classList.add('active');
@@ -465,7 +490,7 @@
                 actualizarMetricas(cacheReservas);
             }
         } catch (err) {
-            console.error("Error al cargar reservas de administración:", err);
+            console.error("Error al cargar reservas:", err);
         }
     }
 
@@ -479,7 +504,6 @@
         }
 
         tbody.innerHTML = reservas.map(r => {
-            // Manejo dinámico del voucher en R2 o local
             let voucherUrl = '#';
             if (r.comprobante_pago) {
                 voucherUrl = r.comprobante_pago.startsWith('http') 
@@ -536,19 +560,17 @@
             
             if (res.ok) {
                 let data = await res.json();
-                alert(`✅ Reserva #${id} marcada como '${nuevoEstado}'. Se generaron los códigos QR.`);
-                
+                alert(`✅ Reserva #${id} marcada como '${nuevoEstado}'.`);
                 if (nuevoEstado === 'Aprobado' && data.whatsapp_url) {
                     window.open(data.whatsapp_url, '_blank');
                 }
-
                 cargarDashboardAdmin();
             } else {
                 alert("No se pudo actualizar el estatus de la reserva.");
             }
         } catch (err) {
             console.error(err);
-            alert("Error de conexión con el servidor.");
+            alert("Error de conexión.");
         }
     }
 
@@ -597,21 +619,94 @@
             alert("Primero debes registrar o seleccionar un propietario.");
             return;
         }
+
+        const nombreLocal = document.getElementById('local-nombre').value;
+        const tipoEstablecimiento = document.getElementById('local-tipo').value;
+        const ciudad = document.getElementById('local-ciudad').value;
+        const direccion = document.getElementById('local-direccion').value;
+        const logoFile = document.getElementById('local-logo-file').files[0];
+
         const formData = new FormData();
         formData.append("propietario_id", propId);
-        formData.append("nombre_local", document.getElementById('local-nombre').value);
-        formData.append("tipo_establecimiento", document.getElementById('local-tipo').value);
-        formData.append("ciudad", document.getElementById('local-ciudad').value);
-        formData.append("direccion", document.getElementById('local-direccion').value);
+        formData.append("nombre_local", nombreLocal);
+        formData.append("tipo_establecimiento", tipoEstablecimiento);
+        formData.append("ciudad", ciudad);
+        formData.append("direccion", direccion);
 
         try {
             let res = await fetch(`${API_URL}/api/admin/locales/`, { method: "POST", body: formData });
             if (res.ok) {
-                alert("🎉 ¡Local o sucursal registrado con éxito!");
+                let dataLocal = await res.json();
+                let localId = dataLocal.id;
+
+                // Si se adjuntó logo, lo subimos inmediatamente utilizando el endpoint de logo
+                if (logoFile && localId) {
+                    const logoData = new FormData();
+                    logoData.append("local_id", localId);
+                    logoData.append("logo", logoFile);
+                    await fetch(`${API_URL}/api/admin/local/logo`, { method: "POST", body: logoData });
+                }
+
+                alert("🎉 ¡Local registrado y logotipo configurado con éxito!");
                 document.getElementById('form-crear-local').reset();
+                cargarLocalesAdmin();
             } else {
                 let errText = await res.text();
                 alert("Error al registrar el local: " + errText);
+            }
+        } catch(err) {
+            alert("Error de conexión.");
+        }
+    }
+
+    async function cargarLocalesAdmin() {
+        const tbody = document.getElementById('tabla-locales-body');
+        if(!tbody) return;
+
+        try {
+            let res = await fetch(`${API_URL}/api/admin/locales/`);
+            cacheLocales = await res.json();
+
+            if(!cacheLocales || cacheLocales.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7">No hay locales registrados.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = cacheLocales.map(l => {
+                let logoSrc = 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=100&q=80';
+                if (l.logo_url) {
+                    logoSrc = l.logo_url.startsWith('http') ? l.logo_url : `https://pub-3244093a45bd47d9a30548ef0924bb49.r2.dev/${l.logo_url}`;
+                }
+
+                return `
+                <tr>
+                    <td><code>#${l.id}</code></td>
+                    <td><img src="${logoSrc}" class="table-img" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover;"></td>
+                    <td><b>${l.nombre || l.nombre_local}</b></td>
+                    <td>${l.tipo_establecimiento || 'Salsoteca / Bar'}</td>
+                    <td>${l.ciudad || 'Guayaquil'}<br><small class="text-muted">${l.direccion || 'Sin dirección'}</small></td>
+                    <td><code>${l.slug || ''}</code></td>
+                    <td>
+                        <button class="btn btn-warning btn-sm" onclick="alert('Función de edición rápida de local')">✏️ Editar</button>
+                        <button class="btn btn-danger btn-sm" onclick="eliminarLocal(${l.id})">🗑️ Borrar</button>
+                    </td>
+                </tr>
+                `;
+            }).join('');
+        } catch(err) {
+            console.error("Error al listar locales:", err);
+        }
+    }
+
+    async function eliminarLocal(id) {
+        if(!confirm(`¿Estás seguro de eliminar el local #${id}?`)) return;
+        try {
+            let res = await fetch(`${API_URL}/api/admin/locales/${id}`, { method: "DELETE" });
+            if(res.ok) {
+                alert("🗑️ Local eliminado correctamente.");
+                cargarLocalesAdmin();
+            } else {
+                alert("No se pudo eliminar el local.");
             }
         } catch(err) {
             alert("Error de conexión.");
@@ -659,7 +754,7 @@
                 alert(`¡Éxito! Banner #${posicion} actualizado correctamente.`);
                 inputFile.value = "";
             } else {
-                alert("Error al actualizar el banner en el servidor.");
+                alert("Error al actualizar el banner.");
             }
         } catch (error) {
             alert("Error de conexión.");
@@ -668,7 +763,6 @@
 
     async function crearNuevoEvento(e) {
         e.preventDefault();
-
         const localId = document.getElementById('nuevo-local-id').value || 1;
         const nombre = document.getElementById('nuevo-nombre-evento').value;
         const artista = document.getElementById('nuevo-artista').value;
@@ -697,24 +791,16 @@
         if (descMesa) formData.append("descripcion_mesa", descMesa);
         if (promo) formData.append("precio_promocion", promo);
         if (descPromo) formData.append("descripcion_promocion", descPromo);
-
-        if (flyerFile) {
-            formData.append("file", flyerFile);
-        }
+        if (flyerFile) formData.append("file", flyerFile);
 
         try {
-            let res = await fetch(`${API_URL}/api/reservas/eventos/`, {
-                method: "POST",
-                body: formData
-            });
-
+            let res = await fetch(`${API_URL}/api/reservas/eventos/`, { method: "POST", body: formData });
             if (res.ok) {
-                alert("🎉 ¡Evento publicado exitosamente en la cartelera!");
+                alert("🎉 ¡Evento publicado exitosamente!");
                 document.getElementById('form-crear-evento').reset();
                 cargarEventosAdmin();
             } else {
-                let errData = await res.text();
-                alert("Error al publicar el evento: " + errData);
+                alert("Error al publicar el evento.");
             }
         } catch (err) {
             alert("Error de conexión.");
@@ -740,12 +826,9 @@
                 if (ev.precio_mesa) tarifasTxt.push(`Mesa: $${ev.precio_mesa}`);
                 if (ev.precio_promocion) tarifasTxt.push(`Promo: $${ev.precio_promocion}`);
                 
-                // Resolver URL de la imagen en R2 o usar fallback
                 let imgSrc = 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=100&q=80';
                 if (ev.imagen) {
-                    imgSrc = ev.imagen.startsWith('http') 
-                        ? ev.imagen 
-                        : `https://pub-3244093a45bd47d9a30548ef0924bb49.r2.dev/${ev.imagen}`;
+                    imgSrc = ev.imagen.startsWith('http') ? ev.imagen : `https://pub-3244093a45bd47d9a30548ef0924bb49.r2.dev/${ev.imagen}`;
                 }
 
                 return `
@@ -826,22 +909,16 @@
         if (descMesa) formData.append("descripcion_mesa", descMesa);
         if (promo) formData.append("precio_promocion", promo);
         if (descPromo) formData.append("descripcion_promocion", descPromo);
-
         if (flyerFile) formData.append("file", flyerFile);
 
         try {
-            let res = await fetch(`${API_URL}/api/reservas/eventos/${id}`, {
-                method: "PUT",
-                body: formData
-            });
-
+            let res = await fetch(`${API_URL}/api/reservas/eventos/${id}`, { method: "PUT", body: formData });
             if (res.ok) {
                 alert("✅ Evento actualizado correctamente.");
                 cerrarModalEditar();
                 cargarEventosAdmin();
             } else {
-                let errText = await res.text();
-                alert("Error al actualizar el evento: " + errText);
+                alert("Error al actualizar.");
             }
         } catch(err) {
             alert("Error de conexión.");
@@ -850,17 +927,13 @@
 
     async function eliminarEvento(id) {
         if (!confirm(`¿Estás seguro de eliminar el evento #${id}?`)) return;
-
         try {
-            let res = await fetch(`${API_URL}/api/reservas/eventos/${id}`, {
-                method: "DELETE"
-            });
-
+            let res = await fetch(`${API_URL}/api/reservas/eventos/${id}`, { method: "DELETE" });
             if (res.ok) {
                 alert("🗑️ Evento eliminado correctamente.");
                 cargarEventosAdmin();
             } else {
-                alert("No se pudo eliminar el evento.");
+                alert("No se pudo eliminar.");
             }
         } catch (err) {
             alert("Error de conexión.");
@@ -890,7 +963,6 @@
 
             let data = await res.json();
             resBox.style.display = 'block';
-
             const ahoraStr = new Date().toLocaleTimeString();
 
             if (res.ok && data.valido) {
@@ -938,7 +1010,7 @@
             iconoEstado.innerText = '❌';
             titulo.innerHTML = "Error de Conexión";
             subtitulo.innerText = "Fallo de red";
-            detalles.innerHTML = "No se pudo conectar con el servidor de validación.";
+            detalles.innerHTML = "No se pudo conectar con el servidor.";
         }
     }
 
@@ -977,15 +1049,12 @@
         formData.append("cantidad_mesas", mesas);
 
         try {
-            let res = await fetch(`${API_URL}/api/admin/zonas/`, {
-                method: "POST",
-                body: formData
-            });
+            let res = await fetch(`${API_URL}/api/admin/zonas/`, { method: "POST", body: formData });
             if (res.ok) {
-                alert("✅ Zona y distribución de mesas registradas exitosamente.");
+                alert("✅ Zona y mesas registradas exitosamente.");
                 document.getElementById('form-crear-zona').reset();
             } else {
-                alert("Error al registrar la zona.");
+                alert("Error al registrar zona.");
             }
         } catch (err) {
             alert("Error de conexión.");

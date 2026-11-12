@@ -704,3 +704,12 @@ def actualizar_estado_reserva(
         "whatsapp_url": whatsapp_url,
         "qr_codes": qr_links
     }
+    
+@app.delete("/api/admin/locales/{local_id}")
+def eliminar_local(local_id: int, db: Session = Depends(get_db)):
+    local = db.query(Local).filter(Local.id == local_id).first()
+    if not local:
+        raise HTTPException(status_code=404, detail="Local no encontrado")
+    db.delete(local)
+    db.commit()
+    return {"mensaje": "Local eliminado correctamente"}
