@@ -12,7 +12,6 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
 )
-
 from sqlalchemy.orm import relationship
 from .database import Base
 
@@ -51,32 +50,33 @@ class Empresa(Base):
 class Local(Base):
     __tablename__ = "lugares"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column("identificación", Integer, primary_key=True, index=True) # Mapeado a identificación
     empresa_id = Column(BigInteger, ForeignKey("empresas.id", ondelete="CASCADE"), nullable=True)
     propietario_id = Column(Integer, nullable=True)
     nombre = Column(String, nullable=False)
+    slug = Column("babosa", String, unique=True, index=True, nullable=True) # Mapeado a babosa
     tipo_establecimiento = Column(String, nullable=True)
+    correo_envio = Column(String, nullable=True)
     direccion = Column(String, nullable=True)
     ciudad = Column(String, nullable=True)
-    slug = Column(String, unique=True, index=True, nullable=True)
-    imagen = Column(String, nullable=True) # Columna real del logotipo almacenado en R2
-
-    likes = Column(Integer, default=0, nullable=True)
+    gustos = Column(String, nullable=True)
     aviso_reserva = Column(Text, nullable=True)
-
+    
     latitud = Column(Numeric(precision=10, scale=6), nullable=True)
     longitud = Column(Numeric(precision=10, scale=6), nullable=True)
-    pais = Column(String(100), default="Ecuador", nullable=True)
-
-    email_contacto = Column(String(150), nullable=True)
+    pais = Column("país", String(100), default="Ecuador", nullable=True)
+    
+    contacto_correo = Column("contacto por correo electrónico", String(150), nullable=True)
     telefono = Column(String(20), nullable=True)
     telefono_contacto = Column(String(50), nullable=True)
+    
+    imagen = Column(String, nullable=True) # Aquí guardará la URL de Cloudflare R2
     tipo_plan = Column(String(20), default="Normal")
     pagado = Column(Boolean, default=False)
     activo = Column(Boolean, default=True)
-
     creado_en = Column(DateTime, default=datetime.utcnow)
 
+    # Relaciones
     empresa = relationship("Empresa", back_populates="locales")
     zonas = relationship("Zona", back_populates="local", cascade="all, delete")
     eventos = relationship("Evento", back_populates="local", cascade="all, delete")
