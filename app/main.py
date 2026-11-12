@@ -63,16 +63,21 @@ def crear_propietario(
     correo: str = Form(...),
     db: Session = Depends(get_db)
 ):
-    nuevo_usuario = Usuario(
-        nombre=nombre, 
-        correo=correo,
-        contrasena="temporal_hash_admin",
-        rol="propietario"
-    )
-    db.add(nuevo_usuario)
-    db.commit()
-    db.refresh(nuevo_usuario)
-    return {"mensaje": "Propietario/Administrador registrado con éxito", "id": nuevo_usuario.propietario_id}
+    try:
+        nuevo_usuario = Usuario(
+            nombre=nombre, 
+            correo=correo,
+            contrasena="temporal_hash_admin",
+            rol="propietario"
+        )
+        db.add(nuevo_usuario)
+        db.commit()
+        db.refresh(nuevo_usuario)
+        return {"mensaje": "Propietario/Administrador registrado con éxito", "id": getattr(nuevo_usuario, 'propietario_id', nuevo_usuario.id)}
+    except Exception as e:
+        db.rollback()
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error al registrar propietario: {str(e)}")
 
 @app.get("/api/admin/propietarios/")
 def listar_propietarios(db: Session = Depends(get_db)):
@@ -101,13 +106,13 @@ async def actualizar_logo_local(
         R2_PUBLIC_URL = os.getenv("R2_PUBLIC_URL", "https://pub-3244093a45bd47d9a30548ef0924bb49.r2.dev").rstrip('/')
         logo_url = f"{R2_PUBLIC_URL}/{filename_guardado}"
 
-        # Buscamos directamente en la tabla 'lugares'
+        # Actualizamos directamente la columna 'imagen' en la tabla 'lugares'
         local = db.query(Local).filter(Local.id == local_id).first()
         if not local:
-            local = Local(id=local_id, nombre="Salsoteca Carlos Alberto", logo_url=logo_url)
+            local = Local(id=local_id, nombre="Salsoteca Carlos Alberto", imagen=logo_url)
             db.add(local)
         else:
-            local.logo_url = logo_url
+            local.imagen = logo_url
 
         db.commit()
         return {"mensaje": "¡Logotipo actualizado con éxito en la nube!", "logo_url": logo_url}
@@ -121,8 +126,9 @@ def obtener_info_local(local_id: int = 1, db: Session = Depends(get_db)):
     R2_PUBLIC_URL = os.getenv("R2_PUBLIC_URL", "https://pub-3244093a45bd47d9a30548ef0924bb49.r2.dev").rstrip('/')
     local = db.query(Local).filter(Local.id == local_id).first()
     logo_url = ""
-    if local and getattr(local, 'logo_url', None):
-        logo_url = local.logo_url
+    
+    if local and getattr(local, 'imagen', None):
+        logo_url = local.imagen
         if logo_url and not logo_url.startswith("http"):
             logo_url = f"{R2_PUBLIC_URL}/{logo_url}"
             
