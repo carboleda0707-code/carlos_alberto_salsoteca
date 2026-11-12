@@ -30,6 +30,40 @@ body {
     min-height: 100vh;
 }
 
+/* --- BARRA DE NAVEGACIÓN PRINCIPAL Y LOGOTIPO (LADO IZQUIERDO) --- */
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: rgba(15, 16, 26, 0.95);
+    backdrop-filter: blur(8px);
+    border-bottom: 2px solid #d4af37;
+    padding: 10px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.navbar-logo {
+    font-size: 18px;
+    font-weight: 900;
+    color: #d4af37;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.navbar-logo img {
+    height: 42px;
+    max-width: 160px;
+    object-fit: contain;
+    border-radius: 6px;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+}
+
 aside {
     width: 250px;
     background-color: var(--bg-card);
@@ -299,4 +333,22 @@ table img {
 
 .cart-sidebar.open {
     right: 0 !important; /* Se desliza hacia adentro con elegancia */
+}
+
+/* --- RESPONSIVO MÓVIL (LOGOTIPO ARRIBA Y MENÚ DEBAJO) --- */
+@media (max-width: 768px) {
+    .navbar {
+        flex-direction: column;
+        align-items: center;
+        padding: 12px 15px;
+        gap: 10px;
+    }
+    .navbar-logo {
+        font-size: 16px;
+        text-align: center;
+        justify-content: center;
+    }
+    .navbar-logo img {
+        height: 38px;
+    }
 }
