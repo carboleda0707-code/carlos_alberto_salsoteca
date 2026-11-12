@@ -146,7 +146,9 @@ async def actualizar_banner_slider(
         content_type=file.content_type
     )
 
-    imagen_url = filename_guardado
+    # Definir la URL pública absoluta de Cloudflare R2
+    R2_PUBLIC_URL = "https://pub-3244093a45bd47d9a30548ef0924bb49.r2.dev"
+    imagen_url = f"{R2_PUBLIC_URL}/{filename_guardado}"
 
     banner = db.query(BannerSlider).filter(BannerSlider.posicion == posicion).first()
     if banner:
