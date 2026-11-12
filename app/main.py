@@ -172,13 +172,22 @@ async def actualizar_banner_slider(
 
 @app.get("/api/slider/")
 def obtener_banners_slider(db: Session = Depends(get_db)):
+    R2_PUBLIC_URL = os.getenv("R2_PUBLIC_URL", "https://pub-3244093a45bd47d9a30548ef0924bb49.r2.dev").rstrip('/')
     banners = db.query(BannerSlider).order_by(BannerSlider.posicion.asc()).all()
-    return [{
-        "posicion": b.posicion, 
-        "imagen_url": b.imagen_url, 
-        "duracion_segundos": getattr(b, 'duracion_segundos', 5),
-        "caption": getattr(b, 'caption', '')
-    } for b in banners]
+    
+    resultado = []
+    for b in banners:
+        img_url = b.imagen_url or ""
+        if img_url and not img_url.startswith("http"):
+            img_url = f"{R2_PUBLIC_URL}/{img_url}"
+            
+        resultado.append({
+            "posicion": b.posicion, 
+            "imagen_url": img_url, 
+            "duracion_segundos": getattr(b, 'duracion_segundos', 5),
+            "caption": getattr(b, 'caption', '')
+        })
+    return resultado
 
 
 # ==========================================
