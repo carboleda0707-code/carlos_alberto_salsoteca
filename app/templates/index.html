@@ -9,31 +9,56 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background-color: #0b0c10; color: #ffffff; font-family: 'Segoe UI', Arial, sans-serif; }
 
-        /* 1. Header & Navbar Fija (2 Columnas: Izquierda Logo / Derecha 2 Filas) */
+        /* 1. Header & Navbar Fija con Fondo de Ladrillo y Efecto Neón */
         .navbar {
             position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
-            background: rgba(15, 16, 26, 0.95); backdrop-filter: blur(8px);
+            /* Fondo de pared de ladrillo con un overlay oscuro translúcido para legibilidad */
+            background: linear-gradient(rgba(15, 16, 26, 0.85), rgba(15, 16, 26, 0.92)), 
+                        url('https://images.unsplash.com/photo-1558445420-80a560dd4369?auto=format&fit=crop&w=1200&q=80');
+            background-size: cover; background-position: center;
+            backdrop-filter: blur(4px);
             border-bottom: 2px solid #d4af37; padding: 10px 20px;
             display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.7);
         }
         
         /* Columna Izquierda: Logotipo */
         .navbar-logo { display: flex; align-items: center; }
-        .navbar-logo img { height: 42px; max-width: 180px; object-fit: contain; border-radius: 4px; }
+        .navbar-logo img { height: 42px; max-width: 180px; object-fit: contain; border-radius: 4px; border: 1px solid rgba(212,175,55,0.4); }
         
-        /* Columna Derecha: 2 Filas (Arriba: Carrito | Abajo: Menú) */
+        /* Columna Derecha: 2 Filas (Arriba: Carrito | Abajo: Menú Neón) */
         .navbar-right-container { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; width: 100%; }
         .navbar-top-row { display: flex; justify-content: flex-end; width: 100%; }
         
-        .navbar-bottom-row { display: flex; gap: 20px; list-style: none; align-items: center; justify-content: flex-end; flex-wrap: wrap; }
-        .navbar-bottom-row a { color: #fff; text-decoration: none; font-weight: 600; font-size: 13.5px; transition: 0.3s; }
-        .navbar-bottom-row a:hover { color: #d4af37; }
+        .navbar-bottom-row { display: flex; gap: 25px; list-style: none; align-items: center; justify-content: flex-end; flex-wrap: wrap; }
+        
+        /* Efecto Neón Cálido (Naranja/Ámbar) para los enlaces del menú */
+        .navbar-bottom-row a {
+            color: #ffb347;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 0 5px rgba(255, 140, 0, 0.6), 
+                         0 0 10px rgba(255, 140, 0, 0.4), 
+                         0 0 20px rgba(255, 69, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+        .navbar-bottom-row a:hover {
+            color: #fff;
+            text-shadow: 0 0 8px #ff8c00, 
+                         0 0 20px #ff4500, 
+                         0 0 30px #ff4500, 
+                         0 0 40px #ff4500;
+        }
 
         /* Botón de Carrito Superior */
         .btn-carrito-top {
             background: #fbbf24; color: #121316; border: none; padding: 4px 12px;
             border-radius: 20px; font-size: 12px; font-weight: bold; cursor: pointer;
             display: flex; align-items: center; gap: 5px; text-decoration: none;
+            box-shadow: 0 0 10px rgba(251, 191, 36, 0.4);
         }
         .btn-carrito-top:hover { opacity: 0.9; }
         .cart-badge { background: #121316; color: #fbbf24; padding: 1px 6px; border-radius: 10px; font-weight: bold; margin-left: 3px; font-size: 11px; }
@@ -43,12 +68,12 @@
         .dropdown-menu {
             display: none; position: absolute; top: 100%; right: 0;
             background: #121420; border: 1px solid #d4af37; border-radius: 6px;
-            min-width: 220px; list-style: none; padding: 10px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            min-width: 220px; list-style: none; padding: 10px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.8);
             z-index: 1001;
         }
         .dropdown:hover .dropdown-menu { display: block; }
-        .dropdown-menu a { padding: 8px 15px; display: block; color: #ddd; }
-        .dropdown-menu a:hover { background: #d4af37; color: #000; }
+        .dropdown-menu a { padding: 8px 15px; display: block; color: #ffb347; text-shadow: none; font-size: 13px; text-transform: none; letter-spacing: normal; }
+        .dropdown-menu a:hover { background: #d4af37; color: #000; text-shadow: none; }
 
         /* Contenedor Principal */
         .container { max-width: 1200px; margin: 100px auto 40px auto; padding: 0 20px; }
@@ -84,19 +109,19 @@
             .grid-3 { grid-template-columns: 1fr; }
             .navbar { padding: 10px 12px; gap: 10px; }
             .navbar-logo img { height: 38px; }
-            .navbar-bottom-row { gap: 12px; font-size: 12px; justify-content: flex-end; }
+            .navbar-bottom-row { gap: 15px; font-size: 12px; justify-content: flex-end; }
             .container { margin-top: 120px; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Header / Navbar Fija (2 Columnas / 2 Filas a la derecha) -->
+    <!-- Header / Navbar Fija (Fondo Ladrillo + Neón) -->
     <nav class="navbar">
         <!-- Columna Izquierda: Logotipo -->
         <div class="navbar-logo" id="navbar-logo-container">🎷 SALSOTECA CARLOS ALBERTO</div>
         
-        <!-- Columna Derecha: Fila Superior (Carrito) y Fila Inferior (Menú) -->
+        <!-- Columna Derecha: Fila Superior (Carrito) y Fila Inferior (Menú Neón) -->
         <div class="navbar-right-container">
             <div class="navbar-top-row">
                 <button class="btn-carrito-top" onclick="abrirModalCarrito(); return false;">
