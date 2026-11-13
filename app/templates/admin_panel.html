@@ -155,8 +155,67 @@
             </div>
         </div>
 
-        <!-- CONTROL WEB (BANNERS) -->
+        <!-- CONTROL WEB (BANNERS Y TARJETA CREA MI RUMBA) -->
         <div id="vista-home-config" class="tab-content">
+            <!-- NUEVA SECCIÓN: CONFIGURACIÓN TARJETA CREA MI RUMBA Y PRECIOS -->
+            <div class="section-card">
+                <h2>🎉 Configuración de Tarjeta "Crea Mi Rumba" y Tarifas Base (Home)</h2>
+                <p class="section-description" style="margin-bottom: 15px;">Personaliza la tarjeta informativa de la página principal, su imagen de fondo, los textos del botón y las tarifas base que se aplicarán automáticamente cuando el comensal cree su evento.</p>
+                
+                <form id="form-plantilla-celebracion" onsubmit="guardarPlantillaCelebracion(event)">
+                    <div class="grid-forms">
+                        <div class="upload-box grid-span-2">
+                            <label>🖼️ Imagen de Fondo de la Tarjeta (Background - Cloudflare R2)</label>
+                            <input type="file" id="plantilla-fondo-file" accept="image/*">
+                            <small id="plantilla-fondo-actual" style="color: #9ca3af; display: block; margin-top: 4px;"></small>
+                        </div>
+
+                        <div class="upload-box">
+                            <label>Título Principal</label>
+                            <input type="text" id="plantilla-titulo-principal" placeholder="Ej: 🎷 Cartelera de la Semana" value="🎷 Cartelera de la Semana" required>
+                        </div>
+
+                        <div class="upload-box">
+                            <label>Descripción Principal</label>
+                            <input type="text" id="plantilla-descripcion-principal" placeholder="Ej: Reserva tus pases y mesas con anticipación..." value="Reserva tus pases y mesas con anticipación para asegurar tu ingreso directo con código QR verificado." required>
+                        </div>
+
+                        <div class="upload-box">
+                            <label>Subtítulo 1 (Encabezado del Botón)</label>
+                            <input type="text" id="plantilla-subtitulo-1" placeholder="Ej: 🎂 ¿Celebras tu Cumpleaños?" value="🎂 ¿Celebras tu Cumpleaños?" required>
+                        </div>
+
+                        <div class="upload-box">
+                            <label>Subtítulo 2 (Texto Secundario del Botón)</label>
+                            <input type="text" id="plantilla-subtitulo-2" placeholder="Ej: Configura tu festejo a medida." value="Configura tu festejo a medida." required>
+                        </div>
+
+                        <div class="upload-box">
+                            <label>Texto del Botón Disparador</label>
+                            <input type="text" id="plantilla-texto-boton" placeholder="Ej: 🎉 Crear Mi Rumba" value="🎉 Crear Mi Rumba" required>
+                        </div>
+
+                        <div class="upload-box">
+                            <label>🎟️ Precio Base Cover por Persona ($)</label>
+                            <input type="number" step="0.01" id="plantilla-precio-cover" placeholder="Ej: 10.00" value="10.00" required>
+                        </div>
+
+                        <div class="upload-box">
+                            <label>🍾 Precio Base por Mesa ($)</label>
+                            <input type="number" step="0.01" id="plantilla-precio-mesa" placeholder="Ej: 50.00" value="50.00" required>
+                        </div>
+
+                        <div class="upload-box">
+                            <label>🎁 Promoción / Beneficio Automático (Opcional)</label>
+                            <input type="text" id="plantilla-promocion-texto" placeholder="Ej: Botella de cortesía a partir de 10 invitados">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-success full-width">💾 Guardar Configuración de Tarjeta y Tarifas</button>
+                </form>
+            </div>
+
+            <!-- BANNERS DEL SLIDER AUTOMÁTICO -->
             <div class="section-card">
                 <h2>🖼️ Banners del Slider Automático (Home)</h2>
                 <div class="grid-forms">
@@ -383,7 +442,6 @@
         <div class="modal-card" style="background: #121316; border: 1px solid #d4af37; padding: 25px; border-radius: 10px; width: 90%; max-width: 500px; color: #fff;">
             <h3 style="color: #fbbf24; margin-top: 0; margin-bottom: 15px; border-bottom: 1px solid rgba(212,175,55,0.3); padding-bottom: 10px;">🎟️ Accesos QR de la Reserva</h3>
             <div id="modal-body-qrs" style="max-height: 350px; overflow-y: auto; margin-bottom: 20px;">
-                <!-- Aquí se inyectan los pases dinámicamente -->
             </div>
             <button class="btn btn-danger full-width" onclick="cerrarModalQrs()">Cerrar Ventana</button>
         </div>
@@ -474,6 +532,7 @@
             document.getElementById('vista-home-config').classList.add('active');
             document.getElementById('nav-home-config').classList.add('active');
             document.getElementById('titulo-panel').innerText = 'Gestión de Secciones del Home (Sitio Web)';
+            cargarPlantillaCelebracionAdmin();
         } else if(tab === 'eventos-config') {
             document.getElementById('vista-eventos-config').classList.add('active');
             document.getElementById('nav-eventos-config').classList.add('active');
@@ -491,6 +550,70 @@
         }
     }
 
+    // --- FUNCIONES DE CONFIGURACIÓN TARJETA CREA MI RUMBA ---
+    async function cargarPlantillaCelebracionAdmin() {
+        try {
+            let res = await fetch(`${API_URL}/api/admin/plantilla-celebracion/`);
+            if (res.ok) {
+                let data = await res.json();
+                if (data.titulo_principal) document.getElementById('plantilla-titulo-principal').value = data.titulo_principal;
+                if (data.descripcion_principal) document.getElementById('plantilla-descripcion-principal').value = data.descripcion_principal;
+                if (data.subtitulo_1) document.getElementById('plantilla-subtitulo-1').value = data.subtitulo_1;
+                if (data.subtitulo_2) document.getElementById('plantilla-subtitulo-2').value = data.subtitulo_2;
+                if (data.texto_boton) document.getElementById('plantilla-texto-boton').value = data.texto_boton;
+                if (data.precio_cover_defecto !== undefined) document.getElementById('plantilla-precio-cover').value = data.precio_cover_defecto;
+                if (data.precio_mesa_defecto !== undefined) document.getElementById('plantilla-precio-mesa').value = data.precio_mesa_defecto;
+                if (data.promocion_texto) document.getElementById('plantilla-promocion-texto').value = data.promocion_texto;
+
+                const fondoInfo = document.getElementById('plantilla-fondo-actual');
+                let bgUrl = data.imagen_fondo || data.fondo_url || '';
+                if (bgUrl && fondoInfo) {
+                    fondoInfo.innerText = `Imagen actual configurada: ${bgUrl}`;
+                }
+            }
+        } catch (err) {
+            console.error("Error al cargar configuración de plantilla celebración:", err);
+        }
+    }
+
+    async function guardarPlantillaCelebracion(e) {
+        e.preventDefault();
+        const formData = new FormData();
+        formData.append("titulo_principal", document.getElementById('plantilla-titulo-principal').value);
+        formData.append("descripcion_principal", document.getElementById('plantilla-descripcion-principal').value);
+        formData.append("subtitulo_1", document.getElementById('plantilla-subtitulo-1').value);
+        formData.append("subtitulo_2", document.getElementById('plantilla-subtitulo-2').value);
+        formData.append("texto_boton", document.getElementById('plantilla-texto-boton').value);
+        formData.append("precio_cover_defecto", document.getElementById('plantilla-precio-cover').value);
+        formData.append("precio_mesa_defecto", document.getElementById('plantilla-precio-mesa').value);
+        formData.append("promocion_texto", document.getElementById('plantilla-promocion-texto').value);
+
+        const fondoFile = document.getElementById('plantilla-fondo-file').files[0];
+        if (fondoFile) {
+            formData.append("file", fondoFile);
+        }
+
+        try {
+            let res = await fetch(`${API_URL}/api/admin/plantilla-celebracion/`, {
+                method: "POST",
+                body: formData
+            });
+
+            if (res.ok) {
+                alert("✅ ¡Configuración de la tarjeta 'Crea Mi Rumba' y tarifas actualizada con éxito!");
+                document.getElementById('plantilla-fondo-file').value = "";
+                cargarPlantillaCelebracionAdmin();
+            } else {
+                let errText = await res.text();
+                alert("Error al guardar la configuración: " + errText);
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Error de conexión con el servidor.");
+        }
+    }
+
+    // --- FUNCIONES DEL DASHBOARD Y RESERVAS ---
     async function cargarDashboardAdmin() {
         try {
             let res = await fetch(`${API_URL}/api/admin/reservas/`);
@@ -541,7 +664,6 @@
         }).join('');
     }
 
-    // Funcionalidad para abrir el modal de QRs individuales al hacer clic en el código de reserva
     async function verDetalleQrsReserva(reservaId) {
         try {
             let response = await fetch(`${API_URL}/api/reservas/${reservaId}/qrs`);
@@ -603,7 +725,6 @@
                 let data = await res.json();
                 alert(`✨ ¡Reserva #${id} aprobada y códigos QR individuales generados con éxito!`);
                 
-                // Abrir automáticamente el chat de WhatsApp con el mensaje preparado y los QR
                 if (data.whatsapp_url) {
                     window.open(data.whatsapp_url, '_blank');
                 }

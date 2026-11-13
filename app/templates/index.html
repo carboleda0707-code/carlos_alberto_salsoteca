@@ -50,7 +50,7 @@
                          0 0 10px #00cfff, 
                          0 0 20px #0077ff, 
                          0 0 35px #0055ff;
-            animation: deslizarMarquesina 45s linear infinite; /* Deslizamiento mucho más lento (45s) */
+            animation: deslizarMarquesina 45s linear infinite; /* Deslizamiento muy lento (45s) */
         }
 
         @keyframes deslizarMarquesina {
@@ -134,7 +134,7 @@
             .container { margin-top: 90px; }
             .navbar-logo img { height: 42px; }
             .navbar { grid-template-columns: auto 1fr; }
-            .navbar-marquee-container { display: none; } /* Ocultar marquesina en móviles estrechos si no cabe, o mantenerla si prefieres */
+            .navbar-marquee-container { display: none; }
         }
 
         /* Slider Hero Compacto */
@@ -260,17 +260,22 @@
                 </div>
             </section>
 
-            <div style="background: #121420; border: 1px solid rgba(212,175,55,0.3); border-radius: 10px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between;">
-                <div>
-                    <h3 style="color: #d4af37; font-size: 17px; margin-bottom: 8px;">🎷 Cartelera de la Semana</h3>
-                    <p style="color: #aaa; font-size: 12.5px; line-height: 1.5; margin-bottom: 12px;">
+            <!-- Columna Derecha: Tarjeta Automatizada y Dinámica desde Admin -->
+            <div id="dynamic-promo-card" style="position: relative; border-radius: 10px; overflow: hidden; border: 1px solid rgba(212,175,55,0.4); background: #121420; display: flex; flex-direction: column; justify-content: space-between; padding: 20px; background-size: cover; background-position: center;">
+                <!-- Capa semitransparente para legibilidad -->
+                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(18, 20, 32, 0.88); z-index: 1;"></div>
+
+                <div style="position: relative; z-index: 2;">
+                    <h3 id="promo-titulo-principal" style="color: #d4af37; font-size: 18px; margin-bottom: 8px;">🎷 Cartelera de la Semana</h3>
+                    <p id="promo-descripcion-principal" style="color: #ddd; font-size: 13px; line-height: 1.5; margin-bottom: 15px;">
                         Reserva tus pases y mesas con anticipación para asegurar tu ingreso directo con código QR verificado.
                     </p>
                 </div>
-                <div style="background: linear-gradient(135deg, rgba(212,175,55,0.15), rgba(121,40,202,0.2)); border: 1px solid #d4af37; border-radius: 8px; padding: 12px; text-align: center;">
-                    <h4 style="color: #d4af37; font-size: 14px; margin-bottom: 4px;">🎂 ¿Celebras tu Cumpleaños?</h4>
-                    <p style="color: #ccc; font-size: 11.5px; margin-bottom: 10px;">Configura tu festejo a medida.</p>
-                    <button class="btn-reservar" onclick="abrirModalCreaTuEvento()">🎉 Crear Mi Rumba</button>
+
+                <div style="position: relative; z-index: 2; background: linear-gradient(135deg, rgba(212,175,55,0.15), rgba(121,40,202,0.25)); border: 1px solid #d4af37; border-radius: 8px; padding: 15px; text-align: center;">
+                    <h4 id="promo-subtitulo-1" style="color: #d4af37; font-size: 14.5px; margin-bottom: 4px;">🎂 ¿Celebras tu Cumpleaños?</h4>
+                    <p id="promo-subtitulo-2" style="color: #ccc; font-size: 12px; margin-bottom: 12px;">Configura tu festejo a medida.</p>
+                    <button id="promo-btn-texto" class="btn-reservar" onclick="abrirModalCreaTuEvento()">🎉 Crear Mi Rumba</button>
                 </div>
             </div>
         </div>
@@ -392,16 +397,44 @@
             } catch (error) { console.error("Error banners:", error); }
         }
 
-        async function cargarPlantillaBaseConfig() {
+        async function cargarConfiguracionPromoCard() {
             try {
                 let res = await fetch('/api/admin/plantilla-celebracion/');
                 if (res.ok) {
                     let data = await res.json();
-                    PRECIO_COVER_PLANTILLA = Number(data.precio_cover_defecto) || 10.00;
-                    PRECIO_MESA_PLANTILLA = Number(data.precio_mesa_defecto) || 50.00;
+                    
+                    // Aplicar imagen de fondo (Background)
+                    const cardEl = document.getElementById('dynamic-promo-card');
+                    let bgUrl = data.imagen_fondo || data.fondo_url || '';
+                    if (bgUrl) {
+                        if (!bgUrl.startsWith('http')) {
+                            bgUrl = `https://pub-3244093a45bd47d9a30548ef0924bb49.r2.dev/${bgUrl}`;
+                        }
+                        cardEl.style.backgroundImage = `url('${bgUrl}')`;
+                    }
+
+                    // Títulos y descripciones
+                    if (data.titulo_principal) document.getElementById('promo-titulo-principal').innerText = data.titulo_principal;
+                    if (data.descripcion_principal) document.getElementById('promo-descripcion-principal').innerText = data.descripcion_principal;
+                    if (data.subtitulo_1) document.getElementById('promo-subtitulo-1').innerText = data.subtitulo_1;
+                    if (data.subtitulo_2) document.getElementById('promo-subtitulo-2').innerText = data.subtitulo_2;
+                    if (data.texto_boton) document.getElementById('promo-btn-texto').innerText = data.texto_boton;
+
+                    // Precios configurables para cuando el comensal crea el evento
+                    if (data.precio_cover_defecto) {
+                        PRECIO_COVER_PLANTILLA = Number(data.precio_cover_defecto) || 10.00;
+                        const lblCover = document.getElementById('label-cover-precio');
+                        if (lblCover) lblCover.innerText = `Covers ($${PRECIO_COVER_PLANTILLA.toFixed(2)} c/u):`;
+                    }
+                    if (data.precio_mesa_defecto) {
+                        PRECIO_MESA_PLANTILLA = Number(data.precio_mesa_defecto) || 50.00;
+                        const lblMesa = document.getElementById('label-mesa-precio');
+                        if (lblMesa) lblMesa.innerText = `Mesas ($${PRECIO_MESA_PLANTILLA.toFixed(2)} c/u):`;
+                    }
+
                     calcularTotalCustom();
                 }
-            } catch (err) { console.error("Error config:", err); }
+            } catch (err) { console.error("Error config promo card:", err); }
         }
 
         async function cargarLogotipoDinamico() {
@@ -448,7 +481,7 @@
 
         document.addEventListener("DOMContentLoaded", () => {
             cargarBannersDinamicos();
-            cargarPlantillaBaseConfig();
+            cargarConfiguracionPromoCard();
             cargarLogotipoDinamico();
         });
     </script>
