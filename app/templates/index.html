@@ -214,7 +214,7 @@
         }
 
         /* ==========================================================
-           PIE DE PÁGINA (FOOTER ESTILO Fajas Isabella adaptado)
+           PIE DE PÁGINA (FOOTER DE 4 COLUMNAS DESDE CONFIG.PY)
            ========================================================== */
         .site-footer {
             background-color: #0b0d14;
@@ -441,21 +441,21 @@
     </div>
 
     <!-- ==========================================================
-       PIE DE PÁGINA (FOOTER ESTILO Fajas Isabella adaptado)
+       PIE DE PÁGINA (FOOTER DE 4 COLUMNAS DESDE CONFIG.PY)
        ========================================================== -->
     <footer class="site-footer">
         <div class="footer-container">
-            <!-- Columna 1: Marca y Redes -->
+            <!-- Columna 1: Marca y Redes Sociales -->
             <div class="footer-col footer-brand-col">
                 <div class="footer-logo-box" id="footer-logo-container">
-                    <span style="color:#d4af37; font-weight:bold; font-size:15px;">Salsoteca Carlos Alberto</span>
+                    <span id="footer-nombre-marca" style="color:#d4af37; font-weight:bold; font-size:15px;">Salsoteca Carlos Alberto</span>
                 </div>
-                <p>El templo de la salsa en Guayaquil. Noches legendarias con orquestas en vivo, preventa digital y control de acceso verificado con códigos QR.</p>
-                <div class="footer-socials">
-                    <a href="#" target="_blank" title="Instagram"><i class="fab fa-instagram"></i></a>
-                    <a href="#" target="_blank" title="Facebook"><i class="fab fa-facebook-f"></i></a>
-                    <a href="#" target="_blank" title="TikTok"><i class="fab fa-tiktok"></i></a>
-                    <a href="#" target="_blank" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                <p id="footer-slogan">El templo de la salsa en Guayaquil. Noches legendarias con orquestas en vivo, preventa digital y control de acceso verificado con códigos QR.</p>
+                <div class="footer-socials" id="footer-socials-container">
+                    <a href="#" id="link-instagram" target="_blank" title="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="#" id="link-facebook" target="_blank" title="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" id="link-tiktok" target="_blank" title="TikTok"><i class="fab fa-tiktok"></i></a>
+                    <a href="#" id="link-whatsapp" target="_blank" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
                 </div>
             </div>
 
@@ -481,28 +481,28 @@
                 </ul>
             </div>
 
-            <!-- Columna 4: Contacto y Envíos -->
+            <!-- Columna 4: Contacto y Ubicación -->
             <div class="footer-col">
                 <h4>Contacto y Ubicación</h4>
                 <div class="footer-contact-info">
                     <div class="footer-contact-item">
                         <i class="fas fa-map-marker-alt"></i>
-                        <span>Guayaquil, Ecuador</span>
+                        <span id="footer-txt-ciudad">Guayaquil, Ecuador</span>
                     </div>
                     <div class="footer-contact-item">
                         <i class="fas fa-phone-alt"></i>
-                        <span>+593 99 999 9999</span>
+                        <span id="footer-txt-telefono">+593 99 999 9999</span>
                     </div>
                     <div class="footer-contact-item">
                         <i class="fas fa-envelope"></i>
-                        <span>reservas@salsotecacarlosalberto.com</span>
+                        <span id="footer-txt-correo">reservas@salsotecacarlosalberto.com</span>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="footer-bottom-bar">
-            <p>&copy; 2026 Salsoteca Carlos Alberto - Guayaquil, Ecuador. Todos los derechos reservados.</p>
+            <p id="footer-copyright">&copy; 2026 Salsoteca Carlos Alberto - Guayaquil, Ecuador. Todos los derechos reservados.</p>
         </div>
     </footer>
 
@@ -658,12 +658,51 @@
                         if (footerLogoContainer) {
                             footerLogoContainer.innerHTML = `
                                 <img src="${logoUrl}" alt="Logo Footer">
-                                <span>${data.nombre_local || 'Salsoteca Carlos Alberto'}</span>
+                                <span id="footer-nombre-marca">${data.nombre_local || data.nombre || 'Salsoteca Carlos Alberto'}</span>
                             `;
                         }
                     }
                 }
             } catch (error) { console.error("Error logo:", error); }
+        }
+
+        async function cargarFooterDinamico() {
+            try {
+                let res = await fetch('/api/config/footer');
+                if (res.ok) {
+                    let data = await res.json();
+                    if (data.nombre_local) {
+                        const marca = document.getElementById('footer-nombre-marca');
+                        if (marca) marca.innerText = data.nombre_local;
+                        const copyright = document.getElementById('footer-copyright');
+                        if (copyright) copyright.innerHTML = `&copy; 2026 ${data.nombre_local} - ${data.ciudad || 'Guayaquil, Ecuador'}. Todos los derechos reservados.`;
+                    }
+                    if (data.slogan) {
+                        const slogan = document.getElementById('footer-slogan');
+                        if (slogan) slogan.innerText = data.slogan;
+                    }
+                    if (data.ciudad) {
+                        const ciudad = document.getElementById('footer-txt-ciudad');
+                        if (ciudad) ciudad.innerText = data.direccion ? `${data.direccion} - ${data.ciudad}` : data.ciudad;
+                    }
+                    if (data.telefono) {
+                        const tel = document.getElementById('footer-txt-telefono');
+                        if (tel) tel.innerText = data.telefono;
+                    }
+                    if (data.correo) {
+                        const correo = document.getElementById('footer-txt-correo');
+                        if (correo) correo.innerText = data.correo;
+                    }
+                    if (data.redes) {
+                        if (data.redes.instagram) document.getElementById('link-instagram').href = data.redes.instagram;
+                        if (data.redes.facebook) document.getElementById('link-facebook').href = data.redes.facebook;
+                        if (data.redes.tiktok) document.getElementById('link-tiktok').href = data.redes.tiktok;
+                        if (data.redes.whatsapp) document.getElementById('link-whatsapp').href = data.redes.whatsapp;
+                    }
+                }
+            } catch (err) {
+                console.error("Error al cargar la configuración del footer:", err);
+            }
         }
 
         function mostrarBannerActual() {
@@ -698,6 +737,7 @@
             cargarBannersDinamicos();
             cargarConfiguracionPromoCard();
             cargarLogotipoDinamico();
+            cargarFooterDinamico();
         });
     </script>
     <script src="/static/tienda.js"></script>

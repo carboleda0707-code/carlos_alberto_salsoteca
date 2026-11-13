@@ -157,6 +157,15 @@ class PlantillaCelebracionBase(Base):
     precio_cover_defecto = Column(Numeric(10, 2), default=10.00)
     precio_mesa_defecto = Column(Numeric(10, 2), default=50.00)
     descripcion_base = Column(Text, nullable=True)
+    
+    # Nuevos campos dinámicos para automatización desde el Admin Panel
+    titulo_principal = Column(String(150), default="🎷 Cartelera de la Semana")
+    descripcion_principal = Column(Text, default="Reserva tus pases y mesas con anticipación para asegurar tu ingreso directo con código QR verificado.")
+    subtitulo_1 = Column(String(150), default="🎂 ¿Celebras tu Cumpleaños?")
+    subtitulo_2 = Column(String(150), default="Configura tu festejo a medida.")
+    texto_boton = Column(String(50), default="🎉 Crear Mi Rumba")
+    promocion_texto = Column(String(255), nullable=True)
+    imagen_fondo = Column(String(255), nullable=True)
 
 
 class PrecioEventoMesa(Base):
@@ -223,7 +232,7 @@ class ConfiguracionNotificaciones(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     correo_remitente = Column(String, nullable=True)
-    password_correo = Column(String, nullable=True)
+    password_correo = Column(String, nullable=True)  # Debe almacenarse cifrado o de forma segura
     celular_remitente = Column(String, nullable=True)
 
 
@@ -265,7 +274,7 @@ class Usuario(Base):
     )
     nombre = Column(String(100), nullable=False)
     correo = Column(String(150), unique=True, nullable=False, index=True)
-    contrasena = Column(String(255), nullable=False)
+    contrasena = Column(String(255), nullable=False)  # Almacena hash seguro con bcrypt
     reset_token = Column(String(10), nullable=True)
     reset_token_expires = Column(DateTime, nullable=True)
     rol = Column(String(30), default="propietario")
@@ -291,7 +300,7 @@ class UsuarioFinal(Base):
     cedula = Column(String(20), unique=True, index=True, nullable=True)
     nombre = Column(String(100), nullable=False)
     email = Column(String(150), unique=True, index=True, nullable=False)
-    password_hash = Column(String(255), nullable=False)
+    password_hash = Column(String(255), nullable=False)  # Hash seguro obligatorio
     telefono = Column(String(20), nullable=True)
     fecha_registro = Column(DateTime, default=datetime.utcnow)
     es_activo = Column(Boolean, default=True)

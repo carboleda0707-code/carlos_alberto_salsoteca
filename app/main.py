@@ -14,6 +14,7 @@ from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
+from app.config import obtener_configuracion_local
 
 from app.database import engine, Base, get_db
 from app.models import Local, Evento, UsuarioFinal, Reserva, BannerSlider, Usuario, IngresoPuerta, PlantillaCelebracionBase
@@ -251,7 +252,7 @@ def obtener_banners_slider(db: Session = Depends(get_db)):
 
 
 # ==========================================
-# ENDPOINTS: PLANTILLA BASE DE CELEBRACIÓN (Cloudflare R2)
+# ENDPOINTS: PLANTILLA BASE Y CONFIGURACIÓN TARJETA "CREA MI RUMBA" (Cloudflare R2)
 # ==========================================
 @app.get("/api/admin/plantilla-celebracion/")
 def obtener_plantilla_base(db: Session = Depends(get_db)):
@@ -263,57 +264,98 @@ def obtener_plantilla_base(db: Session = Depends(get_db)):
             imagen_base="evento_default.jpg",
             precio_cover_defecto=10.00,
             precio_mesa_defecto=50.00,
-            descripcion_base="Personaliza tu festejo con nosotros. Selecciona la fecha y el tipo de celebración."
+            descripcion_base="Personaliza tu festejo con nosotros. Selecciona la fecha y el tipo de celebración.",
+            titulo_principal="🎷 Cartelera de la Semana",
+            descripcion_principal="Reserva tus pases y mesas con anticipación para asegurar tu ingreso directo con código QR verificado.",
+            subtitulo_1="🎂 ¿Celebras tu Cumpleaños?",
+            subtitulo_2="Configura tu festejo a medida.",
+            texto_boton="🎉 Crear Mi Rumba"
         )
         db.add(plantilla)
         db.commit()
         db.refresh(plantilla)
-    return plantilla
+    
+    R2_PUBLIC_URL = os.getenv("R2_PUBLIC_URL", "https://pub-3244093a45bd47d9a30548ef0924bb49.r2.dev").rstrip('/')
+    fondo_url = getattr(plantilla, 'imagen_fondo', None) or ""
+    if fondo_url and not fondo_url.startswith("http"):
+        fondo_url = f"{R2_PUBLIC_URL}/{fondo_url}"
+
+    return {
+        "id": plantilla.id,
+        "local_id": plantilla.local_id,
+        "titulo_principal": getattr(plantilla, 'titulo_principal', "🎷 Cartelera de la Semana"),
+        "descripcion_principal": getattr(plantilla, 'descripcion_principal', "Reserva tus pases y mesas con anticipación para asegurar tu ingreso directo con código QR verificado."),
+        "subtitulo_1": getattr(plantilla, 'subtitulo_1', "🎂 ¿Celebras tu Cumpleaños?"),
+        "subtitulo_2": getattr(plantilla, 'subtitulo_2', "Configura tu festejo a medida."),
+        "texto_boton": getattr(plantilla, 'texto_boton', "🎉 Crear Mi Rumba"),
+        "precio_cover_defecto": float(plantilla.precio_cover_defecto or 10.00),
+        "precio_mesa_defecto": float(plantilla.precio_mesa_defecto or 50.00),
+        "promocion_texto": getattr(plantilla, 'promocion_texto', ""),
+        "imagen_fondo": fondo_url
+    }
 
 
 @app.post("/api/admin/plantilla-celebracion/")
 async def guardar_plantilla_base(
     local_id: int = Form(1),
-    titulo_base: str = Form(...),
+    titulo_principal: str = Form("🎷 Cartelera de la Semana"),
+    descripcion_principal: str = Form(...),
+    subtitulo_1: str = Form("🎂 ¿Celebras tu Cumpleaños?"),
+    subtitulo_2: str = Form("Configura tu festejo a medida."),
+    texto_boton: str = Form("🎉 Crear Mi Rumba"),
     precio_cover_defecto: float = Form(10.00),
     precio_mesa_defecto: float = Form(50.00),
-    descripcion_base: str = Form(None),
-    file_base: UploadFile = File(None),
+    promocion_texto: Optional[str] = Form(None),
+    file: UploadFile = File(None),
     db: Session = Depends(get_db)
 ):
-    plantilla = db.query(PlantillaCelebracionBase).filter(PlantillaCelebracionBase.local_id == local_id).first()
-    
-    imagen_nombre = plantilla.imagen_base if plantilla else "evento_default.jpg"
-    if file_base and file_base.filename:
-        file_extension = Path(file_base.filename).suffix
-        imagen_nombre = f"plantilla_base_{uuid.uuid4().hex[:6]}{file_extension}"
+    try:
+        plantilla = db.query(PlantillaCelebracionBase).filter(PlantillaCelebracionBase.local_id == local_id).first()
         
-        upload_file_to_r2(
-            file_obj=file_base.file,
-            filename=imagen_nombre,
-            content_type=file_base.content_type
-        )
+        imagen_fondo_nombre = plantilla.imagen_fondo if plantilla and hasattr(plantilla, 'imagen_fondo') else None
+        if file and file.filename:
+            file_extension = Path(file.filename).suffix
+            imagen_fondo_nombre = f"tarjeta_promo_{uuid.uuid4().hex[:6]}{file_extension}"
+            
+            upload_file_to_r2(
+                file_obj=file.file,
+                filename=imagen_fondo_nombre,
+                content_type=file.content_type
+            )
 
-    if not plantilla:
-        plantilla = PlantillaCelebracionBase(
-            local_id=local_id,
-            titulo_base=titulo_base,
-            imagen_base=imagen_nombre,
-            precio_cover_defecto=precio_cover_defecto,
-            precio_mesa_defecto=precio_mesa_defecto,
-            descripcion_base=descripcion_base
-        )
-        db.add(plantilla)
-    else:
-        plantilla.titulo_base = titulo_base
-        plantilla.imagen_base = imagen_nombre
-        plantilla.precio_cover_defecto = precio_cover_defecto
-        plantilla.precio_mesa_defecto = precio_mesa_defecto
-        plantilla.descripcion_base = descripcion_base
+        if not plantilla:
+            plantilla = PlantillaCelebracionBase(
+                local_id=local_id,
+                titulo_principal=titulo_principal,
+                descripcion_principal=descripcion_principal,
+                subtitulo_1=subtitulo_1,
+                subtitulo_2=subtitulo_2,
+                texto_boton=texto_boton,
+                precio_cover_defecto=precio_cover_defecto,
+                precio_mesa_defecto=precio_mesa_defecto,
+                promocion_texto=promocion_texto,
+                imagen_fondo=imagen_fondo_nombre
+            )
+            db.add(plantilla)
+        else:
+            plantilla.titulo_principal = titulo_principal
+            plantilla.descripcion_principal = descripcion_principal
+            plantilla.subtitulo_1 = subtitulo_1
+            plantilla.subtitulo_2 = subtitulo_2
+            plantilla.texto_boton = texto_boton
+            plantilla.precio_cover_defecto = precio_cover_defecto
+            plantilla.precio_mesa_defecto = precio_mesa_defecto
+            plantilla.promocion_texto = promocion_texto
+            if imagen_fondo_nombre:
+                plantilla.imagen_fondo = imagen_fondo_nombre
 
-    db.commit()
-    db.refresh(plantilla)
-    return {"mensaje": "Plantilla maestra de celebración actualizada con éxito en R2", "id": plantilla.id}
+        db.commit()
+        db.refresh(plantilla)
+        return {"mensaje": "Configuración de tarjeta y tarifas actualizada con éxito en R2", "id": plantilla.id}
+    except Exception as e:
+        db.rollback()
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error al guardar plantilla: {str(e)}")
 
 
 @app.get("/api/config/tarifas")
@@ -741,3 +783,8 @@ def eliminar_local(local_id: int, db: Session = Depends(get_db)):
     db.delete(local)
     db.commit()
     return {"mensaje": "Local eliminado correctamente"}
+
+@app.get("/api/config/footer")
+def obtener_config_footer():
+    """Retorna los datos institucionales y de contacto para el pie de página desde config.py"""
+    return obtener_configuracion_local()
