@@ -6,11 +6,13 @@
     <title>Salsoteca Carlos Alberto - Guayaquil</title>
     <!-- Importar fuente cursiva estilo script para el neón -->
     <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap" rel="stylesheet">
+    <!-- FontAwesome para iconos del Footer -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- CSS Estilo Tienda & Salsoteca Minimalista / Corregido -->
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background-color: #0b0c10; color: #ffffff; font-family: 'Segoe UI', Arial, sans-serif; }
+        body { background-color: #0b0c10; color: #ffffff; font-family: 'Segoe UI', Arial, sans-serif; display: flex; flex-direction: column; min-height: 100vh; }
 
         /* Navbar Fija Minimalista en 1 Sola Fila Compacta */
         .navbar {
@@ -21,7 +23,7 @@
             backdrop-filter: blur(4px);
             border-bottom: 2px solid #d4af37; padding: 8px 15px;
             display: grid; 
-            grid-template-columns: auto 1fr auto; /* Columna 1: Logo | Columna 2: Marquesina central | Columna 3: Carrito y menú */
+            grid-template-columns: auto 1fr auto;
             align-items: center; 
             gap: 15px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.7);
@@ -31,7 +33,7 @@
         .navbar-logo { display: flex; align-items: center; flex-shrink: 0; }
         .navbar-logo img { height: 55px; max-width: 180px; object-fit: contain; border-radius: 6px; border: 1px solid rgba(212,175,55,0.4); }
         
-        /* Marquesina Central (Entre el logotipo y el carrito) */
+        /* Marquesina Central */
         .navbar-marquee-container {
             width: 100%;
             overflow: hidden;
@@ -45,12 +47,11 @@
             font-size: 21px;
             color: #ffffff;
             letter-spacing: 1.5px;
-            /* Efecto de Luz Neón Blanca Brillante con destello azul */
             text-shadow: 0 0 4px #ffffff, 
                          0 0 10px #00cfff, 
                          0 0 20px #0077ff, 
                          0 0 35px #0055ff;
-            animation: deslizarMarquesina 45s linear infinite; /* Deslizamiento muy lento (45s) */
+            animation: deslizarMarquesina 45s linear infinite;
         }
 
         @keyframes deslizarMarquesina {
@@ -61,7 +62,7 @@
         /* Contenedor derecho (Carrito + Menú de 3 Puntos) */
         .navbar-right-container { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
 
-        /* Menú Desplegable de 3 Puntos con Puente Anti-desaparición */
+        /* Menú Desplegable de 3 Puntos */
         .menu-dropdown-container { position: relative; display: inline-block; padding-bottom: 12px; margin-bottom: -12px; }
         
         .btn-menu-tres-puntos {
@@ -119,7 +120,7 @@
         .cart-badge { background: #121316; color: #fbbf24; padding: 1px 6px; border-radius: 10px; font-size: 11px; }
 
         /* Contenedor Principal */
-        .container { max-width: 1200px; margin: 95px auto 40px auto; padding: 0 15px; }
+        .container { max-width: 1200px; margin: 95px auto 40px auto; padding: 0 15px; flex: 1; width: 100%; }
 
         /* SECCIÓN SUPERIOR: 2 Columnas */
         .top-dual-grid {
@@ -145,9 +146,6 @@
         /* Tarjetas de Eventos / Cartelera */
         .section-title { font-size: 18px; color: #d4af37; border-bottom: 2px solid rgba(212,175,55,0.3); padding-bottom: 6px; margin-bottom: 15px; }
 
-        /* ==========================================================
-           CORRECCIÓN ESTRICTA DE LA CARTELERA AUTOMÁTICA
-           ========================================================== */
         .grid-compact { 
             display: grid; 
             grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); 
@@ -214,6 +212,155 @@
         @media (max-width: 768px) {
             .grid-compact { grid-template-columns: 1fr; gap: 15px; }
         }
+
+        /* ==========================================================
+           PIE DE PÁGINA (FOOTER ESTILO Fajas Isabella adaptado)
+           ========================================================== */
+        .site-footer {
+            background-color: #0b0d14;
+            color: #b3b3b3;
+            padding: 50px 20px 20px 20px;
+            border-top: 1px solid rgba(212, 175, 55, 0.2);
+            margin-top: 50px;
+        }
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1.5fr 1fr 1fr 1.2fr;
+            gap: 30px;
+        }
+        @media (max-width: 900px) {
+            .footer-container { grid-template-columns: 1fr 1fr; gap: 25px; }
+        }
+        @media (max-width: 550px) {
+            .footer-container { grid-template-columns: 1fr; text-align: center; }
+            .footer-brand-col { align-items: center; }
+            .footer-socials { justify-content: center; }
+        }
+        .footer-col h4 {
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 18px;
+            position: relative;
+            display: inline-block;
+        }
+        .footer-col h4::before {
+            content: '';
+            position: absolute;
+            left: -12px;
+            top: 2px;
+            bottom: 2px;
+            width: 3px;
+            background: #d4af37;
+        }
+        @media (max-width: 550px) {
+            .footer-col h4::before { left: -15px; }
+        }
+        .footer-brand-col {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .footer-logo-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .footer-logo-box img {
+            height: 45px;
+            max-width: 150px;
+            object-fit: contain;
+            border-radius: 4px;
+            border: 1px solid rgba(212,175,55,0.3);
+            background: #121420;
+            padding: 2px;
+        }
+        .footer-logo-box span {
+            font-weight: bold;
+            color: #d4af37;
+            font-size: 16px;
+            letter-spacing: 0.5px;
+        }
+        .footer-brand-col p {
+            font-size: 12.5px;
+            line-height: 1.6;
+            color: #aaa;
+        }
+        .footer-socials {
+            display: flex;
+            gap: 12px;
+            margin-top: 5px;
+        }
+        .footer-socials a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(212, 175, 55, 0.25);
+            color: #d4af37;
+            border-radius: 50%;
+            text-decoration: none;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+        .footer-socials a:hover {
+            background: #d4af37;
+            color: #0b0c10;
+            border-color: #d4af37;
+        }
+        .footer-col ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .footer-col ul li a {
+            color: #b3b3b3;
+            text-decoration: none;
+            font-size: 13px;
+            transition: 0.2s;
+        }
+        .footer-col ul li a:hover {
+            color: #d4af37;
+            padding-left: 4px;
+        }
+        .footer-contact-info {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .footer-contact-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 13px;
+            color: #b3b3b3;
+        }
+        @media (max-width: 550px) {
+            .footer-contact-item { justify-content: center; }
+        }
+        .footer-contact-item i {
+            color: #d4af37;
+            margin-top: 3px;
+            font-size: 14px;
+        }
+        .footer-bottom-bar {
+            max-width: 1200px;
+            margin: 35px auto 0 auto;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            text-align: center;
+            font-size: 12px;
+            color: #777;
+        }
     </style>
 </head>
 <body>
@@ -243,7 +390,7 @@
                 <ul class="dropdown-menu-content">
                     <li><a href="#inicio">🏠 Inicio</a></li>
                     <li><a href="#eventos-activos">📅 Reservaciones</a></li>
-                    <li><a href="#" onclick="abrirModalCreaTuEvento(); return false;">🎉 Crear Mi Rumba</a></li>
+                    <li><a href="#" onclick="abrirModalCreaTuEvento(); return false;">🎉 Crear Tu Mi Rumba</a></li>
                     <li><a href="#historia">📜 Historia</a></li>
                 </ul>
             </div>
@@ -293,10 +440,70 @@
         </section>
     </div>
 
-    <!-- Pie de Página -->
-    <footer style="background: #090a10; text-align: center; padding: 20px; border-top: 1px solid rgba(212,175,55,0.2); color: #888; font-size: 12px;">
-        <p style="color: #d4af37; font-weight: bold;">SALSOTECA CARLOS ALBERTO - GUAYAQUIL</p>
-        <p>📍 Guayaquil, Ecuador | WhatsApp Reservas</p>
+    <!-- ==========================================================
+       PIE DE PÁGINA (FOOTER ESTILO Fajas Isabella adaptado)
+       ========================================================== -->
+    <footer class="site-footer">
+        <div class="footer-container">
+            <!-- Columna 1: Marca y Redes -->
+            <div class="footer-col footer-brand-col">
+                <div class="footer-logo-box" id="footer-logo-container">
+                    <span style="color:#d4af37; font-weight:bold; font-size:15px;">Salsoteca Carlos Alberto</span>
+                </div>
+                <p>El templo de la salsa en Guayaquil. Noches legendarias con orquestas en vivo, preventa digital y control de acceso verificado con códigos QR.</p>
+                <div class="footer-socials">
+                    <a href="#" target="_blank" title="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="#" target="_blank" title="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" target="_blank" title="TikTok"><i class="fab fa-tiktok"></i></a>
+                    <a href="#" target="_blank" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                </div>
+            </div>
+
+            <!-- Columna 2: Secciones Destacadas -->
+            <div class="footer-col">
+                <h4>Secciones Destacadas</h4>
+                <ul>
+                    <li><a href="#inicio">🏠 Inicio & Banners</a></li>
+                    <li><a href="#eventos-activos">📅 Cartelera de Eventos</a></li>
+                    <li><a href="#" onclick="abrirModalCreaTuEvento(); return false;">🎉 Crea Tu Mi Rumba</a></li>
+                    <li><a href="#historia">📜 Historia y Pasados</a></li>
+                </ul>
+            </div>
+
+            <!-- Columna 3: Información Legal -->
+            <div class="footer-col">
+                <h4>Información Legal</h4>
+                <ul>
+                    <li><a href="#">Términos y Condiciones</a></li>
+                    <li><a href="#">Políticas de Privacidad y LOPDP</a></li>
+                    <li><a href="#">Políticas de Cancelación</a></li>
+                    <li><a href="#">Preguntas Frecuentes (FAQ)</a></li>
+                </ul>
+            </div>
+
+            <!-- Columna 4: Contacto y Envíos -->
+            <div class="footer-col">
+                <h4>Contacto y Ubicación</h4>
+                <div class="footer-contact-info">
+                    <div class="footer-contact-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>Guayaquil, Ecuador</span>
+                    </div>
+                    <div class="footer-contact-item">
+                        <i class="fas fa-phone-alt"></i>
+                        <span>+593 99 999 9999</span>
+                    </div>
+                    <div class="footer-contact-item">
+                        <i class="fas fa-envelope"></i>
+                        <span>reservas@salsotecacarlosalberto.com</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom-bar">
+            <p>&copy; 2026 Salsoteca Carlos Alberto - Guayaquil, Ecuador. Todos los derechos reservados.</p>
+        </div>
     </footer>
 
     <!-- Modales -->
@@ -331,7 +538,7 @@
     <div id="modal-crea-tu-evento" class="modal">
         <div class="modal-content" style="max-width: 520px;">
             <span class="close-modal" onclick="cerrarModalCreaTuEvento()">&times;</span>
-            <h3 style="color: #d4af37; margin-bottom: 4px; font-size: 16px;">🎉 Crea Mi Rumba Personalizada</h3>
+            <h3 style="color: #d4af37; margin-bottom: 4px; font-size: 16px;">🎉 Crea tu Mi Rumba Personalizada</h3>
             <p style="color: #aaa; font-size: 11.5px; margin-bottom: 14px;">Configura tus pases y mesas para tu festejo.</p>
             <form id="form-crea-tu-evento" onsubmit="agregarEventoPersonalizadoAlCarrito(event)">
                 <div class="form-group">
@@ -443,9 +650,17 @@
                 if (response.ok) {
                     let data = await response.json();
                     const logoContainer = document.getElementById("navbar-logo-container");
-                    if (logoContainer && data && data.logo_url) {
+                    const footerLogoContainer = document.getElementById("footer-logo-container");
+
+                    if (data && data.logo_url) {
                         let logoUrl = data.logo_url.startsWith('http') ? data.logo_url : `https://pub-3244093a45bd47d9a30548ef0924bb49.r2.dev/${data.logo_url}`;
-                        logoContainer.innerHTML = `<img src="${logoUrl}" alt="Logo">`;
+                        if (logoContainer) logoContainer.innerHTML = `<img src="${logoUrl}" alt="Logo">`;
+                        if (footerLogoContainer) {
+                            footerLogoContainer.innerHTML = `
+                                <img src="${logoUrl}" alt="Logo Footer">
+                                <span>${data.nombre_local || 'Salsoteca Carlos Alberto'}</span>
+                            `;
+                        }
                     }
                 }
             } catch (error) { console.error("Error logo:", error); }
