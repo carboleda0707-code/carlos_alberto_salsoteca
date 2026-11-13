@@ -47,9 +47,44 @@ def obtener_tarifas_sistema():
     Retorna un diccionario con las tarifas vigentes de covers y mesas
     leídas directamente desde el archivo de configuración config.ini.
     """
+    try:
+        cover = config.getfloat("defaults", "precio_cover", fallback=10.00)
+    except Exception:
+        cover = 10.00
+
+    try:
+        mesa = config.getfloat("defaults", "precio_mesa", fallback=50.00)
+    except Exception:
+        mesa = 50.00
+
     return {
-        "precio_cover": PRECIO_COVER,
-        "precio_mesa": PRECIO_MESA
+        "precio_cover_default": cover,
+        "precio_mesa_default": mesa,
+        "precio_cover": cover,
+        "precio_mesa": mesa
+    }
+
+# ==========================================
+# CONFIGURACIÓN INSTITUCIONAL Y FOOTER
+# ==========================================
+def obtener_configuracion_local():
+    """
+    Retorna la información institucional, redes sociales y datos de contacto
+    leídos desde la sección [salsoteca] del archivo config.ini.
+    """
+    return {
+        "nombre_local": config.get("salsoteca", "nombre_local", fallback="Salsoteca Carlos Alberto"),
+        "slogan": config.get("salsoteca", "slogan", fallback="El templo de la salsa en Guayaquil."),
+        "ciudad": config.get("salsoteca", "ciudad", fallback="Guayaquil, Ecuador"),
+        "direccion": config.get("salsoteca", "direccion", fallback="Av. Principal y Calle E"),
+        "telefono": config.get("salsoteca", "telefono", fallback="+593 99 999 9999"),
+        "correo": config.get("salsoteca", "correo", fallback="reservas@salsotecacarlosalberto.com"),
+        "redes": {
+            "instagram": config.get("salsoteca", "instagram", fallback=""),
+            "facebook": config.get("salsoteca", "facebook", fallback=""),
+            "tiktok": config.get("salsoteca", "tiktok", fallback=""),
+            "whatsapp": config.get("salsoteca", "whatsapp", fallback="")
+        }
     }
 
 # ==========================================
