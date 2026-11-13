@@ -29,7 +29,8 @@
             box-shadow: 0 4px 20px rgba(0,0,0,0.7);
         }
         
-        /* Logotipo Más Grande y Destacado */
+        /* Grupo Izquierdo: Logotipo alineado a la izquierda */
+        .navbar-left-group { display: flex; align-items: center; gap: 10px; flex-shrink: 0; justify-content: flex-start; }
         .navbar-logo { display: flex; align-items: center; flex-shrink: 0; }
         .navbar-logo img { height: 55px; max-width: 180px; object-fit: contain; border-radius: 6px; border: 1px solid rgba(212,175,55,0.4); }
         
@@ -59,8 +60,8 @@
             100% { transform: translateX(-100%); }
         }
 
-        /* Contenedor derecho (Carrito + Menú de 3 Puntos) */
-        .navbar-right-container { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+        /* Contenedor derecho (Carrito + Menú de 3 Puntos alineados a la izquierda en su contenedor) */
+        .navbar-right-container { display: flex; align-items: center; gap: 10px; flex-shrink: 0; justify-content: flex-start; }
 
         /* Menú Desplegable de 3 Puntos */
         .menu-dropdown-container { position: relative; display: inline-block; padding-bottom: 12px; margin-bottom: -12px; }
@@ -367,17 +368,19 @@
 
     <!-- Header / Navbar Fija en una Sola Fila -->
     <nav class="navbar">
-        <!-- Columna 1: Logotipo -->
-        <div class="navbar-logo" id="navbar-logo-container">🎷 SALSOTECA CARLOS ALBERTO</div>
+        <!-- Columna Izquierda: Logotipo alineado a la izquierda -->
+        <div class="navbar-left-group">
+            <div class="navbar-logo" id="navbar-logo-container">🎷 SALSOTECA CARLOS ALBERTO</div>
+        </div>
         
-        <!-- Columna 2: Frase Neón Deslizante Lenta en el centro -->
+        <!-- Columna Central: Frase Neón Deslizante Lenta -->
         <div class="navbar-marquee-container">
             <span class="marquee-text">
                 La salsa es mi vida &nbsp;&bull;&nbsp; Reservaciones instantáneas &nbsp;&bull;&nbsp; Crea tu evento para que compartas a tus invitados &nbsp;&bull;&nbsp; Aceptamos Transferencias, Depósitos y Pagos con Tarjetas
             </span>
         </div>
 
-        <!-- Columna 3: Carrito + Menú de 3 Puntos -->
+        <!-- Columna Derecha: Carrito + Menú de 3 Puntos alineados a la izquierda en su bloque -->
         <div class="navbar-right-container">
             <!-- Botón de Carrito -->
             <button class="btn-carrito-top" onclick="abrirModalCarrito(); return false;">
@@ -582,6 +585,45 @@
         </div>
     </div>
 
+    <!-- Modal Central de Checkout / Finalizar Compra -->
+    <div id="modal-checkout-centro" class="modal" style="display: none; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 20000;">
+        <div class="modal-content" style="max-width: 500px; background: #121420; border: 1px solid #d4af37; border-radius: 12px; padding: 25px; position: relative;">
+            <span class="close-modal" onclick="cerrarModalCheckoutCentro()" style="position: absolute; top: 12px; right: 15px; font-size: 20px; color: #fff; cursor: pointer;">&times;</span>
+            <h3 style="color: #d4af37; margin-bottom: 6px; font-size: 18px;">💳 Finalizar Compra y Reservas</h3>
+            <p style="color: #aaa; font-size: 12px; margin-bottom: 15px;">Ingresa tus datos para registrar tus pases y mesas. Adjunta el comprobante de pago.</p>
+            
+            <form id="form-checkout-carrito" onsubmit="enviarCheckoutCarrito(event)">
+                <div class="form-group">
+                    <label>Cédula o RUC *</label>
+                    <input type="text" id="checkout-cedula" placeholder="Ej: 0912345678" required>
+                </div>
+                <div class="form-group">
+                    <label>Nombre Completo *</label>
+                    <input type="text" id="checkout-nombre" placeholder="Ej: Carlos Alberto Arboleda" required>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="form-group">
+                        <label>Teléfono / WhatsApp *</label>
+                        <input type="text" id="checkout-telefono" placeholder="Ej: 0999999999" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Correo Electrónico</label>
+                        <input type="email" id="checkout-email" placeholder="correo@ejemplo.com">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Comprobante de Transferencia / Depósito *</label>
+                    <input type="file" id="checkout-comprobante" accept="image/*,application/pdf" required style="padding: 6px; background: #0b0c10; border: 1px solid #444; color: #fff; border-radius: 4px; width: 100%;">
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button type="button" class="btn" style="flex: 1; background: #333; color: #fff; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold;" onclick="volverAlPanelCarrito()">⬅️ Volver</button>
+                    <button type="submit" class="btn-reservar" style="flex: 1; margin-top: 0;">🚀 Enviar Solicitud</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script>
         let listaBanners = [];
@@ -731,6 +773,35 @@
             const pers = parseInt(document.getElementById('custom-cant-personas').value) || 0;
             const mes = parseInt(document.getElementById('custom-cant-mesas').value) || 0;
             document.getElementById('display-custom-total').innerText = `$${((pers * PRECIO_COVER_PLANTILLA) + (mes * PRECIO_MESA_PLANTILLA)).toFixed(2)}`;
+        }
+
+        // Funciones de control del modal de checkout y carrito
+        function abrirModalCheckoutDesdePanel() {
+            try {
+                window.carrito = JSON.parse(localStorage.getItem('salsoteca_carrito')) || [];
+            } catch(e) { window.carrito = []; }
+            
+            if (!window.carrito || window.carrito.length === 0) {
+                alert("Tu carrito está vacío.");
+                return;
+            }
+            cerrarPanelCarrito();
+            const modalCentro = document.getElementById('modal-checkout-centro');
+            if (modalCentro) {
+                modalCentro.style.display = 'flex';
+            }
+        }
+
+        function cerrarModalCheckoutCentro() {
+            const modalCentro = document.getElementById('modal-checkout-centro');
+            if (modalCentro) {
+                modalCentro.style.display = 'none';
+            }
+        }
+
+        function volverAlPanelCarrito() {
+            cerrarModalCheckoutCentro();
+            abrirModalCarrito();
         }
 
         document.addEventListener("DOMContentLoaded", () => {
