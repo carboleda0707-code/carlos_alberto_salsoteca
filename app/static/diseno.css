@@ -14,6 +14,11 @@
     --text-main: #ffffff;
     --text-muted: #d6d5df;
     --border-color: rgba(150, 55, 255, 0.25);
+    
+    /* Variables de Control para Sidebar Colapsable */
+    --sidebar-width: 250px;
+    --sidebar-collapsed-width: 75px;
+    --transition-speed: 0.3s ease;
 }
 
 * { 
@@ -28,6 +33,7 @@ body {
     color: var(--text-main);
     display: flex;
     min-height: 100vh;
+    overflow-x: hidden;
 }
 
 /* --- BARRA DE NAVEGACIÓN PRINCIPAL (Logo Grande + 3 Puntitos) --- */
@@ -129,13 +135,25 @@ body {
     color: #000;
 }
 
+/* --- MENÚ LATERAL (ASIDE) COLAPSIBLE --- */
 aside {
-    width: 250px;
+    width: var(--sidebar-width);
     background-color: var(--bg-card);
     border-right: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
     padding: 24px 16px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 100;
+    transition: width var(--transition-speed);
+    overflow: hidden;
+}
+
+aside.collapsed {
+    width: var(--sidebar-collapsed-width);
 }
 
 aside h2 {
@@ -144,6 +162,14 @@ aside h2 {
     color: var(--accent-blue);
     margin-bottom: 30px;
     text-align: center;
+    white-space: nowrap;
+    transition: opacity var(--transition-speed);
+}
+
+aside.collapsed h2 {
+    opacity: 0;
+    width: 0;
+    display: none;
 }
 
 aside nav a {
@@ -160,6 +186,18 @@ aside nav a {
     white-space: nowrap;
     transition: all 0.2s ease;
     cursor: pointer;
+    overflow: hidden;
+}
+
+aside.collapsed nav a {
+    justify-content: center;
+    padding: 10px 0;
+}
+
+aside.collapsed nav a span.nav-text {
+    opacity: 0;
+    width: 0;
+    display: none;
 }
 
 aside nav a:hover, aside nav a.active {
@@ -168,10 +206,20 @@ aside nav a:hover, aside nav a.active {
     border: 1px solid var(--border-color);
 }
 
+/* --- CONTENIDO PRINCIPAL (MAIN) --- */
 main {
+    margin-left: var(--sidebar-width);
     flex: 1;
     padding: 30px;
     overflow-y: auto;
+    transition: margin-left var(--transition-speed), width var(--transition-speed);
+    width: calc(100% - var(--sidebar-width));
+    box-sizing: border-box;
+}
+
+main.expanded {
+    margin-left: var(--sidebar-collapsed-width);
+    width: calc(100% - var(--sidebar-collapsed-width));
 }
 
 header {
@@ -458,7 +506,7 @@ table img {
         padding: 8px 12px;
     }
     .navbar-logo img {
-        height: 45px; /* Logotipo visible y proporcionado en móvil */
+        height: 45px;
     }
     .grid-compact {
         grid-template-columns: 1fr;
