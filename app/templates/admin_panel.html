@@ -6,23 +6,129 @@
     <title>Panel de Administración - Salsoteca Carlos Alberto</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/diseno.css">
+    <style>
+        /* Estilos optimizados para menú lateral colapsable / minimalista */
+        :root {
+            --sidebar-width: 260px;
+            --sidebar-collapsed-width: 75px;
+            --bg-sidebar: #121420;
+            --accent-gold: #d4af37;
+            --transition-speed: 0.3s ease;
+        }
+
+        aside {
+            width: var(--sidebar-width);
+            transition: width var(--transition-speed);
+            overflow: hidden;
+        }
+
+        aside.collapsed {
+            width: var(--sidebar-collapsed-width);
+        }
+
+        aside .sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        aside h2 {
+            font-size: 15px;
+            color: var(--accent-gold);
+            margin: 0;
+            white-space: nowrap;
+            transition: opacity var(--transition-speed);
+        }
+
+        aside.collapsed h2 {
+            opacity: 0;
+            width: 0;
+            display: none;
+        }
+
+        .btn-toggle-sidebar {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            color: var(--accent-gold);
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: 0.2s;
+            flex-shrink: 0;
+        }
+        .btn-toggle-sidebar:hover { background: rgba(212, 175, 55, 0.2); }
+
+        aside nav a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            transition: 0.2s;
+        }
+
+        aside.collapsed nav a {
+            justify-content: center;
+            padding: 12px 0;
+        }
+
+        aside.collapsed nav a span.nav-text {
+            opacity: 0;
+            width: 0;
+            display: none;
+        }
+
+        main {
+            margin-left: var(--sidebar-width);
+            transition: margin-left var(--transition-speed);
+            min-width: 0;
+        }
+
+        main.expanded {
+            margin-left: var(--sidebar-collapsed-width);
+        }
+    </style>
 </head>
 <body onload="cargarDashboardAdmin()">
 
-    <aside>
-        <h2>Salsoteca C.A.</h2>
+    <aside id="app-sidebar">
+        <div class="sidebar-header">
+            <h2>Salsoteca C.A.</h2>
+            <button class="btn-toggle-sidebar" onclick="toggleSidebar()" title="Contraer / Expandir Menú">☰</button>
+        </div>
         <nav>
-            <a onclick="verPestana('dashboard')" id="nav-dashboard" class="active">📊 Resumen y Dashboard</a>
-            <a onclick="verPestana('locales-config')" id="nav-locales-config">🏢 Sucursales y Negocio</a>
-            <a onclick="verPestana('home-config')" id="nav-home-config">🌐 Control del Sitio Web</a>
-            <a onclick="verPestana('eventos-config')" id="nav-eventos-config">📅 Cartelera de Eventos</a>
-            <a onclick="verPestana('dashboard')" id="nav-reservas">📋 Gestión de Reservas</a>
-            <a onclick="verPestana('checkin-config')" id="nav-checkin">🎟️ Control de Acceso QR</a>
-            <a onclick="verPestana('zonas-config')" id="nav-zonas">🛠️ Distribución de Mesas</a>
+            <a onclick="verPestana('dashboard')" id="nav-dashboard" class="active">
+                <span>📊</span> <span class="nav-text">Resumen y Dashboard</span>
+            </a>
+            <a onclick="verPestana('locales-config')" id="nav-locales-config">
+                <span>🏢</span> <span class="nav-text">Sucursales y Negocio</span>
+            </a>
+            <a onclick="verPestana('home-config')" id="nav-home-config">
+                <span>🌐</span> <span class="nav-text">Control del Sitio Web</span>
+            </a>
+            <a onclick="verPestana('eventos-config')" id="nav-eventos-config">
+                <span>📅</span> <span class="nav-text">Cartelera de Eventos</span>
+            </a>
+            <a onclick="verPestana('dashboard')" id="nav-reservas">
+                <span>📋</span> <span class="nav-text">Gestión de Reservas</span>
+            </a>
+            <a onclick="verPestana('checkin-config')" id="nav-checkin">
+                <span>🎟️</span> <span class="nav-text">Control de Acceso QR</span>
+            </a>
+            <a onclick="verPestana('zonas-config')" id="nav-zonas">
+                <span>🛠️</span> <span class="nav-text">Distribución de Mesas</span>
+            </a>
         </nav>
     </aside>
 
-    <main>
+    <main id="app-main">
         <header>
             <h1 id="titulo-panel">Panel General de Administración</h1>
             <div class="header-actions">
@@ -507,6 +613,14 @@
     </div>
 
     <script>
+    // Función para contraer y expandir el menú lateral
+    function toggleSidebar() {
+        const sidebar = document.getElementById('app-sidebar');
+        const main = document.getElementById('app-main');
+        sidebar.classList.toggle('collapsed');
+        main.classList.toggle('expanded');
+    }
+
     const API_URL = window.location.origin;
     let cacheEventos = [];
     let cacheReservas = [];
