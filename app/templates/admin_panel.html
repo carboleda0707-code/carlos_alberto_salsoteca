@@ -6,8 +6,6 @@
     <title>Panel de Administración - Salsoteca Carlos Alberto</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/diseno.css">
-    <!-- Librería para el escáner de QR con la cámara del celular -->
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
         :root {
             --sidebar-width: 260px;
@@ -463,40 +461,18 @@
             </div>
         </div>
 
-        <!-- MÓDULO CHECKIN-QR (ACTUALIZADO CON FILTRO POR FECHA/EVENTO, CÁMARA Y LISTADO POR CÉDULA) -->
+        <!-- MÓDULO CHECKIN-QR -->
         <div id="vista-checkin-config" class="tab-content">
-            <!-- 1. FILTRO POR FECHA Y EVENTO -->
-            <div class="section-card">
-                <h2>📅 Seleccionar Evento y Fecha</h2>
-                <p class="section-description">Selecciona el evento para desplegar la lista de asistentes ordenada por cédula con sus respectivos nombres y números de WhatsApp.</p>
-                <div class="grid-forms" style="margin-top: 15px;">
-                    <div class="upload-box grid-span-2">
-                        <label>Filtrar Asistentes por Evento</label>
-                        <select id="checkin-select-evento" onchange="cargarAsistentesPorEvento()" style="background: #1a1c24; color: #fff; padding: 12px; border: 1px solid #d4af37; border-radius: 6px; width: 100%;">
-                            <option value="">Cargando eventos...</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 2. TERMINAL DE ESCANEO (CÁMARA Y MANUAL) -->
             <div class="section-card checkin-card">
-                <h2>🎟️ Terminal Interactiva de Control de Acceso</h2>
-                <p class="section-description">Activa la cámara de tu celular para escanear el QR o ingresa el código manualmente.</p>
+                <h2>🎟️ Terminal Interactiva de Control de Acceso en Puerta</h2>
+                <p class="section-description">Escanea con pistola láser o introduce manualmente el código QR de acceso emitido en la reserva aprobada para validar el ingreso inmediato de clientes a la Salsoteca.</p>
                 
-                <div style="margin-bottom: 15px;">
-                    <button class="btn btn-warning" onclick="toggleCamaraScanner()">📷 Activar / Desactivar Cámara del Celular</button>
-                </div>
-
-                <!-- Visor de la cámara -->
-                <div id="reader" style="width: 100%; max-width: 350px; margin: 0 auto 15px auto; display: none; border: 2px solid #d4af37; border-radius: 8px; overflow: hidden;"></div>
-
                 <div class="checkin-search-bar">
                     <input type="text" id="input-codigo-qr" placeholder="🔍 Escanea o ingresa el código QR del pase..." onkeypress="if(event.key === 'Enter') validarCodigoQRManual()">
                     <button class="btn btn-success btn-large" onclick="validarCodigoQRManual()">⚡ Validar Acceso</button>
                 </div>
 
-                <div id="resultado-checkin" class="result-box" style="display: none; margin-top: 15px;">
+                <div id="resultado-checkin" class="result-box">
                     <div class="result-header">
                         <span id="checkin-icono-estado" class="status-icon">✅</span>
                         <div>
@@ -508,14 +484,13 @@
                 </div>
             </div>
 
-            <!-- MÉTRICAS DE ACCESO -->
             <div class="metrics-grid">
                 <div class="metric-card">
-                    <h3>Pases Totales del Evento</h3>
+                    <h3>Pases Totales Emitidos</h3>
                     <div class="value" id="checkin-total-pases">0</div>
                 </div>
                 <div class="metric-card">
-                    <h3>Pases Validados (Adentro)</h3>
+                    <h3>Pases Validados (Ingresados)</h3>
                     <div class="value status-green" id="checkin-pases-usados">0</div>
                 </div>
                 <div class="metric-card">
@@ -524,46 +499,22 @@
                 </div>
             </div>
 
-            <!-- 3. LISTADO ORDENADO POR CÉDULA, NOMBRE Y WHATSAPP -->
             <div class="section-card">
-                <h2>📋 Listado de Asistentes y Pases QR por Cédula</h2>
-                <div style="overflow-x: auto;">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Cédula / Cliente</th>
-                                <th>WhatsApp</th>
-                                <th>Código QR / Token</th>
-                                <th>Estado Pase</th>
-                                <th>Acción Puerta</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabla-asistentes-evento">
-                            <tr>
-                                <td colspan="5" style="text-align: center; color: #aaa;">Selecciona un evento arriba para ver el listado.</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- 4. HISTORIAL EN TIEMPO REAL CONFORME SE REGISTRAN -->
-            <div class="section-card">
-                <h2>⏱️ Historial en Tiempo Real de Ingresos</h2>
+                <h2>📋 Historial de Accesos Recientes en Puerta</h2>
                 <table>
                     <thead>
                         <tr>
                             <th>Hora de Ingreso</th>
-                            <th>Código QR</th>
+                            <th>Código QR / Token</th>
                             <th>Cliente</th>
                             <th>Cédula</th>
-                            <th>WhatsApp</th>
+                            <th>Evento</th>
                             <th>Estado</th>
                         </tr>
                     </thead>
                     <tbody id="tabla-historial-checkin">
                         <tr>
-                            <td colspan="6">No hay registros de escaneo en esta sesión todavía.</td>
+                            <td colspan="6">No hay registros de escaneo recientes en esta sesión.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -591,7 +542,7 @@
         </div>
     </main>
 
-    <!-- MODAL VOUCHER -->
+    <!-- 🔍 MODAL VISUALIZADOR DE COMPROBANTE DE PAGO -->
     <div id="modal-comprobante" class="modal-overlay">
         <div class="modal-card modal-center">
             <h3>🔍 Ver Comprobante de Pago</h3>
@@ -600,27 +551,67 @@
         </div>
     </div>
 
-    <!-- MODAL QRS -->
+    <!-- 🎟️ MODAL VISUALIZADOR DE QRS Y ESTATUS (PE / AL) -->
     <div id="modal-qrs-overlay" class="modal-overlay" style="display: none; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000;">
         <div class="modal-card" style="background: #121316; border: 1px solid #d4af37; padding: 25px; border-radius: 10px; width: 90%; max-width: 500px; color: #fff;">
             <h3 style="color: #fbbf24; margin-top: 0; margin-bottom: 15px; border-bottom: 1px solid rgba(212,175,55,0.3); padding-bottom: 10px;">🎟️ Accesos QR de la Reserva</h3>
-            <div id="modal-body-qrs" style="max-height: 350px; overflow-y: auto; margin-bottom: 20px;"></div>
+            <div id="modal-body-qrs" style="max-height: 350px; overflow-y: auto; margin-bottom: 20px;">
+            </div>
             <button class="btn btn-danger full-width" onclick="cerrarModalQrs()">Cerrar Ventana</button>
         </div>
     </div>
 
-    <!-- MODAL EDITAR EVENTO -->
+    <!-- ✏️ MODAL DE EDICIÓN DE EVENTOS -->
     <div id="modal-editar-evento" class="modal-overlay">
         <div class="modal-card">
             <h2>✏️ Editar Evento #<span id="edit-id-label"></span></h2>
             <form id="form-editar-evento" onsubmit="guardarEdicionEvento(event)">
                 <input type="hidden" id="edit-evento-id">
                 <div class="grid-forms">
-                    <div class="upload-box"><label>Nombre del Evento</label><input type="text" id="edit-nombre-evento" required></div>
-                    <div class="upload-box"><label>Artista / Orquesta</label><input type="text" id="edit-artista"></div>
-                    <div class="upload-box"><label>📅 Fecha</label><input type="date" id="edit-fecha" required></div>
-                    <div class="upload-box"><label>⏰ Hora</label><input type="time" id="edit-hora" required></div>
+                    <div class="upload-box">
+                        <label>Nombre del Evento</label>
+                        <input type="text" id="edit-nombre-evento" required>
+                    </div>
+                    <div class="upload-box">
+                        <label>Artista / Orquesta</label>
+                        <input type="text" id="edit-artista">
+                    </div>
+                    <div class="upload-box">
+                        <label>📅 Fecha</label>
+                        <input type="date" id="edit-fecha" required>
+                    </div>
+                    <div class="upload-box">
+                        <label>⏰ Hora</label>
+                        <input type="time" id="edit-hora" required>
+                    </div>
+                    <div class="upload-box grid-span-2">
+                        <label>Cambiar Flyer / Póster (Opcional)</label>
+                        <input type="file" id="edit-flyer" accept="image/*">
+                    </div>
                 </div>
+
+                <div class="grid-forms">
+                    <div class="upload-box">
+                        <label>🎟️ Cover ($)</label>
+                        <input type="number" step="0.01" id="edit-precio-cover">
+                    </div>
+                    <div class="upload-box">
+                        <label>🍾 Mesa ($)</label>
+                        <input type="number" step="0.01" id="edit-precio-mesa">
+                        <input type="text" id="edit-desc-mesa" placeholder="Detalle mesa">
+                    </div>
+                    <div class="upload-box">
+                        <label>🎉 Promo ($)</label>
+                        <input type="number" step="0.01" id="edit-precio-promocion">
+                        <input type="text" id="edit-desc-promocion" placeholder="Detalle promo">
+                    </div>
+                </div>
+
+                <div class="form-group-full">
+                    <label>Descripción</label>
+                    <textarea id="edit-descripcion"></textarea>
+                </div>
+
                 <div class="modal-actions">
                     <button type="submit" class="btn btn-success flex-1">💾 Guardar Cambios</button>
                     <button type="button" class="btn btn-danger flex-1" onclick="cerrarModalEditar()">❌ Cancelar</button>
@@ -678,7 +669,6 @@
             document.getElementById('vista-checkin-config').classList.add('active');
             document.getElementById('nav-checkin').classList.add('active');
             document.getElementById('titulo-panel').innerText = 'Módulo CheckIn-QR en Puerta';
-            inicializarCheckinEventos();
         } else if(tab === 'zonas-config') {
             document.getElementById('vista-zonas-config').classList.add('active');
             document.getElementById('nav-zonas').classList.add('active');
@@ -686,120 +676,616 @@
         }
     }
 
-    async function inicializarCheckinEventos() {
+    async function cargarPlantillaCelebracionAdmin() {
         try {
-            let res = await fetch(`${API_URL}/api/reservas/eventos/?local_id=1`);
-            let eventos = await res.json();
-            const select = document.getElementById('checkin-select-evento');
-            if (!select) return;
+            let res = await fetch(`${API_URL}/api/admin/plantilla-celebracion/`);
+            if (res.ok) {
+                let data = await res.json();
+                if (data.titulo_principal) document.getElementById('plantilla-titulo-principal').value = data.titulo_principal;
+                if (data.descripcion_principal) document.getElementById('plantilla-descripcion-principal').value = data.descripcion_principal;
+                if (data.subtitulo_1) document.getElementById('plantilla-subtitulo-1').value = data.subtitulo_1;
+                if (data.subtitulo_2) document.getElementById('plantilla-subtitulo-2').value = data.subtitulo_2;
+                if (data.texto_boton) document.getElementById('plantilla-texto-boton').value = data.texto_boton;
+                if (data.precio_cover_defecto !== undefined) document.getElementById('plantilla-precio-cover').value = data.precio_cover_defecto;
+                if (data.precio_mesa_defecto !== undefined) document.getElementById('plantilla-precio-mesa').value = data.precio_mesa_defecto;
+                if (data.promocion_texto) document.getElementById('plantilla-promocion-texto').value = data.promocion_texto;
 
-            if (!eventos || eventos.length === 0) {
-                select.innerHTML = '<option value="">No hay eventos disponibles</option>';
-                return;
+                const fondoInfo = document.getElementById('plantilla-fondo-actual');
+                let bgUrl = data.imagen_fondo || data.fondo_url || '';
+                if (bgUrl && fondoInfo) {
+                    fondoInfo.innerText = `Imagen actual configurada: ${bgUrl}`;
+                }
             }
-
-            select.innerHTML = '<option value="">-- Selecciona una fecha y evento --</option>' + 
-                eventos.map(ev => `<option value="${ev.id}">📅 ${ev.fecha_hora ? ev.fecha_hora.replace('T', ' ') : 'Fecha por definir'} - ${ev.nombre_evento} (${ev.artista_orquesta || 'Salsoteca'})</option>`).join('');
         } catch (err) {
-            console.error("Error al cargar eventos para checkin:", err);
+            console.error("Error al cargar configuración de plantilla celebración:", err);
         }
     }
 
-    async function cargarAsistentesPorEvento() {
-        const eventoId = document.getElementById('checkin-select-evento').value;
-        const tbody = document.getElementById('tabla-asistentes-evento');
-        if (!eventoId || !tbody) return;
+    async function guardarPlantillaCelebracion(e) {
+        e.preventDefault();
+        const formData = new FormData();
+        formData.append("titulo_principal", document.getElementById('plantilla-titulo-principal').value);
+        formData.append("descripcion_principal", document.getElementById('plantilla-descripcion-principal').value);
+        formData.append("subtitulo_1", document.getElementById('plantilla-subtitulo-1').value);
+        formData.append("subtitulo_2", document.getElementById('plantilla-subtitulo-2').value);
+        formData.append("texto_boton", document.getElementById('plantilla-texto-boton').value);
+        formData.append("precio_cover_defecto", document.getElementById('plantilla-precio-cover').value);
+        formData.append("precio_mesa_defecto", document.getElementById('plantilla-precio-mesa').value);
+        formData.append("promocion_texto", document.getElementById('plantilla-promocion-texto').value);
 
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;">Cargando asistentes...</td></tr>`;
+        const fondoFile = document.getElementById('plantilla-fondo-file').files[0];
+        if (fondoFile) {
+            formData.append("file", fondoFile);
+        }
 
+        try {
+            let res = await fetch(`${API_URL}/api/admin/plantilla-celebracion/`, {
+                method: "POST",
+                body: formData
+            });
+
+            if (res.ok) {
+                alert("✅ ¡Configuración de la tarjeta 'Crea Mi Rumba' y tarifas actualizada con éxito!");
+                document.getElementById('plantilla-fondo-file').value = "";
+                cargarPlantillaCelebracionAdmin();
+            } else {
+                let errText = await res.text();
+                alert("Error al guardar la configuración: " + errText);
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Error de conexión con el servidor.");
+        }
+    }
+
+    async function cargarDashboardAdmin() {
         try {
             let res = await fetch(`${API_URL}/api/admin/reservas/`);
             if (res.ok) {
-                let reservas = await res.json();
-                let reservasEvento = reservas.filter(r => String(r.evento_id) === String(eventoId) && (r.estado || '').toUpperCase().includes('APROBADO'));
-
-                if (reservasEvento.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #aaa;">No hay reservas aprobadas para este evento.</td></tr>`;
-                    document.getElementById('checkin-total-pases').innerText = 0;
-                    document.getElementById('checkin-pases-pendientes').innerText = 0;
-                    return;
-                }
-
-                let filasHtml = "";
-                let totalPasesCount = 0;
-                let validadosCount = 0;
-
-                for (let r of reservasEvento) {
-                    let qrsRes = await fetch(`${API_URL}/api/reservas/${r.id}/qrs`);
-                    let qrsList = qrsRes.ok ? await qrsRes.json() : [];
-                    totalPasesCount += qrsList.length;
-
-                    qrsList.forEach((pase, idx) => {
-                        let isAdentro = pase.estatus === 'AL';
-                        if (isAdentro) validadosCount++;
-
-                        let estadoBadge = isAdentro ? 
-                            `<span style="background: #34d39920; color: #34d399; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 11px;">🟢 Adentro (AL)</span>` : 
-                            `<span style="background: #fbbf2420; color: #fbbf24; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 11px;">🟡 Pendiente (PE)</span>`;
-                        
-                        let botonAccion = isAdentro ? 
-                            `<span style="color: #6b7280; font-size: 11px;">Ya ingresó</span>` : 
-                            `<button class="btn btn-success btn-sm" onclick="validarQrDirecto('${pase.codigo_qr}')">⚡ Dar Ingreso</button>`;
-
-                        let telLimpio = (r.cliente_telefono || '').replace(/^0/, '');
-
-                        filasHtml += `
-                            <tr>
-                                <td><b>${r.cliente_nombre || 'Cliente'}</b><br><small style="color: #fbbf24;">Cédula: ${r.cliente_cedula || 'N/A'}</small></td>
-                                <td>📱 <a href="https://wa.me/593${telLimpio}" target="_blank" style="color: #34d399; text-decoration: none; font-weight: bold;">${r.cliente_telefono || 'S/N'}</a></td>
-                                <td><code>${pase.codigo_qr}</code></td>
-                                <td>${estadoBadge}</td>
-                                <td>${botonAccion}</td>
-                            </tr>
-                        `;
-                    });
-                }
-
-                tbody.innerHTML = filasHtml;
-                document.getElementById('checkin-total-pases').innerText = totalPasesCount;
-                document.getElementById('checkin-pases-usados').innerText = validadosCount;
-                document.getElementById('checkin-pases-pendientes').innerText = totalPasesCount - validadosCount;
+                cacheReservas = await res.json();
+                renderizarTablaReservas(cacheReservas);
+                actualizarMetricas(cacheReservas);
             }
         } catch (err) {
-            console.error("Error al cargar asistentes:", err);
-            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #ef4444;">Error al cargar los datos.</td></tr>`;
+            console.error("Error al cargar reservas:", err);
         }
     }
 
-    function validarQrDirecto(codigoQr) {
-        document.getElementById('input-codigo-qr').value = codigoQr;
-        validarCodigoQRManual();
+    function renderizarTablaReservas(reservas) {
+        const tbody = document.getElementById('tabla-reservas-body');
+        if (!tbody) return;
+
+        if (!reservas || reservas.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8">No hay solicitudes de reserva recientes.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = reservas.map(r => {
+            let voucherUrl = '#';
+            if (r.comprobante_pago) {
+                voucherUrl = r.comprobante_pago.startsWith('http') 
+                    ? r.comprobante_pago 
+                    : `https://pub-3244093a45bd47d9a30548ef0924bb49.r2.dev/${r.comprobante_pago}`;
+            }
+
+            let estadoUpper = (r.estado || 'Por Aprobar').toUpperCase();
+            let accionesHtml = '';
+
+            if (estadoUpper === 'APROBADO' || estadoUpper === 'APROBADA') {
+                accionesHtml = `
+                    <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                        <span style="color: #34d399; font-weight: bold; font-size: 11px;">✅ APROBADO</span>
+                        <button onclick="aprobarReservaYEnviarWhatsApp(${r.id})" 
+                                style="background: #25d366; color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer;">
+                            📲 Reenviar QR
+                        </button>
+                    </div>
+                `;
+            } else {
+                accionesHtml = `
+                    <div style="display: flex; gap: 6px; align-items: center;">
+                        <button onclick="aprobarReservaYEnviarWhatsApp(${r.id})" 
+                                style="background: #34d399; color: #000; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer;">
+                            ✔️ Aprobar
+                        </button>
+                        <button onclick="cambiarEstadoReserva(${r.id}, 'Rechazado')" 
+                                style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer;">
+                            ❌ Rechazar
+                        </button>
+                    </div>
+                `;
+            }
+
+            return `
+            <tr>
+                <td><code style="cursor: pointer; color: #fbbf24;" onclick="verDetalleQrsReserva(${r.id})" title="Clic para ver códigos QR e ingresos">${r.codigo || 'RES-' + (9000 + r.id)}</code></td>
+                <td><b>${r.cliente_nombre || 'Cliente'}</b><br><small class="text-muted">${r.cliente_telefono || ''}</small></td>
+                <td>${r.evento_nombre || 'Evento'}</td>
+                <td>👥 ${r.cantidad_personas || 0} pases<br>🍾 ${r.cantidad_mesas || 0} mesa(s)</td>
+                <td><b class="text-green">$${Number(r.monto_total || 0).toFixed(2)}</b></td>
+                <td>
+                    ${r.comprobante_pago ? `<a href="#" onclick="verComprobante('${voucherUrl}')" class="link-voucher">📄 Ver Voucher</a>` : 'Sin Comprobante'}
+                </td>
+                <td><span class="status-pill ${estadoUpper.includes('APROB') ? 'status-confirmed' : 'status-pending'}">${r.estado || 'Por Aprobar'}</span></td>
+                <td>${accionesHtml}</td>
+            </tr>
+            `;
+        }).join('');
     }
 
-    let html5QrCode = null;
-    function toggleCamaraScanner() {
-        const readerDiv = document.getElementById('reader');
-        if (readerDiv.style.display === 'none') {
-            readerDiv.style.display = 'block';
-            if (!html5QrCode) {
-                html5QrCode = new Html5Qrcode("reader");
-            }
-            html5QrCode.start(
-                { facingMode: "environment" },
-                { fps: 10, qrbox: { width: 250, height: 250 } },
-                (decodedText, decodedResult) => {
-                    document.getElementById('input-codigo-qr').value = decodedText;
-                    validarCodigoQRManual();
-                },
-                (errorMessage) => {}
-            ).catch(err => {
-                alert("No se pudo acceder a la cámara del dispositivo: " + err);
+    async function aprobarReservaYEnviarWhatsApp(reservaId) {
+        if (!confirm("¿Estás seguro de aprobar esta reserva? Se generarán los códigos QR y se abrirá WhatsApp con el mensaje para el cliente.")) return;
+
+        try {
+            let response = await fetch(`${API_URL}/api/reservas/${reservaId}/aprobar`, {
+                method: 'POST'
             });
-        } else {
-            readerDiv.style.display = 'none';
-            if (html5QrCode) {
-                html5QrCode.stop().catch(err => console.log(err));
+            let data = await response.json();
+            
+            if (response.ok && data.exito) {
+                alert("✅ Reserva aprobada y códigos QR generados con éxito.");
+                if (data.whatsapp_url) {
+                    window.open(data.whatsapp_url, '_blank');
+                }
+                cargarDashboardAdmin();
+            } else {
+                alert("Error al aprobar la reserva: " + (data.detail || "Error desconocido"));
             }
+        } catch (error) {
+            console.error("Error al aprobar reserva:", error);
+            alert("Ocurrió un error al conectar con el servidor.");
+        }
+    }
+
+    async function cambiarEstadoReserva(reservaId, nuevoEstado) {
+        if (!confirm(`¿Estás seguro de marcar esta reserva como ${nuevoEstado}?`)) return;
+
+        try {
+            let response = await fetch(`${API_URL}/api/reservas/${reservaId}/estado`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ estado: nuevoEstado })
+            });
+
+            if (response.ok) {
+                alert(`Reserva actualizada a estado: ${nuevoEstado}`);
+                cargarDashboardAdmin();
+            } else {
+                alert("No se pudo actualizar el estado de la reserva.");
+            }
+        } catch (error) {
+            console.error("Error al cambiar estado:", error);
+            alert("Error de conexión.");
+        }
+    }
+
+    async function verDetalleQrsReserva(reservaId) {
+        try {
+            let response = await fetch(`${API_URL}/api/reservas/${reservaId}/qrs`);
+            if (response.ok) {
+                let data = await response.json();
+                
+                let contenedorHtml = `<div style="display: flex; flex-direction: column; gap: 10px;">`;
+                if (!data || data.length === 0) {
+                    contenedorHtml += `<p style="text-align: center; color: #aaa;">No hay códigos QR generados todavía. (Aprueba la reserva primero).</p>`;
+                } else {
+                    data.forEach((pase, index) => {
+                        let isAl = pase.estatus === 'AL';
+                        let badgeColor = isAl ? '#34d399' : '#fbbf24';
+                        let badgeTexto = isAl ? '🟢 ADENTRO LOCAL (AL)' : '🟡 PENDIENTE DE ENTRAR (PE)';
+                        
+                        contenedorHtml += `
+                            <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(212,175,55,0.2); padding: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <strong style="color: #fbbf24;">Pase #${index + 1}</strong>
+                                    <div style="font-size: 11px; color: #aaa; word-break: break-all;">Código: ${pase.codigo_qr}</div>
+                                    ${pase.fecha_ingreso ? `<div style="font-size: 10px; color: #34d399;">Ingreso: ${pase.fecha_ingreso}</div>` : ''}
+                                </div>
+                                <div style="text-align: right; min-width: 130px;">
+                                    <span style="background: ${badgeColor}20; color: ${badgeColor}; border: 1px solid ${badgeColor}; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; display: inline-block;">
+                                        ${badgeTexto}
+                                    </span>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+                contenedorHtml += `</div>`;
+                
+                document.getElementById('modal-body-qrs').innerHTML = contenedorHtml;
+                document.getElementById('modal-qrs-overlay').style.display = 'flex';
+            } else {
+                alert("No se pudieron cargar los códigos QR de esta reserva.");
+            }
+        } catch (error) {
+            console.error("Error al cargar los códigos QR:", error);
+            alert("Error de conexión al obtener los pases.");
+        }
+    }
+
+    function cerrarModalQrs() {
+        document.getElementById('modal-qrs-overlay').style.display = 'none';
+    }
+
+    function actualizarMetricas(reservas) {
+        document.getElementById('val-reservas').innerText = reservas.length;
+        let totalIngresos = reservas.filter(r => (r.estado || '').toUpperCase() === 'APROBADO' || (r.estado || '').toUpperCase() === 'APROBADA').reduce((acc, r) => acc + Number(r.monto_total || 0), 0);
+        document.getElementById('val-ingresos').innerText = `$${totalIngresos.toFixed(2)}`;
+        let totalMesas = reservas.filter(r => (r.estado || '').toUpperCase() === 'APROBADO' || (r.estado || '').toUpperCase() === 'APROBADA').reduce((acc, r) => acc + Number(r.cantidad_mesas || 0), 0);
+        document.getElementById('val-mesas').innerText = totalMesas;
+    }
+
+    function verComprobante(url) {
+        document.getElementById('img-comprobante-preview').src = url;
+        document.getElementById('modal-comprobante').style.display = 'flex';
+    }
+
+    function cerrarModalComprobante() {
+        document.getElementById('modal-comprobante').style.display = 'none';
+    }
+
+    async function crearPropietario(e) {
+        e.preventDefault();
+        const formData = new FormData();
+        formData.append("nombre", document.getElementById('prop-nombre').value);
+        formData.append("telefono", document.getElementById('prop-telefono').value);
+        formData.append("correo", document.getElementById('prop-correo').value);
+
+        try {
+            let res = await fetch(`${API_URL}/api/admin/propietarios/`, { method: "POST", body: formData });
+            if (res.ok) {
+                alert("✅ Propietario registrado exitosamente.");
+                document.getElementById('form-crear-propietario').reset();
+                cargarPropietariosSelect();
+            } else {
+                let errText = await res.text();
+                alert("Error al registrar propietario: " + errText);
+            }
+        } catch(err) {
+            alert("Error de conexión.");
+        }
+    }
+
+    async function cargarPropietariosSelect() {
+        try {
+            let res = await fetch(`${API_URL}/api/admin/propietarios/`);
+            let props = await res.json();
+            const select = document.getElementById('local-propietario-id');
+            if(!select) return;
+            if(props.length === 0) {
+                select.innerHTML = '<option value="">No hay propietarios. Registra uno primero.</option>';
+                return;
+            }
+            select.innerHTML = props.map(p => `<option value="${p.propietario_id || p.id}">${p.propietario_id || p.id} - ${p.nombre || p.nombre_propietario}</option>`).join('');
+        } catch(err) {
+            console.error("Error al cargar propietarios:", err);
+        }
+    }
+
+    async function crearLocal(e) {
+        e.preventDefault();
+        const propId = document.getElementById('local-propietario-id').value;
+        if(!propId) {
+            alert("Primero debes registrar o seleccionar un propietario.");
+            return;
+        }
+
+        const nombreLocal = document.getElementById('local-nombre').value;
+        const tipoEstablecimiento = document.getElementById('local-tipo').value;
+        const ciudad = document.getElementById('local-ciudad').value;
+        const direccion = document.getElementById('local-direccion').value;
+        const logoFile = document.getElementById('local-logo-file').files[0];
+
+        const formData = new FormData();
+        formData.append("propietario_id", propId);
+        formData.append("nombre_local", nombreLocal);
+        formData.append("tipo_establecimiento", tipoEstablecimiento);
+        formData.append("ciudad", ciudad);
+        formData.append("direccion", direccion);
+
+        try {
+            let res = await fetch(`${API_URL}/api/admin/locales/`, { method: "POST", body: formData });
+            if (res.ok) {
+                let dataLocal = await res.json();
+                let localId = dataLocal.id;
+
+                if (logoFile && localId) {
+                    const logoData = new FormData();
+                    logoData.append("local_id", localId);
+                    logoData.append("logo", logoFile);
+                    await fetch(`${API_URL}/api/admin/local/logo`, { method: "POST", body: logoData });
+                }
+
+                alert("🎉 ¡Local registrado y logotipo configurado con éxito!");
+                document.getElementById('form-crear-local').reset();
+                cargarLocalesAdmin();
+            } else {
+                let errText = await res.text();
+                alert("Error al registrar el local: " + errText);
+            }
+        } catch(err) {
+            alert("Error de conexión.");
+        }
+    }
+
+    async function cargarLocalesAdmin() {
+        const tbody = document.getElementById('tabla-locales-body');
+        if(!tbody) return;
+
+        try {
+            let res = await fetch(`${API_URL}/api/admin/locales/`);
+            cacheLocales = await res.json();
+
+            if(!cacheLocales || cacheLocales.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7">No hay locales registrados.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = cacheLocales.map(l => {
+                let logoSrc = 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=100&q=80';
+                if (l.logo_url) {
+                    logoSrc = l.logo_url.startsWith('http') ? l.logo_url : `https://pub-3244093a45bd47d9a30548ef0924bb49.r2.dev/${l.logo_url}`;
+                }
+
+                return `
+                <tr>
+                    <td><code>#${l.id}</code></td>
+                    <td><img src="${logoSrc}" class="table-img" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover;"></td>
+                    <td><b>${l.nombre || l.nombre_local}</b></td>
+                    <td>${l.tipo_establecimiento || 'Salsoteca / Bar'}</td>
+                    <td>${l.ciudad || 'Guayaquil'}<br><small class="text-muted">${l.direccion || 'Sin dirección'}</small></td>
+                    <td><code>${l.slug || ''}</code></td>
+                    <td>
+                        <button class="btn btn-warning btn-sm" onclick="alert('Función de edición rápida de local')">✏️ Editar</button>
+                        <button class="btn btn-danger btn-sm" onclick="eliminarLocal(${l.id})">🗑️ Borrar</button>
+                    </td>
+                </tr>
+                `;
+            }).join('');
+        } catch(err) {
+            console.error("Error al listar locales:", err);
+        }
+    }
+
+    async function eliminarLocal(id) {
+        if(!confirm(`¿Estás seguro de eliminar el local #${id}?`)) return;
+        try {
+            let res = await fetch(`${API_URL}/api/admin/locales/${id}`, { method: "DELETE" });
+            if(res.ok) {
+                alert("🗑️ Local eliminado correctamente.");
+                cargarLocalesAdmin();
+            } else {
+                alert("No se pudo eliminar el local.");
+            }
+        } catch(err) {
+            alert("Error de conexión.");
+        }
+    }
+
+    async function cargarLocalesSelect() {
+        try {
+            let res = await fetch(`${API_URL}/api/admin/locales/`);
+            let locales = await res.json();
+            const select = document.getElementById('nuevo-local-id');
+            if(!select) return;
+            if(locales.length === 0) {
+                select.innerHTML = '<option value="1">Local por Defecto (ID #1)</option>';
+                return;
+            }
+            select.innerHTML = locales.map(l => `<option value="${l.id}">${l.nombre || l.nombre_local} (${l.ciudad || ''})</option>`).join('');
+        } catch(err) {
+            console.error("Error al cargar locales:", err);
+        }
+    }
+
+    async function subirBannerSlider(posicion) {
+        const inputFile = document.getElementById(`banner-file-${posicion}`);
+        const inputTiempo = document.getElementById(`banner-time-${posicion}`);
+        const inputCaption = document.getElementById(`banner-caption-${posicion}`);
+        
+        if (!inputFile.files[0]) {
+            alert(`Por favor seleccione una imagen para el Banner #${posicion}.`);
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("file", inputFile.files[0]);
+        formData.append("duracion_segundos", inputTiempo.value);
+        formData.append("caption", inputCaption.value);
+
+        try {
+            let response = await fetch(`${API_URL}/api/admin/slider/${posicion}`, {
+                method: "POST",
+                body: formData
+            });
+
+            if (response.ok) {
+                alert(`¡Éxito! Banner #${posicion} actualizado correctamente.`);
+                inputFile.value = "";
+            } else {
+                alert("Error al actualizar el banner.");
+            }
+        } catch (error) {
+            alert("Error de conexión.");
+        }
+    }
+
+    async function crearNuevoEvento(e) {
+        e.preventDefault();
+        const localId = document.getElementById('nuevo-local-id').value || 1;
+        const nombre = document.getElementById('nuevo-nombre-evento').value;
+        const artista = document.getElementById('nuevo-artista').value;
+        const fechaVal = document.getElementById('nuevo-fecha').value;
+        const horaVal = document.getElementById('nuevo-hora').value;
+        const descripcion = document.getElementById('nuevo-descripcion').value;
+        const flyerFile = document.getElementById('nuevo-flyer').files[0];
+
+        const cover = document.getElementById('nuevo-precio-cover').value;
+        const mesa = document.getElementById('nuevo-precio-mesa').value;
+        const descMesa = document.getElementById('nuevo-desc-mesa').value;
+        const promo = document.getElementById('nuevo-precio-promocion').value;
+        const descPromo = document.getElementById('nuevo-desc-promocion').value;
+
+        const fechaHoraCompleta = `${fechaVal}T${horaVal}:00`;
+
+        const formData = new FormData();
+        formData.append("local_id", localId);
+        formData.append("nombre_evento", nombre);
+        formData.append("artista_orquesta", artista || "Varios Artistas");
+        formData.append("fecha_hora", fechaHoraCompleta);
+        formData.append("descripcion", descripcion);
+
+        if (cover) formData.append("precio_cover", cover);
+        if (mesa) formData.append("precio_mesa", mesa);
+        if (descMesa) formData.append("descripcion_mesa", descMesa);
+        if (promo) formData.append("precio_promocion", promo);
+        if (descPromo) formData.append("descripcion_promocion", descPromo);
+        if (flyerFile) formData.append("file", flyerFile);
+
+        try {
+            let res = await fetch(`${API_URL}/api/reservas/eventos/`, { method: "POST", body: formData });
+            if (res.ok) {
+                alert("🎉 ¡Evento publicado exitosamente!");
+                document.getElementById('form-crear-evento').reset();
+                cargarEventosAdmin();
+            } else {
+                alert("Error al publicar el evento.");
+            }
+        } catch (err) {
+            alert("Error de conexión.");
+        }
+    }
+
+    async function cargarEventosAdmin() {
+        const tbody = document.getElementById('tabla-eventos-body');
+        if (!tbody) return;
+
+        try {
+            let res = await fetch(`${API_URL}/api/reservas/eventos/?local_id=1`);
+            cacheEventos = await res.json();
+
+            if (!cacheEventos || cacheEventos.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7">No hay eventos registrados.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = cacheEventos.map(ev => {
+                let tarifasTxt = [];
+                if (ev.precio_cover) tarifasTxt.push(`Cover: $${ev.precio_cover}`);
+                if (ev.precio_mesa) tarifasTxt.push(`Mesa: $${ev.precio_mesa}`);
+                if (ev.precio_promocion) tarifasTxt.push(`Promo: $${ev.precio_promocion}`);
+                
+                let imgSrc = 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=100&q=80';
+                if (ev.imagen) {
+                    imgSrc = ev.imagen.startsWith('http') ? ev.imagen : `https://pub-3244093a45bd47d9a30548ef0924bb49.r2.dev/${ev.imagen}`;
+                }
+
+                return `
+                <tr>
+                    <td><code>#${ev.id}</code></td>
+                    <td><img src="${imgSrc}" class="table-img"></td>
+                    <td><b>${ev.nombre_evento}</b></td>
+                    <td>🎤 ${ev.artista_orquesta || 'Varios'}</td>
+                    <td><small class="text-green">${tarifasTxt.length > 0 ? tarifasTxt.join('<br>') : 'Sin Tarifas'}</small></td>
+                    <td>📅 ${String(ev.fecha_hora).replace('T', ' ')}</td>
+                    <td>
+                        <button class="btn btn-warning btn-sm" onclick="abrirModalEditar(${ev.id})">✏️ Editar</button>
+                        <button class="btn btn-danger btn-sm" onclick="eliminarEvento(${ev.id})">🗑️ Borrar</button>
+                    </td>
+                </tr>
+                `;
+            }).join('');
+        } catch (error) {
+            console.error("Error al cargar eventos:", error);
+        }
+    }
+
+    function abrirModalEditar(id) {
+        const ev = cacheEventos.find(e => e.id === id);
+        if(!ev) return;
+
+        document.getElementById('edit-evento-id').value = ev.id;
+        document.getElementById('edit-id-label').innerText = ev.id;
+        document.getElementById('edit-nombre-evento').value = ev.nombre_evento || '';
+        document.getElementById('edit-artista').value = ev.artista_orquesta || '';
+        
+        if (ev.fecha_hora) {
+            const parts = String(ev.fecha_hora).split('T');
+            document.getElementById('edit-fecha').value = parts[0] || '';
+            document.getElementById('edit-hora').value = parts[1] ? parts[1].substring(0, 5) : '21:00';
+        }
+
+        document.getElementById('edit-precio-cover').value = ev.precio_cover || '';
+        document.getElementById('edit-precio-mesa').value = ev.precio_mesa || '';
+        document.getElementById('edit-desc-mesa').value = ev.descripcion_mesa || '';
+        document.getElementById('edit-precio-promocion').value = ev.precio_promocion || '';
+        document.getElementById('edit-desc-promocion').value = ev.descripcion_promocion || '';
+        document.getElementById('edit-descripcion').value = ev.descripcion || '';
+
+        document.getElementById('modal-editar-evento').style.display = 'flex';
+    }
+
+    function cerrarModalEditar() {
+        document.getElementById('modal-editar-evento').style.display = 'none';
+    }
+
+    async function guardarEdicionEvento(e) {
+        e.preventDefault();
+        const id = document.getElementById('edit-evento-id').value;
+        const nombre = document.getElementById('edit-nombre-evento').value;
+        const artista = document.getElementById('edit-artista').value;
+        const fechaVal = document.getElementById('edit-fecha').value;
+        const horaVal = document.getElementById('edit-hora').value;
+        const descripcion = document.getElementById('edit-descripcion').value;
+        const flyerFile = document.getElementById('edit-flyer').files[0];
+
+        const cover = document.getElementById('edit-precio-cover').value;
+        const mesa = document.getElementById('edit-precio-mesa').value;
+        const descMesa = document.getElementById('edit-desc-mesa').value;
+        const promo = document.getElementById('edit-precio-promocion').value;
+        const descPromo = document.getElementById('edit-desc-promocion').value;
+
+        const fechaHoraCompleta = `${fechaVal}T${horaVal}:00`;
+
+        const formData = new FormData();
+        formData.append("nombre_evento", nombre);
+        formData.append("artista_orquesta", artista);
+        formData.append("fecha_hora", fechaHoraCompleta);
+        formData.append("descripcion", descripcion);
+
+        if (cover) formData.append("precio_cover", cover);
+        if (mesa) formData.append("precio_mesa", mesa);
+        if (descMesa) formData.append("descripcion_mesa", descMesa);
+        if (promo) formData.append("precio_promocion", promo);
+        if (descPromo) formData.append("descripcion_promocion", descPromo);
+        if (flyerFile) formData.append("file", flyerFile);
+
+        try {
+            let res = await fetch(`${API_URL}/api/reservas/eventos/${id}`, { method: "PUT", body: formData });
+            if (res.ok) {
+                alert("✅ Evento actualizado correctamente.");
+                cerrarModalEditar();
+                cargarEventosAdmin();
+            } else {
+                alert("Error al actualizar.");
+            }
+        } catch(err) {
+            alert("Error de conexión.");
+        }
+    }
+
+    async function eliminarEvento(id) {
+        if (!confirm(`¿Estás seguro de eliminar el evento #${id}?`)) return;
+        try {
+            let res = await fetch(`${API_URL}/api/reservas/eventos/${id}`, { method: "DELETE" });
+            if (res.ok) {
+                alert("🗑️ Evento eliminado correctamente.");
+                cargarEventosAdmin();
+            } else {
+                alert("No se pudo eliminar.");
+            }
+        } catch (err) {
+            alert("Error de conexión.");
         }
     }
 
@@ -836,7 +1322,7 @@
                 detalles.innerHTML = `
                     <b>Cliente:</b> ${data.detalles?.cliente_nombre || 'Cliente'} &nbsp;|&nbsp; <b>Cédula:</b> ${data.detalles?.cliente_cedula || 'S/C'}<br>
                     <b>Evento:</b> ${data.detalles?.evento_nombre || 'Salsoteca'}<br>
-                    <b>Tipo:</b> ${data.detalles?.tipo_reserva || 'Cover'} &nbsp;|&nbsp; <b>Pases:</b> ${data.detalles?.pases || 1}
+                    <b>Tipo:</b> ${data.detalles?.tipo_reserva || 'Cover'} &nbsp;|&nbsp; <b>Pases:</b> ${data.detalles?.pases || 1} &nbsp;|&nbsp; <b>Mesas:</b> ${data.detalles?.mesas || 0}
                 `;
 
                 historialAccesos.unshift({
@@ -844,14 +1330,9 @@
                     codigo: codigo,
                     cliente: data.detalles?.cliente_nombre || 'Cliente',
                     cedula: data.detalles?.cliente_cedula || 'S/C',
-                    whatsapp: data.detalles?.cliente_telefono || 'S/N',
+                    evento: data.detalles?.evento_nombre || 'Salsoteca',
                     estado: '✅ Permitido (AL)'
                 });
-
-                // Recargar listado si hay evento seleccionado
-                if (document.getElementById('checkin-select-evento').value) {
-                    cargarAsistentesPorEvento();
-                }
             } else {
                 resBox.className = "result-box error";
                 iconoEstado.innerText = '⚠️';
@@ -864,7 +1345,7 @@
                     codigo: codigo,
                     cliente: data.cliente || 'Desconocido',
                     cedula: 'N/A',
-                    whatsapp: 'N/N',
+                    evento: 'N/A',
                     estado: '❌ Denegado / Usado'
                 });
             }
@@ -897,128 +1378,37 @@
                 <td><code>${h.codigo}</code></td>
                 <td><b>${h.cliente}</b></td>
                 <td>${h.cedula}</td>
-                <td>📱 ${h.whatsapp}</td>
+                <td>${h.evento}</td>
                 <td><span class="status-pill ${h.estado.includes('Permitido') ? 'status-confirmed' : 'status-pending'}">${h.estado}</span></td>
             </tr>
         `).join('');
+
+        const permitidos = historialAccesos.filter(h => h.estado.includes('Permitido')).length;
+        document.getElementById('checkin-pases-usados').innerText = permitidos;
+        document.getElementById('checkin-total-pases').innerText = historialAccesos.length;
     }
 
-    async function cargarDashboardAdmin() {
+    async function crearZona(e) {
+        e.preventDefault();
+        const nombre = document.getElementById('zona-nombre').value;
+        const mesas = document.getElementById('zona-mesas').value;
+
+        const formData = new FormData();
+        formData.append("nombre_zona", nombre);
+        formData.append("cantidad_mesas", mesas);
+
         try {
-            let res = await fetch(`${API_URL}/api/admin/reservas/`);
+            let res = await fetch(`${API_URL}/api/admin/zonas/`, { method: "POST", body: formData });
             if (res.ok) {
-                cacheReservas = await res.json();
-                renderizarTablaReservas(cacheReservas);
-                actualizarMetricas(cacheReservas);
+                alert("✅ Zona y mesas registradas exitosamente.");
+                document.getElementById('form-crear-zona').reset();
+            } else {
+                alert("Error al registrar zona.");
             }
         } catch (err) {
-            console.error("Error al cargar reservas:", err);
+            alert("Error de conexión.");
         }
     }
-
-    function renderizarTablaReservas(reservas) {
-        const tbody = document.getElementById('tabla-reservas-body');
-        if (!tbody) return;
-
-        if (!reservas || reservas.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="8">No hay solicitudes de reserva recientes.</td></tr>`;
-            return;
-        }
-
-        tbody.innerHTML = reservas.map(r => {
-            let voucherUrl = '#';
-            if (r.comprobante_pago) {
-                voucherUrl = r.comprobante_pago.startsWith('http') ? r.comprobante_pago : `https://pub-3244093a45bd47d9a30548ef0924bb49.r2.dev/${r.comprobante_pago}`;
-            }
-
-            let estadoUpper = (r.estado || 'Por Aprobar').toUpperCase();
-            let accionesHtml = estadoUpper.includes('APROB') ? `
-                <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-                    <span style="color: #34d399; font-weight: bold; font-size: 11px;">✅ APROBADO</span>
-                    <button onclick="aprobarReservaYEnviarWhatsApp(${r.id})" style="background: #25d366; color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer;">📲 Reenviar QR</button>
-                </div>
-            ` : `
-                <div style="display: flex; gap: 6px; align-items: center;">
-                    <button onclick="aprobarReservaYEnviarWhatsApp(${r.id})" style="background: #34d399; color: #000; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer;">✔️ Aprobar</button>
-                    <button onclick="cambiarEstadoReserva(${r.id}, 'Rechazado')" style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer;">❌ Rechazar</button>
-                </div>
-            `;
-
-            return `
-            <tr>
-                <td><code style="cursor: pointer; color: #fbbf24;" onclick="verDetalleQrsReserva(${r.id})">${r.codigo || 'RES-' + (9000 + r.id)}</code></td>
-                <td><b>${r.cliente_nombre || 'Cliente'}</b><br><small class="text-muted">${r.cliente_telefono || ''}</small></td>
-                <td>${r.evento_nombre || 'Evento'}</td>
-                <td>👥 ${r.cantidad_personas || 0} pases<br>🍾 ${r.cantidad_mesas || 0} mesa(s)</td>
-                <td><b class="text-green">$${Number(r.monto_total || 0).toFixed(2)}</b></td>
-                <td>${r.comprobante_pago ? `<a href="#" onclick="verComprobante('${voucherUrl}')" class="link-voucher">📄 Ver Voucher</a>` : 'Sin Comprobante'}</td>
-                <td><span class="status-pill ${estadoUpper.includes('APROB') ? 'status-confirmed' : 'status-pending'}">${r.estado || 'Por Aprobar'}</span></td>
-                <td>${accionesHtml}</td>
-            </tr>
-            `;
-        }).join('');
-    }
-
-    async function aprobarReservaYEnviarWhatsApp(reservaId) {
-        if (!confirm("¿Estás seguro de aprobar esta reserva? Se generarán los códigos QR y se abrirá WhatsApp con el mensaje para el cliente.")) return;
-        try {
-            let response = await fetch(`${API_URL}/api/reservas/${reservaId}/aprobar`, { method: 'POST' });
-            let data = await response.json();
-            if (response.ok && data.exito) {
-                alert("✅ Reserva aprobada y códigos QR generados con éxito.");
-                if (data.whatsapp_url) window.open(data.whatsapp_url, '_blank');
-                cargarDashboardAdmin();
-            } else {
-                alert("Error al aprobar la reserva.");
-            }
-        } catch (error) { console.error(error); }
-    }
-
-    async function cambiarEstadoReserva(reservaId, nuevoEstado) {
-        if (!confirm(`¿Estás seguro de marcar esta reserva como ${nuevoEstado}?`)) return;
-        try {
-            let response = await fetch(`${API_URL}/api/reservas/${reservaId}/estado`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ estado: nuevoEstado })
-            });
-            if (response.ok) { cargarDashboardAdmin(); }
-        } catch (error) { console.error(error); }
-    }
-
-    async function verDetalleQrsReserva(reservaId) {
-        try {
-            let response = await fetch(`${API_URL}/api/reservas/${reservaId}/qrs`);
-            if (response.ok) {
-                let data = await response.json();
-                let contenedorHtml = `<div style="display: flex; flex-direction: column; gap: 10px;">`;
-                data.forEach((pase, index) => {
-                    let isAl = pase.estatus === 'AL';
-                    let badgeColor = isAl ? '#34d399' : '#fbbf24';
-                    contenedorHtml += `
-                        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(212,175,55,0.2); padding: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
-                            <div><strong style="color: #fbbf24;">Pase #${index + 1}</strong><div style="font-size: 11px; color: #aaa;">${pase.codigo_qr}</div></div>
-                            <span style="background: ${badgeColor}20; color: ${badgeColor}; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold;">${isAl ? '🟢 AL' : '🟡 PE'}</span>
-                        </div>
-                    `;
-                });
-                contenedorHtml += `</div>`;
-                document.getElementById('modal-body-qrs').innerHTML = contenedorHtml;
-                document.getElementById('modal-qrs-overlay').style.display = 'flex';
-            }
-        } catch (error) { console.error(error); }
-    }
-
-    function cerrarModalQrs() { document.getElementById('modal-qrs-overlay').style.display = 'none'; }
-    function actualizarMetricas(reservas) {
-        document.getElementById('val-reservas').innerText = reservas.length;
-        let totalIngresos = reservas.filter(r => (r.estado || '').toUpperCase().includes('APROB')).reduce((acc, r) => acc + Number(r.monto_total || 0), 0);
-        document.getElementById('val-ingresos').innerText = `$${totalIngresos.toFixed(2)}`;
-        let totalMesas = reservas.filter(r => (r.estado || '').toUpperCase().includes('APROB')).reduce((acc, r) => acc + Number(r.cantidad_mesas || 0), 0);
-        document.getElementById('val-mesas').innerText = totalMesas;
-    }
-    function verComprobante(url) { document.getElementById('img-comprobante-preview').src = url; document.getElementById('modal-comprobante').style.display = 'flex'; }
-    function cerrarModalComprobante() { document.getElementById('modal-comprobante').style.display = 'none'; }
     </script>
 </body>
 </html>
