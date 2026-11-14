@@ -24,6 +24,7 @@ async def crear_evento_y_reserva_personalizada(
     cantidad_personas: int = Form(1),
     cantidad_mesas: int = Form(0),
     monto_total: float = Form(0.0),
+    mostrar_en_cartelera: str = Form("true"), # Recibir estado de la casilla de cartelera
     file_flyer: UploadFile = File(None),
     file_comprobante: UploadFile = File(...),
     db: Session = Depends(get_db)
@@ -70,6 +71,10 @@ async def crear_evento_y_reserva_personalizada(
         if len(fecha_limpia) == 16: fecha_limpia += ":00"
         fecha_dt = datetime.strptime(fecha_limpia, "%Y-%m-%d %H:%M:%S")
 
+        # Evaluar si el usuario quiso mostrarlo en cartelera
+        bool_cartelera = str(mostrar_en_cartelera).lower() in ["true", "1", "yes", "on"]
+        estado_evento = "aprobado" if bool_cartelera else "programado"
+
         # 5. Registrar el Evento en la Cartelera de la Salsoteca
         nuevo_evento = Evento(
             local_id=local_id,
@@ -79,7 +84,7 @@ async def crear_evento_y_reserva_personalizada(
             fecha_hora=fecha_dt,
             descripcion=f"Evento personalizado creado por {cliente_nombre}. ¡Acompáñanos!",
             imagen=imagen_evento_nombre,
-            estado="programado",
+            estado=estado_evento, # Dinámico según la casilla
             precio_cover=10.00,
             precio_mesa=50.00
         )
@@ -99,7 +104,8 @@ async def crear_evento_y_reserva_personalizada(
             tipo_celebracion=tipo_celebracion,
             codigo_reserva=codigo_reserva,
             comprobante_pago=comprobante_nombre,
-            estado_reserva="Por Aprobar"
+            estado_reserva="Por Aprobar",
+            mostrar_en_cartelera=bool_cartelera
         )
         db.add(nueva_reserva)
         db.commit()

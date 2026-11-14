@@ -160,7 +160,26 @@
 
             <div class="section-card">
                 <h2>📈 Resumen de Actividad Reciente</h2>
-                <p class="text-muted">Utiliza el menú lateral izquierdo para navegar hacia la <b>Gestión de Reservas</b> donde podrás aprobar y rechazar solicitudes con envío automático de WhatsApp.</p>
+                <p class="section-description" style="margin-bottom: 15px;">Últimas transacciones y solicitudes registradas en el sistema.</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Cliente</th>
+                            <th>Evento / Paquete</th>
+                            <th>Detalle (Pases / Mesas)</th>
+                            <th>Total ($)</th>
+                            <th>Comprobante</th>
+                            <th>Estado</th>
+                            <th>Acción WhatsApp</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-dashboard-recientes-body">
+                        <tr>
+                            <td colspan="8">Cargando actividad reciente...</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
 
@@ -744,11 +763,62 @@
             if (res.ok) {
                 cacheReservas = await res.json();
                 renderizarTablaReservas(cacheReservas);
+                renderizarTablaDashboardRecientes(cacheReservas);
                 actualizarMetricas(cacheReservas);
             }
         } catch (err) {
             console.error("Error al cargar reservas:", err);
         }
+    }
+
+    function renderizarTablaDashboardRecientes(reservas) {
+        const tbody = document.getElementById('tabla-dashboard-recientes-body');
+        if (!tbody) return;
+
+        if (!reservas || reservas.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8">No hay actividad reciente registrada.</td></tr>`;
+            return;
+        }
+
+        const recientes = reservas.slice(0, 8);
+
+        tbody.innerHTML = recientes.map(r => {
+            let voucherUrl = '#';
+            if (r.comprobante_pago) {
+                voucherUrl = r.comprobante_pago.startsWith('http') 
+                    ? r.comprobante_pago 
+                    : `https://pub-3244093a45bd47d9a30548ef0924bb49.r2.dev/${r.comprobante_pago}`;
+            }
+
+            let estadoUpper = (r.estado || 'Por Aprobar').toUpperCase();
+            let accionBtn = '';
+
+            if (estadoUpper === 'APROBADO' || estadoUpper === 'APROBADA') {
+                accionBtn = `
+                    <button onclick="aprobarReservaYEnviarWhatsApp(${r.id})" 
+                            style="background: #25d366; color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer;">
+                        📲 Reenviar QR
+                    </button>
+                `;
+            } else {
+                accionBtn = `<span style="color: #fbbf24; font-size: 11px;">Pendiente en Gestión</span>`;
+            }
+
+            return `
+            <tr>
+                <td><code style="color: #fbbf24;">${r.codigo || 'RES-' + (9000 + r.id)}</code></td>
+                <td><b>${r.cliente_nombre || 'Cliente'}</b><br><small class="text-muted">${r.cliente_telefono || ''}</small></td>
+                <td>${r.evento_nombre || 'Evento'}</td>
+                <td>👥 ${r.cantidad_personas || 0} pases<br>🍾 ${r.cantidad_mesas || 0} mesa(s)</td>
+                <td><b class="text-green">$${Number(r.monto_total || 0).toFixed(2)}</b></td>
+                <td>
+                    ${r.comprobante_pago ? `<a href="#" onclick="verComprobante('${voucherUrl}')" class="link-voucher">📄 Ver Voucher</a>` : 'Sin Comprobante'}
+                </td>
+                <td><span class="status-pill ${estadoUpper.includes('APROB') ? 'status-confirmed' : 'status-pending'}">${r.estado || 'Por Aprobar'}</span></td>
+                <td>${accionBtn}</td>
+            </tr>
+            `;
+        }).join('');
     }
 
     function renderizarTablaReservas(reservas) {
@@ -813,8 +883,8 @@
         }).join('');
     }
 
-    async function aprobarReservaYEnviarWhatsApp(reservaId) {
-        if (!confirm("¿Estás seguro de aprobar esta reserva? Se generarán los códigos QR y se abrirá WhatsApp con el mensaje para el cliente.")) return;
+        async function aprobarReservaYEnviarWhatsApp(reservaId) {
+        if (!confirm("¿Estás seguro de aprobar esta reserva? Se generarán los códigos QR.")) return;
 
         try {
             let response = await fetch(`${API_URL}/api/reservas/${reservaId}/aprobar`, {
@@ -825,6 +895,7 @@
             if (response.ok && data.exito) {
                 alert("✅ Reserva aprobada y códigos QR generados con éxito.");
                 if (data.whatsapp_url) {
+                    // Abrir WhatsApp en una nueva pestaña
                     window.open(data.whatsapp_url, '_blank');
                 }
                 cargarDashboardAdmin();

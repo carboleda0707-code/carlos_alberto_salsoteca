@@ -21,7 +21,6 @@ router = APIRouter(prefix="/api", tags=["Reservas y Clientes"])
 @router.get("/clientes/buscar/{cedula}")
 def buscar_cliente_por_cedula(cedula: str, db: Session = Depends(get_db)):
     """Busca un cliente registrado por su cédula exacta para autocompletar el checkout"""
-    # Buscamos directamente en la columna cedula de la tabla usuarios_finales
     cliente = db.query(models.UsuarioFinal).filter(
         models.UsuarioFinal.cedula == cedula.strip()
     ).first()
@@ -67,13 +66,10 @@ async def crear_evento(
     file: UploadFile = File(None),
     db: Session = Depends(get_db)
 ):
-    """Crea un nuevo evento con tarifas y sube su flyer/póster directamente a Cloudflare R2"""
     imagen_nombre = None
-    
     if file and file.filename:
         file_extension = file.filename.split(".")[-1]
         imagen_nombre = f"evento_{uuid.uuid4()}.{file_extension}"
-        
         upload_file_to_r2(
             file_obj=file.file,
             filename=imagen_nombre,
@@ -115,7 +111,6 @@ async def actualizar_evento(
     file: UploadFile = File(None),
     db: Session = Depends(get_db)
 ):
-    """Actualiza los datos, tarifas y el flyer en Cloudflare R2 de un evento existente"""
     evento = db.query(models.Evento).filter(models.Evento.id == evento_id).first()
     if not evento:
         raise HTTPException(status_code=404, detail="Evento no encontrado")
@@ -134,7 +129,6 @@ async def actualizar_evento(
     if file and file.filename:
         file_extension = file.filename.split(".")[-1]
         imagen_nombre = f"evento_{uuid.uuid4()}.{file_extension}"
-        
         upload_file_to_r2(
             file_obj=file.file,
             filename=imagen_nombre,
@@ -148,11 +142,9 @@ async def actualizar_evento(
 
 @router.delete("/reservas/eventos/{evento_id}")
 def eliminar_evento(evento_id: int, db: Session = Depends(get_db)):
-    """Elimina un evento de la cartelera"""
     evento = db.query(models.Evento).filter(models.Evento.id == evento_id).first()
     if not evento:
         raise HTTPException(status_code=404, detail="Evento no encontrado")
-    
     db.delete(evento)
     db.commit()
     return {"mensaje": "Evento eliminado correctamente"}
@@ -173,7 +165,6 @@ async def checkout_carrito(
     comprobante: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
-    """Procesa el carrito de compras completo, registra al cliente, sube el comprobante a R2 y genera las reservas"""
     try:
         items = json.loads(items_json)
     except Exception as e:
@@ -182,7 +173,6 @@ async def checkout_carrito(
     if not items:
         raise HTTPException(status_code=400, detail="El carrito está vacío.")
 
-    # 1. Subir comprobante a R2
     file_extension = comprobante.filename.split(".")[-1]
     nombre_comprobante = f"comprobante_{uuid.uuid4()}.{file_extension}"
     upload_file_to_r2(
@@ -191,10 +181,11 @@ async def checkout_carrito(
         content_type=comprobante.content_type
     )
 
-    # 2. Gestionar Cliente (Búsqueda o Creación por Cédula / Teléfono)
     cliente = db.query(models.UsuarioFinal).filter(
         (models.UsuarioFinal.telefono == telefono) | (models.UsuarioFinal.email == email)
     ).first()
+
+    bool_cartelera = str(mostrar_en_cartelera).lower() in ["true", "1", "yes", "on"]
 
     if not cliente:
         cliente = models.UsuarioFinal(
@@ -207,13 +198,11 @@ async def checkout_carrito(
         db.commit()
         db.refresh(cliente)
     else:
-        # Actualizar datos por si cambió de nombre u otro detalle
         cliente.nombre = nombre
         cliente.telefono = telefono
         if email: cliente.email = email
         db.commit()
 
-    bool_cartelera = str(mostrar_en_cartelera).lower() in ["true", "1", "yes", "on"]
     reservas_creadas = []
 
     for item in items:
@@ -222,16 +211,15 @@ async def checkout_carrito(
         cant_mesas = item.get("cantidad_mesas", 0)
         subtotal = item.get("subtotal", 0.0)
         
-        # Si es un evento personalizado creado por el cliente
         if item.get("tipo") == "personalizado":
-            # Creamos el evento automáticamente en la BD
+            estado_ev = "aprobado" if bool_cartelera else "programado"
             nuevo_evento_pers = models.Evento(
                 local_id=1,
                 nombre_evento=item.get("nombre_evento", "Mi Rumba"),
                 artista_orquesta=item.get("tipo_celebracion", "Celebración"),
                 fecha_hora=item.get("fecha_hora", datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')),
                 descripcion=f"Evento personalizado de {nombre}",
-                estado="aprobado"
+                estado=estado_ev  # Sincronizado con cartelera
             )
             db.add(nuevo_evento_pers)
             db.commit()
@@ -266,12 +254,12 @@ async def checkout_carrito(
 
 
 # ==========================================
-# APROBACIÓN, QR INDIVIDUALES Y WHATSAPP WA.ME
+# APROBACIÓN, QR SEGUROS Y WHATSAPP WA.ME
 # ==========================================
 
 @router.post("/reservas/{reserva_id}/aprobar")
 def aprobar_reserva_y_generar_qrs(reserva_id: int, db: Session = Depends(get_db)):
-    """Aprueba la reserva, genera códigos QR individuales por cada pase (Estatus PE) y arma el enlace de WhatsApp"""
+    """Aprueba la reserva, genera códigos QR en base de datos y arma el enlace de WhatsApp SIN mostrar los textos QR por seguridad"""
     reserva = db.query(models.Reserva).filter(models.Reserva.id == reserva_id).first()
     if not reserva:
         raise HTTPException(status_code=404, detail="Reserva no encontrada.")
@@ -299,13 +287,12 @@ def aprobar_reserva_y_generar_qrs(reserva_id: int, db: Session = Depends(get_db)
     telefono_cliente = reserva.cliente.telefono if reserva.cliente and reserva.cliente.telefono else ""
     evento_nombre = reserva.evento.nombre_evento if getattr(reserva, "evento", None) else "Salsoteca Carlos Alberto"
 
-    lista_qrs_texto = "\n".join([f"🎟️ Pase #{i+1}: `{qr}`" for i, qr in enumerate(pases_generados)])
-
+    # MENSAJE DE WHATSAPP SEGURO (SIN EXPONER LOS CÓDIGOS QR EN EL TEXTO)
     mensaje_whatsapp = (
         f"🎉 ¡Hola *{cliente_nombre}*! Tu reserva en la *Salsoteca Carlos Alberto* "
-        f"para *{evento_nombre}* ({reserva.codigo_reserva}) ha sido *APROBADA*.\n\n"
-        f"Aquí tienes tus accesos QR individuales (Estatus: PE - Pendiente de Entrar) para presentarlos en puerta:\n"
-        f"{lista_qrs_texto}\n\n"
+        f"para *{evento_nombre}* (`{reserva.codigo_reserva}`) ha sido *APROBADA*.\n\n"
+        f"✅ Tienes *{len(pases_generados)} pases aprobados* y tu(s) mesa(s) aseguradas.\n"
+        f"📱 Tu ingreso en puerta será verificado con nuestros escáneres QR corporativos.\n\n"
         f"📍 ¡Te esperamos para vivir la mejor noche salsera en Guayaquil!"
     )
 
@@ -328,7 +315,6 @@ def aprobar_reserva_y_generar_qrs(reserva_id: int, db: Session = Depends(get_db)
 
 @router.get("/reservas/{reserva_id}/qrs")
 def obtener_qrs_reserva(reserva_id: int, db: Session = Depends(get_db)):
-    """Obtiene la lista de pases QR y sus estatus (PE / AL) para el modal de administración"""
     ingresos = db.query(models.IngresoPuerta).filter(models.IngresoPuerta.reserva_id == reserva_id).all()
     
     resultado = []
