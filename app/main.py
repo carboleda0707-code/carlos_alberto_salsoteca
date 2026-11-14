@@ -524,6 +524,7 @@ async def procesar_checkout_carrito(
     items_json: str = Form(...),
     mostrar_en_cartelera: str = Form("true"),
     comprobante: UploadFile = File(...),
+    file_flyer: Optional[UploadFile] = File(None), # <--- Recibir el flyer del cliente
     db: Session = Depends(get_db)
 ):
     try:
@@ -539,6 +540,17 @@ async def procesar_checkout_carrito(
             filename=file_name,
             content_type=comprobante.content_type
         )
+
+        # Si subió flyer personalizado, lo subimos a Cloudflare R2
+        imagen_evento_nombre = "evento_default.jpg"
+        if file_flyer and file_flyer.filename:
+            flyer_ext = Path(file_flyer.filename).suffix
+            imagen_evento_nombre = f"cliente_evento_{uuid.uuid4().hex[:8]}{flyer_ext}"
+            upload_file_to_r2(
+                file_obj=file_flyer.file,
+                filename=imagen_evento_nombre,
+                content_type=file_flyer.content_type
+            )
 
         cliente = db.query(UsuarioFinal).filter(UsuarioFinal.cedula == cedula).first()
         if not cliente:
@@ -562,10 +574,8 @@ async def procesar_checkout_carrito(
             monto_total_global += subtotal_item
             
             codigo_aleatorio = f"RES-{int(datetime.utcnow().timestamp())}-{os.urandom(2).hex()}"
-            
             evento_id_asignado = item.get("evento_id")
 
-            # Si el item es un evento personalizado creado por el cliente ("Crea Mi Rumba")
             if item.get("tipo") == "personalizado" or item.get("nombre_evento"):
                 nombre_ev = item.get("nombre_evento") or item.get("titulo") or "Celebración Especial"
                 tipo_cel = item.get("tipo_celebracion") or "Festejo"
@@ -578,7 +588,6 @@ async def procesar_checkout_carrito(
                 except:
                     fecha_dt = datetime.utcnow()
 
-                # Crear el evento automáticamente en la tabla eventos
                 nuevo_evento_personalizado = Evento(
                     local_id=1,
                     nombre_evento=nombre_ev,
@@ -586,7 +595,7 @@ async def procesar_checkout_carrito(
                     genero_musical="Celebración Privada",
                     fecha_hora=fecha_dt,
                     descripcion=f"Evento personalizado creado por {nombre} vía Crea Mi Rumba.",
-                    imagen="evento_default.jpg",
+                    imagen=imagen_evento_nombre, # <--- Imagen real subida a R2
                     estado="aprobado" if bool_cartelera else "programado",
                     precio_cover=10.00,
                     precio_mesa=50.00
@@ -594,7 +603,6 @@ async def procesar_checkout_carrito(
                 db.add(nuevo_evento_personalizado)
                 db.commit()
                 db.refresh(nuevo_evento_personalizado)
-                
                 evento_id_asignado = nuevo_evento_personalizado.id
 
             nueva_reserva = Reserva(
@@ -617,7 +625,7 @@ async def procesar_checkout_carrito(
 
         return {
             "success": True,
-            "mensaje": "¡Compra procesada con éxito! Tu evento ha sido guardado y las reservas se encuentran en estatus 'Por Aprobar'.",
+            "mensaje": "¡Compra procesada con éxito! Tu evento y flyer han sido guardados correctamente.",
             "total_items": len(items),
             "monto_total": monto_total_global,
             "comprobante": file_name

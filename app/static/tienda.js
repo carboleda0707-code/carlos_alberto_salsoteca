@@ -7,6 +7,7 @@ const API_URL = ""; // Relativo para consumir directamente FastAPI
 let listaBannersDinamicos = [];
 let sliderIndex = 0;
 let sliderTimeout = null;
+let archivoFlyerPersonalizadoGlobal = null; // Variable global para el flyer de Crea Mi Rumba
 
 const TIEMPO_TRANSICION_FADE = 600;
 
@@ -391,6 +392,11 @@ async function enviarCheckoutCarrito(event) {
     const mostrarEnCartelera = document.getElementById("mostrar_en_cartelera")?.checked ? "true" : "false";
     formData.append("mostrar_en_cartelera", mostrarEnCartelera);
 
+    // Adjuntar archivo del flyer personalizado si existe
+    if (archivoFlyerPersonalizadoGlobal) {
+        formData.append("file_flyer", archivoFlyerPersonalizadoGlobal);
+    }
+
     const archivoInput = document.getElementById("checkout-comprobante");
     if (archivoInput.files.length > 0) {
         formData.append("comprobante", archivoInput.files[0]);
@@ -410,6 +416,7 @@ async function enviarCheckoutCarrito(event) {
             alert(resultado.mensaje);
             localStorage.removeItem('salsoteca_carrito');
             carrito = [];
+            archivoFlyerPersonalizadoGlobal = null;
             actualizarBadgeCarrito();
             cerrarPanelCarrito();
             location.reload();
@@ -438,6 +445,10 @@ async function agregarEventoPersonalizadoAlCarrito(event) {
     if (!nombreEvento || !fechaHora) {
         alert("Por favor completa los campos obligatorios del evento.");
         return;
+    }
+
+    if (flyerFile) {
+        archivoFlyerPersonalizadoGlobal = flyerFile; // Guardamos el flyer en la variable global
     }
 
     const subtotal = (cantPersonas * PRECIO_COVER_PLANTILLA) + (cantMesas * PRECIO_MESA_PLANTILLA);

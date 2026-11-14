@@ -895,7 +895,7 @@
             if (response.ok && data.exito) {
                 alert("✅ Reserva aprobada y códigos QR generados con éxito.");
                 if (data.whatsapp_url) {
-                    // Abrir WhatsApp en una nueva pestaña
+                    // Abre automáticamente WhatsApp para enviar el mensaje con los links QR
                     window.open(data.whatsapp_url, '_blank');
                 }
                 cargarDashboardAdmin();
