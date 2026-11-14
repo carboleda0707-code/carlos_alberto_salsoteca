@@ -8,15 +8,15 @@ import traceback
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
-from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Form, Request
+from typing import Optional, List
+from pydantic import BaseModel
+from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Form, Request, Query
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from app.config import obtener_configuracion_local
-from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Form, Request, Query
 
 from app.database import engine, Base, get_db
 from app.models import Local, Evento, UsuarioFinal, Reserva, BannerSlider, Usuario, IngresoPuerta, PlantillaCelebracionBase
@@ -525,7 +525,7 @@ async def procesar_checkout_carrito(
     items_json: str = Form(...),
     mostrar_en_cartelera: str = Form("true"),
     comprobante: UploadFile = File(...),
-    file_flyer: Optional[UploadFile] = File(None), # <--- Captura el flyer enviado desde el frontend
+    file_flyer: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db)
 ):
     try:
@@ -533,7 +533,6 @@ async def procesar_checkout_carrito(
         if not items:
             raise HTTPException(status_code=400, detail="El carrito está vacío.")
 
-        # 1. Guardar comprobante de pago
         file_extension = Path(comprobante.filename).suffix
         file_name = f"comprobante_{cedula}_{uuid.uuid4().hex[:6]}{file_extension}"
         upload_file_to_r2(
@@ -542,7 +541,6 @@ async def procesar_checkout_carrito(
             content_type=comprobante.content_type
         )
 
-        # 2. Guardar el flyer personalizado si el cliente lo adjuntó
         imagen_evento_nombre = "evento_default.jpg"
         if file_flyer and file_flyer.filename:
             flyer_ext = Path(file_flyer.filename).suffix
@@ -577,7 +575,6 @@ async def procesar_checkout_carrito(
             codigo_aleatorio = f"RES-{int(datetime.utcnow().timestamp())}-{os.urandom(2).hex()}"
             evento_id_asignado = item.get("evento_id")
 
-            # Si el item es un evento personalizado creado por el cliente ("Crea Mi Rumba")
             if item.get("tipo") == "personalizado" or item.get("nombre_evento"):
                 nombre_ev = item.get("nombre_evento") or item.get("titulo") or "Celebración Especial"
                 tipo_cel = item.get("tipo_celebracion") or "Festejo"
@@ -597,7 +594,7 @@ async def procesar_checkout_carrito(
                     genero_musical="Celebración Privada",
                     fecha_hora=fecha_dt,
                     descripcion=f"Evento personalizado creado por {nombre} vía Crea Mi Rumba.",
-                    imagen=imagen_evento_nombre, # <--- Guarda el nombre real del archivo en R2
+                    imagen=imagen_evento_nombre,
                     estado="aprobado" if bool_cartelera else "programado",
                     precio_cover=10.00,
                     precio_mesa=50.00
@@ -637,6 +634,82 @@ async def procesar_checkout_carrito(
         db.rollback()
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error al procesar el checkout del carrito: {str(e)}")
+
+
+# ==========================================
+# ENDPOINTS DE CONTROL DE ACCESO Y PUERTA (FECHA, QR, APROBACIÓN MANUAL Y LOTE)
+# ==========================================
+@app.get("/api/admin/eventos-por-fecha")
+def listar_eventos_por_fecha(fecha: str = Query(...), local_id: int = 1, db: Session = Depends(get_db)):
+    """Filtra los eventos de la Salsoteca por una fecha específica (YYYY-MM-DD)"""
+    eventos = db.query(Evento).filter(
+        Evento.local_id == local_id,
+        Evento.estado != "plantilla_maestra"
+    ).all()
+    
+    eventos_filtrados = []
+    for ev in eventos:
+        if ev.fecha_hora and ev.fecha_hora.strftime("%Y-%m-%d") == fecha:
+            eventos_filtrados.append({
+                "id": ev.id,
+                "nombre_evento": ev.nombre_evento,
+                "artista_orquesta": ev.artista_orquesta,
+                "fecha_hora": ev.fecha_hora.strftime("%Y-%m-%d %H:%M")
+            })
+    return eventos_filtrados
+
+@app.get("/api/admin/eventos/{evento_id}/pases-puerta")
+def obtener_pases_evento_puerta(evento_id: int, db: Session = Depends(get_db)):
+    """Obtiene todas las reservas y sus pases QR individuales para un evento específico"""
+    reservas = db.query(Reserva).filter(Reserva.evento_id == evento_id).all()
+    resultado = []
+    
+    for r in reservas:
+        ingresos = db.query(IngresoPuerta).filter(IngresoPuerta.reserva_id == r.id).all()
+        cliente = r.cliente
+        for ing in ingresos:
+            resultado.append({
+                "reserva_id": r.id,
+                "codigo_reserva": r.codigo_reserva,
+                "cliente_nombre": cliente.nombre if cliente else "Cliente",
+                "cedula": cliente.cedula if cliente else "N/A",
+                "token_qr": ing.codigo_qr,
+                "estado_ingreso": ing.estado_ingreso, # PE o AL
+                "qr_img": f"https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={ing.codigo_qr}"
+            })
+    return resultado
+
+@app.post("/api/admin/ingresos/{token_qr}/aprobar-manual")
+def aprobar_ingreso_manual(token_qr: str, db: Session = Depends(get_db)):
+    """Aprueba/Valida manualmente el acceso de un QR específico desde la puerta"""
+    ingreso = db.query(IngresoPuerta).filter(IngresoPuerta.codigo_qr == token_qr).first()
+    if not ingreso:
+        raise HTTPException(status_code=404, detail="Pase QR no encontrado")
+    
+    ingreso.estado_ingreso = "AL" # Acceso Liberado / Ingresado
+    ingreso.fecha_ingreso = datetime.utcnow()
+    db.commit()
+    return {"exito": True, "mensaje": f"Pase {token_qr} validado y aprobado con éxito en puerta."}
+
+class LoteAprobacionRequest(BaseModel):
+    tokens: List[str]
+
+@app.post("/api/admin/ingresos/aprobar-lote")
+def aprobar_ingreso_lote(data: LoteAprobacionRequest, db: Session = Depends(get_db)):
+    """Aprueba de forma masiva un lote de pases QR seleccionados mediante checkboxes en puerta"""
+    if not data.tokens:
+        raise HTTPException(status_code=400, detail="No se seleccionó ningún pase.")
+    
+    actualizados = 0
+    for token in data.tokens:
+        ingreso = db.query(IngresoPuerta).filter(IngresoPuerta.codigo_qr == token).first()
+        if ingreso and ingreso.estado_ingreso != "AL":
+            ingreso.estado_ingreso = "AL"
+            ingreso.fecha_ingreso = datetime.utcnow()
+            actualizados += 1
+            
+    db.commit()
+    return {"exito": True, "mensaje": f"Se aprobaron {actualizados} pases correctamente en puerta."}
 
 
 # ==========================================
@@ -818,17 +891,14 @@ def actualizar_estado_reserva(
 
 @app.get("/api/reservas/{reserva_id}/qrs")
 def obtener_qrs_reserva(reserva_id: int, db: Session = Depends(get_db)):
-    """Endpoint para que el panel de administración consulte los pases de una reserva y sus estatus (PE / AL)"""
     ingresos = db.query(IngresoPuerta).filter(IngresoPuerta.reserva_id == reserva_id).all()
-    
     resultado = []
     for ing in ingresos:
         resultado.append({
             "codigo_qr": ing.codigo_qr,
-            "estatus": ing.estado_ingreso,  # "PE" o "AL"
+            "estatus": ing.estado_ingreso,
             "fecha_ingreso": ing.fecha_ingreso.strftime('%Y-%m-%d %H:%M:%S') if ing.fecha_ingreso else None
         })
-        
     return resultado
     
 @app.delete("/api/admin/locales/{local_id}")
@@ -842,60 +912,4 @@ def eliminar_local(local_id: int, db: Session = Depends(get_db)):
 
 @app.get("/api/config/footer")
 def obtener_config_footer():
-    """Retorna los datos institucionales y de contacto para el pie de página desde config.py"""
     return obtener_configuracion_local()
-
-# ==========================================
-# ENDPOINTS DE CONTROL DE ACCESO Y PUERTA (FECHA, QR, APROBACIÓN MANUAL)
-# ==========================================
-@app.get("/api/admin/eventos-por-fecha")
-def listar_eventos_por_fecha(fecha: str = Query(...), local_id: int = 1, db: Session = Depends(get_db)):
-    """Filtra los eventos de la Salsoteca por una fecha específica (YYYY-MM-DD)"""
-    eventos = db.query(Evento).filter(
-        Evento.local_id == local_id,
-        Evento.estado != "plantilla_maestra"
-    ).all()
-    
-    eventos_filtrados = []
-    for ev in eventos:
-        if ev.fecha_hora and ev.fecha_hora.strftime("%Y-%m-%d") == fecha:
-            eventos_filtrados.append({
-                "id": ev.id,
-                "nombre_evento": ev.nombre_evento,
-                "artista_orquesta": ev.artista_orquesta,
-                "fecha_hora": ev.fecha_hora.strftime("%Y-%m-%d %H:%M")
-            })
-    return eventos_filtrados
-
-@app.get("/api/admin/eventos/{evento_id}/pases-puerta")
-def obtener_pases_evento_puerta(evento_id: int, db: Session = Depends(get_db)):
-    """Obtiene todas las reservas y sus pases QR individuales para un evento específico"""
-    reservas = db.query(Reserva).filter(Reserva.evento_id == evento_id).all()
-    resultado = []
-    
-    for r in reservas:
-        ingresos = db.query(IngresoPuerta).filter(IngresoPuerta.reserva_id == r.id).all()
-        cliente = r.cliente
-        for ing in ingresos:
-            resultado.append({
-                "reserva_id": r.id,
-                "codigo_reserva": r.codigo_reserva,
-                "cliente_nombre": cliente.nombre if cliente else "Cliente",
-                "cedula": cliente.cedula if cliente else "N/A",
-                "token_qr": ing.codigo_qr,
-                "estado_ingreso": ing.estado_ingreso, # PE o AL
-                "qr_img": f"https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={ing.codigo_qr}"
-            })
-    return resultado
-
-@app.post("/api/admin/ingresos/{token_qr}/aprobar-manual")
-def aprobar_ingreso_manual(token_qr: str, db: Session = Depends(get_db)):
-    """Aprueba/Valida manualmente el acceso de un QR específico desde la puerta"""
-    ingreso = db.query(IngresoPuerta).filter(IngresoPuerta.codigo_qr == token_qr).first()
-    if not ingreso:
-        raise HTTPException(status_code=404, detail="Pase QR no encontrado")
-    
-    ingreso.estado_ingreso = "AL" # Acceso Liberado / Ingresado
-    ingreso.fecha_ingreso = datetime.utcnow()
-    db.commit()
-    return {"exito": True, "mensaje": f"Pase {token_qr} validado y aprobado con éxito en puerta."}
