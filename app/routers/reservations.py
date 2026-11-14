@@ -20,17 +20,17 @@ router = APIRouter(prefix="/api", tags=["Reservas y Clientes"])
 
 @router.get("/clientes/buscar/{cedula}")
 def buscar_cliente_por_cedula(cedula: str, db: Session = Depends(get_db)):
-    """Busca un cliente registrado por su cédula o RUC para autocompletar el checkout"""
-    # Buscamos en la tabla UsuarioFinal usando telefono o cédula (según tu modelo de base de datos)
+    """Busca un cliente registrado por su cédula exacta para autocompletar el checkout"""
+    # Buscamos directamente en la columna cedula de la tabla usuarios_finales
     cliente = db.query(models.UsuarioFinal).filter(
-        (models.UsuarioFinal.telefono == cedula) | (models.UsuarioFinal.email.like(f"%{cedula}%"))
+        models.UsuarioFinal.cedula == cedula.strip()
     ).first()
     
     if cliente:
         return {
             "encontrado": True,
             "nombre": cliente.nombre,
-            "telefono": cliente.telefono,
+            "telefono": getattr(cliente, 'telefono', ''),
             "email": cliente.email,
             "mensaje": "¡Cliente encontrado!"
         }

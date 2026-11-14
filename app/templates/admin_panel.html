@@ -71,6 +71,7 @@
             white-space: nowrap;
             overflow: hidden;
             transition: 0.2s;
+            cursor: pointer;
         }
 
         aside.collapsed nav a {
@@ -115,7 +116,7 @@
             <a onclick="verPestana('eventos-config')" id="nav-eventos-config">
                 <span>📅</span> <span class="nav-text">Cartelera de Eventos</span>
             </a>
-            <a onclick="verPestana('dashboard')" id="nav-reservas">
+            <a onclick="verPestana('reservas-gestion')" id="nav-reservas">
                 <span>📋</span> <span class="nav-text">Gestión de Reservas</span>
             </a>
             <a onclick="verPestana('checkin-config')" id="nav-checkin">
@@ -136,7 +137,7 @@
             </div>
         </header>
 
-        <!-- DASHBOARD & AUDITORÍA DE RESERVAS -->
+        <!-- PESTAÑA: RESUMEN Y DASHBOARD -->
         <div id="vista-dashboard" class="tab-content active">
             <div class="metrics-grid">
                 <div class="metric-card">
@@ -158,7 +159,16 @@
             </div>
 
             <div class="section-card">
-                <h2>📋 Solicitudes de Reservas Recientes (Auditoría de Pagos)</h2>
+                <h2>📈 Resumen de Actividad Reciente</h2>
+                <p class="text-muted">Utiliza el menú lateral izquierdo para navegar hacia la <b>Gestión de Reservas</b> donde podrás aprobar y rechazar solicitudes con envío automático de WhatsApp.</p>
+            </div>
+        </div>
+
+        <!-- PESTAÑA: GESTIÓN DE RESERVAS (CONTROL Y APROBACIÓN CON WA.ME) -->
+        <div id="vista-reservas-gestion" class="tab-content">
+            <div class="section-card">
+                <h2>📋 Control y Auditoría de Reservas (Aprobar / Rechazar)</h2>
+                <p class="section-description" style="margin-bottom: 15px;">Revisa los comprobantes de pago adjuntos, aprueba las solicitudes para generar sus códigos QR y disparar el mensaje de WhatsApp al instante, o rechaza las que no cumplan con el pago.</p>
                 <table>
                     <thead>
                         <tr>
@@ -169,7 +179,7 @@
                             <th>Total ($)</th>
                             <th>Comprobante</th>
                             <th>Estado</th>
-                            <th>Acciones</th>
+                            <th>Acciones en Puerta / WhatsApp</th>
                         </tr>
                     </thead>
                     <tbody id="tabla-reservas-body">
@@ -633,6 +643,11 @@
             document.getElementById('nav-dashboard').classList.add('active');
             document.getElementById('titulo-panel').innerText = 'Panel General de Administración';
             cargarDashboardAdmin();
+        } else if(tab === 'reservas-gestion') {
+            document.getElementById('vista-reservas-gestion').classList.add('active');
+            document.getElementById('nav-reservas').classList.add('active');
+            document.getElementById('titulo-panel').innerText = 'Gestión y Control de Reservas';
+            cargarDashboardAdmin();
         } else if(tab === 'locales-config') {
             document.getElementById('vista-locales-config').classList.add('active');
             document.getElementById('nav-locales-config').classList.add('active');
@@ -758,14 +773,26 @@
 
             if (estadoUpper === 'APROBADO' || estadoUpper === 'APROBADA') {
                 accionesHtml = `
-                    <button onclick="reenviarWhatsAppQR(${r.id})" 
-                            style="background: #25d366; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;">
-                        📲 Reenviar QR
-                    </button>
+                    <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                        <span style="color: #34d399; font-weight: bold; font-size: 11px;">✅ APROBADO</span>
+                        <button onclick="aprobarReservaYEnviarWhatsApp(${r.id})" 
+                                style="background: #25d366; color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer;">
+                            📲 Reenviar QR
+                        </button>
+                    </div>
                 `;
             } else {
                 accionesHtml = `
-                    <span class="text-muted" style="font-size: 11px;">Gestionar en Módulo</span>
+                    <div style="display: flex; gap: 6px; align-items: center;">
+                        <button onclick="aprobarReservaYEnviarWhatsApp(${r.id})" 
+                                style="background: #34d399; color: #000; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer;">
+                            ✔️ Aprobar
+                        </button>
+                        <button onclick="cambiarEstadoReserva(${r.id}, 'Rechazado')" 
+                                style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer;">
+                            ❌ Rechazar
+                        </button>
+                    </div>
                 `;
             }
 
@@ -779,28 +806,56 @@
                 <td>
                     ${r.comprobante_pago ? `<a href="#" onclick="verComprobante('${voucherUrl}')" class="link-voucher">📄 Ver Voucher</a>` : 'Sin Comprobante'}
                 </td>
-                <td><span class="status-pill status-pending">${r.estado || 'Por Aprobar'}</span></td>
+                <td><span class="status-pill ${estadoUpper.includes('APROB') ? 'status-confirmed' : 'status-pending'}">${r.estado || 'Por Aprobar'}</span></td>
                 <td>${accionesHtml}</td>
             </tr>
             `;
         }).join('');
     }
 
-    async function reenviarWhatsAppQR(reservaId) {
+    async function aprobarReservaYEnviarWhatsApp(reservaId) {
+        if (!confirm("¿Estás seguro de aprobar esta reserva? Se generarán los códigos QR y se abrirá WhatsApp con el mensaje para el cliente.")) return;
+
         try {
             let response = await fetch(`${API_URL}/api/reservas/${reservaId}/aprobar`, {
                 method: 'POST'
             });
             let data = await response.json();
             
-            if (data.exito && data.whatsapp_url) {
-                window.open(data.whatsapp_url, '_blank');
+            if (response.ok && data.exito) {
+                alert("✅ Reserva aprobada y códigos QR generados con éxito.");
+                if (data.whatsapp_url) {
+                    window.open(data.whatsapp_url, '_blank');
+                }
+                cargarDashboardAdmin();
             } else {
-                alert("⚠️ No se pudo generar el enlace de WhatsApp.");
+                alert("Error al aprobar la reserva: " + (data.detail || "Error desconocido"));
             }
         } catch (error) {
-            console.error("Error al reenviar QR:", error);
+            console.error("Error al aprobar reserva:", error);
             alert("Ocurrió un error al conectar con el servidor.");
+        }
+    }
+
+    async function cambiarEstadoReserva(reservaId, nuevoEstado) {
+        if (!confirm(`¿Estás seguro de marcar esta reserva como ${nuevoEstado}?`)) return;
+
+        try {
+            let response = await fetch(`${API_URL}/api/reservas/${reservaId}/estado`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ estado: nuevoEstado })
+            });
+
+            if (response.ok) {
+                alert(`Reserva actualizada a estado: ${nuevoEstado}`);
+                cargarDashboardAdmin();
+            } else {
+                alert("No se pudo actualizar el estado de la reserva.");
+            }
+        } catch (error) {
+            console.error("Error al cambiar estado:", error);
+            alert("Error de conexión.");
         }
     }
 
@@ -812,7 +867,7 @@
                 
                 let contenedorHtml = `<div style="display: flex; flex-direction: column; gap: 10px;">`;
                 if (!data || data.length === 0) {
-                    contenedorHtml += `<p style="text-align: center; color: #aaa;">No hay códigos QR generados todavía. (Aprueba la reserva en Gestión de Reservas primero).</p>`;
+                    contenedorHtml += `<p style="text-align: center; color: #aaa;">No hay códigos QR generados todavía. (Aprueba la reserva primero).</p>`;
                 } else {
                     data.forEach((pase, index) => {
                         let isAl = pase.estatus === 'AL';
@@ -854,9 +909,9 @@
 
     function actualizarMetricas(reservas) {
         document.getElementById('val-reservas').innerText = reservas.length;
-        let totalIngresos = reservas.filter(r => r.estado === 'APROBADO' || r.estado === 'Aprobado').reduce((acc, r) => acc + Number(r.monto_total || 0), 0);
+        let totalIngresos = reservas.filter(r => (r.estado || '').toUpperCase() === 'APROBADO' || (r.estado || '').toUpperCase() === 'APROBADA').reduce((acc, r) => acc + Number(r.monto_total || 0), 0);
         document.getElementById('val-ingresos').innerText = `$${totalIngresos.toFixed(2)}`;
-        let totalMesas = reservas.filter(r => r.estado === 'APROBADO' || r.estado === 'Aprobado').reduce((acc, r) => acc + Number(r.cantidad_mesas || 0), 0);
+        let totalMesas = reservas.filter(r => (r.estado || '').toUpperCase() === 'APROBADO' || (r.estado || '').toUpperCase() === 'APROBADA').reduce((acc, r) => acc + Number(r.cantidad_mesas || 0), 0);
         document.getElementById('val-mesas').innerText = totalMesas;
     }
 
