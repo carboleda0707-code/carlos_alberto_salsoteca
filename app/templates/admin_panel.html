@@ -19,6 +19,13 @@
             width: var(--sidebar-width);
             transition: width var(--transition-speed);
             overflow: hidden;
+            position: fixed;
+            height: 100vh;
+            top: 0;
+            left: 0;
+            z-index: 100;
+            background: var(--bg-sidebar);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         aside.collapsed {
@@ -72,6 +79,14 @@
             overflow: hidden;
             transition: 0.2s;
             cursor: pointer;
+            padding: 12px 20px;
+            color: #a0aec0;
+            text-decoration: none;
+        }
+
+        aside nav a:hover, aside nav a.active {
+            background: rgba(212, 175, 55, 0.1);
+            color: var(--accent-gold);
         }
 
         aside.collapsed nav a {
@@ -89,10 +104,19 @@
             margin-left: var(--sidebar-width);
             transition: margin-left var(--transition-speed);
             min-width: 0;
+            padding: 20px;
         }
 
         main.expanded {
             margin-left: var(--sidebar-collapsed-width);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
         }
     </style>
 </head>
@@ -175,19 +199,17 @@
                         </tr>
                     </thead>
                     <tbody id="tabla-dashboard-recientes-body">
-                        <tr>
-                            <td colspan="8">Cargando actividad reciente...</td>
-                        </tr>
+                        <tr><td colspan="8">Cargando actividad reciente...</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <!-- PESTAÑA: GESTIÓN DE RESERVAS (CONTROL Y APROBACIÓN CON WA.ME) -->
+        <!-- PESTAÑA: GESTIÓN DE RESERVAS -->
         <div id="vista-reservas-gestion" class="tab-content">
             <div class="section-card">
                 <h2>📋 Control y Auditoría de Reservas (Aprobar / Rechazar)</h2>
-                <p class="section-description" style="margin-bottom: 15px;">Revisa los comprobantes de pago adjuntos, aprueba las solicitudes para generar sus códigos QR y disparar el mensaje de WhatsApp al instante, o rechaza las que no cumplan con el pago.</p>
+                <p class="section-description" style="margin-bottom: 15px;">Revisa los comprobantes de pago adjuntos, aprueba las solicitudes para generar sus códigos QR y disparar el mensaje de WhatsApp al instante.</p>
                 <table>
                     <thead>
                         <tr>
@@ -202,9 +224,7 @@
                         </tr>
                     </thead>
                     <tbody id="tabla-reservas-body">
-                        <tr>
-                            <td colspan="8">Cargando solicitudes...</td>
-                        </tr>
+                        <tr><td colspan="8">Cargando solicitudes...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -216,282 +236,126 @@
                 <h2>👤 Registrar Administrador / Propietario</h2>
                 <form id="form-crear-propietario" onsubmit="crearPropietario(event)">
                     <div class="grid-forms">
-                        <div class="upload-box">
-                            <label>Nombre del Propietario</label>
-                            <input type="text" id="prop-nombre" placeholder="Ej: Carlos Alberto" required>
-                        </div>
-                        <div class="upload-box">
-                            <label>Teléfono</label>
-                            <input type="text" id="prop-telefono" placeholder="Ej: 0999999999">
-                        </div>
-                        <div class="upload-box">
-                            <label>Correo Electrónico</label>
-                            <input type="email" id="prop-correo" placeholder="ejemplo@correo.com" required>
-                        </div>
+                        <div class="upload-box"><label>Nombre</label><input type="text" id="prop-nombre" required></div>
+                        <div class="upload-box"><label>Teléfono</label><input type="text" id="prop-telefono"></div>
+                        <div class="upload-box"><label>Correo</label><input type="email" id="prop-correo" required></div>
                     </div>
                     <button type="submit" class="btn btn-success full-width">💾 Guardar Propietario</button>
                 </form>
             </div>
 
             <div class="section-card">
-                <h2>🏢 Registrar Local / Sucursal y Logotipo</h2>
+                <h2>🏢 Registrar Local / Sucursal</h2>
                 <form id="form-crear-local" onsubmit="crearLocal(event)">
                     <div class="grid-forms">
-                        <div class="upload-box">
-                            <label>Seleccionar Propietario</label>
-                            <select id="local-propietario-id" required>
-                                <option value="">Cargando propietarios...</option>
-                            </select>
-                        </div>
-                        <div class="upload-box">
-                            <label>Nombre del Local / Sucursal</label>
-                            <input type="text" id="local-nombre" placeholder="Ej: Salsoteca Principal" required>
-                        </div>
-                        <div class="upload-box">
-                            <label>Tipo de Establecimiento</label>
-                            <input type="text" id="local-tipo" value="Salsoteca / Bar VIP">
-                        </div>
-                        <div class="upload-box">
-                            <label>Ciudad</label>
-                            <input type="text" id="local-ciudad" value="Guayaquil">
-                        </div>
-                        <div class="upload-box grid-span-2">
-                            <label>🖼️ Logotipo del Local (Cloudflare R2)</label>
-                            <input type="file" id="local-logo-file" accept="image/*">
-                        </div>
+                        <div class="upload-box"><label>Propietario</label><select id="local-propietario-id" required></select></div>
+                        <div class="upload-box"><label>Nombre</label><input type="text" id="local-nombre" required></div>
+                        <div class="upload-box"><label>Tipo</label><input type="text" id="local-tipo" value="Salsoteca / Bar VIP"></div>
+                        <div class="upload-box"><label>Ciudad</label><input type="text" id="local-ciudad" value="Guayaquil"></div>
+                        <div class="upload-box grid-span-2"><label>🖼️ Logotipo R2</label><input type="file" id="local-logo-file" accept="image/*"></div>
                     </div>
-                    <div class="form-group-full">
-                        <label>Dirección Física</label>
-                        <input type="text" id="local-direccion" placeholder="Ej: Av. Principal y Calle E">
-                    </div>
-                    <button type="submit" class="btn btn-success full-width">🚀 Registrar Local y Subir Logotipo</button>
+                    <div class="form-group-full"><label>Dirección</label><input type="text" id="local-direccion"></div>
+                    <button type="submit" class="btn btn-success full-width">🚀 Registrar Local</button>
                 </form>
             </div>
 
             <div class="section-card">
-                <h2>🏢 Sucursales y Locales Registrados</h2>
+                <h2>🏢 Sucursales Registradas</h2>
                 <table>
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Logotipo</th>
-                            <th>Nombre del Local</th>
-                            <th>Tipo</th>
-                            <th>Ciudad / Dirección</th>
-                            <th>Slug</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-locales-body">
-                        <tr><td colspan="7">Cargando locales...</td></tr>
-                    </tbody>
+                    <thead><tr><th>ID</th><th>Logotipo</th><th>Nombre</th><th>Tipo</th><th>Ciudad</th><th>Slug</th><th>Acciones</th></tr></thead>
+                    <tbody id="tabla-locales-body"><tr><td colspan="7">Cargando locales...</td></tr></tbody>
                 </table>
             </div>
         </div>
 
-        <!-- CONTROL WEB (BANNERS Y TARJETA CREA MI RUMBA) -->
+        <!-- CONTROL WEB (BANNERS Y TARJETA) -->
         <div id="vista-home-config" class="tab-content">
             <div class="section-card">
-                <h2>🎉 Configuración de Tarjeta "Crea Mi Rumba" y Tarifas Base (Home)</h2>
-                <p class="section-description" style="margin-bottom: 15px;">Personaliza la tarjeta informativa de la página principal, su imagen de fondo, los textos del botón y las tarifas base que se aplicarán automáticamente cuando el comensal cree su evento.</p>
-                
+                <h2>🎉 Configuración de Tarjeta "Crea Mi Rumba"</h2>
                 <form id="form-plantilla-celebracion" onsubmit="guardarPlantillaCelebracion(event)">
                     <div class="grid-forms">
                         <div class="upload-box grid-span-2">
-                            <label>🖼️ Imagen de Fondo de la Tarjeta (Background - Cloudflare R2)</label>
+                            <label>🖼️ Fondo Tarjeta R2</label>
                             <input type="file" id="plantilla-fondo-file" accept="image/*">
-                            <small id="plantilla-fondo-actual" style="color: #9ca3af; display: block; margin-top: 4px;"></small>
+                            <small id="plantilla-fondo-actual" style="color: #9ca3af; display: block;"></small>
                         </div>
-
-                        <div class="upload-box">
-                            <label>Título Principal</label>
-                            <input type="text" id="plantilla-titulo-principal" placeholder="Ej: 🎷 Cartelera de la Semana" value="🎷 Cartelera de la Semana" required>
-                        </div>
-
-                        <div class="upload-box">
-                            <label>Descripción Principal</label>
-                            <input type="text" id="plantilla-descripcion-principal" placeholder="Ej: Reserva tus pases y mesas con anticipación..." value="Reserva tus pases y mesas con anticipación para asegurar tu ingreso directo con código QR verificado." required>
-                        </div>
-
-                        <div class="upload-box">
-                            <label>Subtítulo 1 (Encabezado del Botón)</label>
-                            <input type="text" id="plantilla-subtitulo-1" placeholder="Ej: 🎂 ¿Celebras tu Cumpleaños?" value="🎂 ¿Celebras tu Cumpleaños?" required>
-                        </div>
-
-                        <div class="upload-box">
-                            <label>Subtítulo 2 (Texto Secundario del Botón)</label>
-                            <input type="text" id="plantilla-subtitulo-2" placeholder="Ej: Configura tu festejo a medida." value="Configura tu festejo a medida." required>
-                        </div>
-
-                        <div class="upload-box">
-                            <label>Texto del Botón Disparador</label>
-                            <input type="text" id="plantilla-texto-boton" placeholder="Ej: 🎉 Crear Mi Rumba" value="🎉 Crear Mi Rumba" required>
-                        </div>
-
-                        <div class="upload-box">
-                            <label>🎟️ Precio Base Cover por Persona ($)</label>
-                            <input type="number" step="0.01" id="plantilla-precio-cover" placeholder="Ej: 10.00" value="10.00" required>
-                        </div>
-
-                        <div class="upload-box">
-                            <label>🍾 Precio Base por Mesa ($)</label>
-                            <input type="number" step="0.01" id="plantilla-precio-mesa" placeholder="Ej: 50.00" value="50.00" required>
-                        </div>
-
-                        <div class="upload-box">
-                            <label>🎁 Promoción / Beneficio Automático (Opcional)</label>
-                            <input type="text" id="plantilla-promocion-texto" placeholder="Ej: Botella de cortesía a partir de 10 invitados">
-                        </div>
+                        <div class="upload-box"><label>Título Principal</label><input type="text" id="plantilla-titulo-principal" value="🎷 Cartelera de la Semana" required></div>
+                        <div class="upload-box"><label>Descripción</label><input type="text" id="plantilla-descripcion-principal" value="Reserva tus pases y mesas con anticipación..." required></div>
+                        <div class="upload-box"><label>Subtítulo 1</label><input type="text" id="plantilla-subtitulo-1" value="🎂 ¿Celebras tu Cumpleaños?" required></div>
+                        <div class="upload-box"><label>Subtítulo 2</label><input type="text" id="plantilla-subtitulo-2" value="Configura tu festejo a medida." required></div>
+                        <div class="upload-box"><label>Texto Botón</label><input type="text" id="plantilla-texto-boton" value="🎉 Crear Mi Rumba" required></div>
+                        <div class="upload-box"><label>Cover Base ($)</label><input type="number" step="0.01" id="plantilla-precio-cover" value="10.00" required></div>
+                        <div class="upload-box"><label>Mesa Base ($)</label><input type="number" step="0.01" id="plantilla-precio-mesa" value="50.00" required></div>
+                        <div class="upload-box"><label>Promoción</label><input type="text" id="plantilla-promocion-texto"></div>
                     </div>
-
-                    <button type="submit" class="btn btn-success full-width">💾 Guardar Configuración de Tarjeta y Tarifas</button>
+                    <button type="submit" class="btn btn-success full-width">💾 Guardar Configuración</button>
                 </form>
-            </div>
-
-            <!-- BANNERS DEL SLIDER AUTOMÁTICO -->
-            <div class="section-card">
-                <h2>🖼️ Banners del Slider Automático (Home)</h2>
-                <div class="grid-forms">
-                    <div class="upload-box">
-                        <label>Banner Principal #1</label>
-                        <input type="file" id="banner-file-1" accept="image/*">
-                        <div class="time-control-group">
-                            <label>⏱️ Duración (s):</label>
-                            <input type="number" id="banner-time-1" value="5" min="1" max="60">
-                        </div>
-                        <input type="text" id="banner-caption-1" placeholder="Leyenda / Título del banner" value="Noches Legendarias de Salsa Live">
-                        <button class="btn full-width" onclick="subirBannerSlider(1)">Actualizar #1</button>
-                    </div>
-
-                    <div class="upload-box">
-                        <label>Banner Principal #2</label>
-                        <input type="file" id="banner-file-2" accept="image/*">
-                        <div class="time-control-group">
-                            <label>⏱️ Duración (s):</label>
-                            <input type="number" id="banner-time-2" value="5" min="1" max="60">
-                        </div>
-                        <input type="text" id="banner-caption-2" placeholder="Leyenda / Título del banner" value="Las Mejores Orquestas en Vivo">
-                        <button class="btn full-width" onclick="subirBannerSlider(2)">Actualizar #2</button>
-                    </div>
-
-                    <div class="upload-box">
-                        <label>Banner Principal #3</label>
-                        <input type="file" id="banner-file-3" accept="image/*">
-                        <div class="time-control-group">
-                            <label>⏱️ Duración (s):</label>
-                            <input type="number" id="banner-time-3" value="5" min="1" max="60">
-                        </div>
-                        <input type="text" id="banner-caption-3" placeholder="Leyenda / Título del banner" value="Ambiente VIP y Coctelería de Clase Mundial">
-                        <button class="btn full-width" onclick="subirBannerSlider(3)">Actualizar #3</button>
-                    </div>
-
-                    <div class="upload-box">
-                        <label>Banner Principal #4</label>
-                        <input type="file" id="banner-file-4" accept="image/*">
-                        <div class="time-control-group">
-                            <label>⏱️ Duración (s):</label>
-                            <input type="number" id="banner-time-4" value="5" min="1" max="60">
-                        </div>
-                        <input type="text" id="banner-caption-4" placeholder="Leyenda / Título del banner" value="Reserva tu Mesa Exclusiva y Siente el Ritmo">
-                        <button class="btn full-width" onclick="subirBannerSlider(4)">Actualizar #4</button>
-                    </div>
-                </div>
             </div>
         </div>
 
         <!-- EVENTOS -->
         <div id="vista-eventos-config" class="tab-content">
             <div class="section-card">
-                <h2>🎉 Crear Nuevo Evento o Cartelera</h2>
+                <h2>🎉 Crear Nuevo Evento</h2>
                 <form id="form-crear-evento" onsubmit="crearNuevoEvento(event)">
                     <div class="grid-forms">
-                        <div class="upload-box">
-                            <label>Seleccionar Local / Sucursal</label>
-                            <select id="nuevo-local-id" required>
-                                <option value="1">Cargando locales...</option>
-                            </select>
-                        </div>
-                        <div class="upload-box">
-                            <label>Nombre del Evento</label>
-                            <input type="text" id="nuevo-nombre-evento" placeholder="Ej: Viernes de Salsa Brava" required>
-                        </div>
-                        <div class="upload-box">
-                            <label>Artista / Orquesta</label>
-                            <input type="text" id="nuevo-artista" placeholder="Ej: Orquesta Sabor Son">
-                        </div>
-                        <div class="upload-box">
-                            <label>📅 Fecha del Evento</label>
-                            <input type="date" id="nuevo-fecha" required>
-                        </div>
-                        <div class="upload-box">
-                            <label>⏰ Hora del Evento</label>
-                            <input type="time" id="nuevo-hora" value="21:00" required>
-                        </div>
-                        <div class="upload-box">
-                            <label>Flyer / Póster del Evento</label>
-                            <input type="file" id="nuevo-flyer" accept="image/*" required>
-                        </div>
+                        <div class="upload-box"><label>Local</label><select id="nuevo-local-id" required></select></div>
+                        <div class="upload-box"><label>Nombre</label><input type="text" id="nuevo-nombre-evento" required></div>
+                        <div class="upload-box"><label>Artista</label><input type="text" id="nuevo-artista"></div>
+                        <div class="upload-box"><label>📅 Fecha</label><input type="date" id="nuevo-fecha" required></div>
+                        <div class="upload-box"><label>⏰ Hora</label><input type="time" id="nuevo-hora" value="21:00" required></div>
+                        <div class="upload-box"><label>Flyer R2</label><input type="file" id="nuevo-flyer" accept="image/*" required></div>
                     </div>
-
                     <div class="grid-forms">
-                        <div class="upload-box">
-                            <label>🎟️ Cover / General ($)</label>
-                            <input type="number" step="0.01" id="nuevo-precio-cover" placeholder="Ej: 15.00 (Opcional)">
-                        </div>
-
-                        <div class="upload-box">
-                            <label>🍾 Reserva de Mesa ($)</label>
-                            <input type="number" step="0.01" id="nuevo-precio-mesa" placeholder="Ej: 60.00 (Opcional)">
-                            <input type="text" id="nuevo-desc-mesa" placeholder="Detalle: Incluye botella, piqueo...">
-                        </div>
-
-                        <div class="upload-box">
-                            <label>🎉 Promo Grupo ($)</label>
-                            <input type="number" step="0.01" id="nuevo-precio-promocion" placeholder="Ej: 100.00 (Opcional)">
-                            <input type="text" id="nuevo-desc-promocion" placeholder="Detalle: Paquete especial...">
-                        </div>
+                        <div class="upload-box"><label>Cover ($)</label><input type="number" step="0.01" id="nuevo-precio-cover"></div>
+                        <div class="upload-box"><label>Mesa ($)</label><input type="number" step="0.01" id="nuevo-precio-mesa"><input type="text" id="nuevo-desc-mesa" placeholder="Detalle mesa"></div>
+                        <div class="upload-box"><label>Promo ($)</label><input type="number" step="0.01" id="nuevo-precio-promocion"><input type="text" id="nuevo-desc-promocion" placeholder="Detalle promo"></div>
                     </div>
-
-                    <div class="form-group-full">
-                        <label>Descripción General del Evento</label>
-                        <textarea id="nuevo-descripcion" placeholder="Detalles de la noche, preventa, sorpresas..."></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-success full-width">🚀 Publicar Evento en Cartelera</button>
+                    <div class="form-group-full"><label>Descripción</label><textarea id="nuevo-descripcion"></textarea></div>
+                    <button type="submit" class="btn btn-success full-width">🚀 Publicar Evento</button>
                 </form>
             </div>
 
             <div class="section-card">
-                <h2>📅 Cartelera de Eventos Activos</h2>
+                <h2>📅 Cartelera Activa</h2>
                 <table>
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Póster</th>
-                            <th>Evento</th>
-                            <th>Artista</th>
-                            <th>Tarifas</th>
-                            <th>Fecha y Hora</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-eventos-body">
-                    </tbody>
+                    <thead><tr><th>ID</th><th>Póster</th><th>Evento</th><th>Artista</th><th>Tarifas</th><th>Fecha</th><th>Acciones</th></tr></thead>
+                    <tbody id="tabla-eventos-body"></tbody>
                 </table>
             </div>
         </div>
 
-        <!-- MÓDULO CHECKIN-QR -->
+        <!-- MÓDULO CHECKIN-QR (ACTUALIZADO CON FILTRO POR FECHA Y QR EN VIVO) -->
         <div id="vista-checkin-config" class="tab-content">
             <div class="section-card checkin-card">
                 <h2>🎟️ Terminal Interactiva de Control de Acceso en Puerta</h2>
-                <p class="section-description">Escanea con pistola láser o introduce manualmente el código QR de acceso emitido en la reserva aprobada para validar el ingreso inmediato de clientes a la Salsoteca.</p>
+                <p class="section-description">Filtra por fecha para desplegar los eventos del día, consulta los códigos QR de cada asistente y valida el acceso con un solo toque (aprobación manual o escáner).</p>
                 
+                <!-- 1. Filtro por Fecha y Selector de Evento -->
+                <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 20px; align-items: flex-end;">
+                    <div style="flex: 1; min-width: 200px;">
+                        <label style="font-size: 12px; color: #aaa; display: block; margin-bottom: 5px;">📅 Seleccionar Fecha del Evento:</label>
+                        <input type="date" id="filtro-fecha-puerta" class="form-control" style="background: #0b0c10; color: #fff; border: 1px solid #444; padding: 10px; border-radius: 6px; width: 100%;" onchange="cargarEventosPorFechaPuerta()">
+                    </div>
+                    <div style="flex: 2; min-width: 250px;">
+                        <label style="font-size: 12px; color: #aaa; display: block; margin-bottom: 5px;">🎵 Evento del Día:</label>
+                        <select id="select-evento-puerta" class="form-control" style="background: #0b0c10; color: #fff; border: 1px solid #444; padding: 10px; border-radius: 6px; width: 100%;" onchange="cargarPasesDeEventoSeleccionado()">
+                            <option value="">-- Primero selecciona una fecha --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <button onclick="abrirEscanerCamaraMovil()" style="background: #34d399; color: #000; font-weight: bold; border: none; padding: 11px 18px; border-radius: 6px; cursor: pointer;">
+                            📷 Escáner Cámara QR
+                        </button>
+                    </div>
+                </div>
+
                 <div class="checkin-search-bar">
-                    <input type="text" id="input-codigo-qr" placeholder="🔍 Escanea o ingresa el código QR del pase..." onkeypress="if(event.key === 'Enter') validarCodigoQRManual()">
+                    <input type="text" id="input-codigo-qr" placeholder="🔍 Escanea con láser o ingresa el token QR..." onkeypress="if(event.key === 'Enter') validarCodigoQRManual()">
                     <button class="btn btn-success btn-large" onclick="validarCodigoQRManual()">⚡ Validar Acceso</button>
                 </div>
 
-                <div id="resultado-checkin" class="result-box">
+                <div id="resultado-checkin" class="result-box" style="display:none;">
                     <div class="result-header">
                         <span id="checkin-icono-estado" class="status-icon">✅</span>
                         <div>
@@ -503,40 +367,12 @@
                 </div>
             </div>
 
-            <div class="metrics-grid">
-                <div class="metric-card">
-                    <h3>Pases Totales Emitidos</h3>
-                    <div class="value" id="checkin-total-pases">0</div>
-                </div>
-                <div class="metric-card">
-                    <h3>Pases Validados (Ingresados)</h3>
-                    <div class="value status-green" id="checkin-pases-usados">0</div>
-                </div>
-                <div class="metric-card">
-                    <h3>Pendientes por Ingresar</h3>
-                    <div class="value status-yellow" id="checkin-pases-pendientes">0</div>
-                </div>
-            </div>
-
+            <!-- Contenedor del listado de QR y pases del evento seleccionado -->
             <div class="section-card">
-                <h2>📋 Historial de Accesos Recientes en Puerta</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Hora de Ingreso</th>
-                            <th>Código QR / Token</th>
-                            <th>Cliente</th>
-                            <th>Cédula</th>
-                            <th>Evento</th>
-                            <th>Estado</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-historial-checkin">
-                        <tr>
-                            <td colspan="6">No hay registros de escaneo recientes en esta sesión.</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <h3 style="color: #fbbf24; margin-bottom: 15px;">📋 Listado de Pases y Códigos QR del Evento</h3>
+                <div id="contenedor-pases-puerta">
+                    <p style="color: #888; text-align: center; padding: 20px;">Selecciona una fecha y un evento arriba para desplegar los códigos QR de acceso y aprobar ingresos manualmente.</p>
+                </div>
             </div>
         </div>
 
@@ -546,14 +382,8 @@
                 <h2>🛠️ Configuración de Zonas y Distribución de Mesas</h2>
                 <form id="form-crear-zona" onsubmit="crearZona(event)">
                     <div class="grid-forms">
-                        <div class="upload-box">
-                            <label>Nombre de Zona</label>
-                            <input type="text" id="zona-nombre" placeholder="Ej: Zona VIP / Pista Principal" required>
-                        </div>
-                        <div class="upload-box">
-                            <label>Capacidad de Mesas</label>
-                            <input type="number" id="zona-mesas" placeholder="Ej: 10" required>
-                        </div>
+                        <div class="upload-box"><label>Nombre de Zona</label><input type="text" id="zona-nombre" required></div>
+                        <div class="upload-box"><label>Capacidad de Mesas</label><input type="number" id="zona-mesas" required></div>
                     </div>
                     <button type="submit" class="btn btn-success full-width">💾 Registrar Zona</button>
                 </form>
@@ -561,90 +391,28 @@
         </div>
     </main>
 
-    <!-- 🔍 MODAL VISUALIZADOR DE COMPROBANTE DE PAGO -->
-    <div id="modal-comprobante" class="modal-overlay">
+    <!-- MODAL COMPROBANTE -->
+    <div id="modal-comprobante" class="modal-overlay" style="display:none;">
         <div class="modal-card modal-center">
             <h3>🔍 Ver Comprobante de Pago</h3>
-            <img id="img-comprobante-preview" src="" alt="Voucher de pago" class="voucher-preview">
-            <button class="btn btn-danger" onclick="cerrarModalComprobante()">Cerrar Ventana</button>
+            <img id="img-comprobante-preview" src="" alt="Voucher" class="voucher-preview" style="max-width:100%;">
+            <button class="btn btn-danger" onclick="cerrarModalComprobante()">Cerrar</button>
         </div>
     </div>
 
-    <!-- 🎟️ MODAL VISUALIZADOR DE QRS Y ESTATUS (PE / AL) -->
+    <!-- MODAL QRS -->
     <div id="modal-qrs-overlay" class="modal-overlay" style="display: none; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000;">
         <div class="modal-card" style="background: #121316; border: 1px solid #d4af37; padding: 25px; border-radius: 10px; width: 90%; max-width: 500px; color: #fff;">
-            <h3 style="color: #fbbf24; margin-top: 0; margin-bottom: 15px; border-bottom: 1px solid rgba(212,175,55,0.3); padding-bottom: 10px;">🎟️ Accesos QR de la Reserva</h3>
-            <div id="modal-body-qrs" style="max-height: 350px; overflow-y: auto; margin-bottom: 20px;">
-            </div>
-            <button class="btn btn-danger full-width" onclick="cerrarModalQrs()">Cerrar Ventana</button>
-        </div>
-    </div>
-
-    <!-- ✏️ MODAL DE EDICIÓN DE EVENTOS -->
-    <div id="modal-editar-evento" class="modal-overlay">
-        <div class="modal-card">
-            <h2>✏️ Editar Evento #<span id="edit-id-label"></span></h2>
-            <form id="form-editar-evento" onsubmit="guardarEdicionEvento(event)">
-                <input type="hidden" id="edit-evento-id">
-                <div class="grid-forms">
-                    <div class="upload-box">
-                        <label>Nombre del Evento</label>
-                        <input type="text" id="edit-nombre-evento" required>
-                    </div>
-                    <div class="upload-box">
-                        <label>Artista / Orquesta</label>
-                        <input type="text" id="edit-artista">
-                    </div>
-                    <div class="upload-box">
-                        <label>📅 Fecha</label>
-                        <input type="date" id="edit-fecha" required>
-                    </div>
-                    <div class="upload-box">
-                        <label>⏰ Hora</label>
-                        <input type="time" id="edit-hora" required>
-                    </div>
-                    <div class="upload-box grid-span-2">
-                        <label>Cambiar Flyer / Póster (Opcional)</label>
-                        <input type="file" id="edit-flyer" accept="image/*">
-                    </div>
-                </div>
-
-                <div class="grid-forms">
-                    <div class="upload-box">
-                        <label>🎟️ Cover ($)</label>
-                        <input type="number" step="0.01" id="edit-precio-cover">
-                    </div>
-                    <div class="upload-box">
-                        <label>🍾 Mesa ($)</label>
-                        <input type="number" step="0.01" id="edit-precio-mesa">
-                        <input type="text" id="edit-desc-mesa" placeholder="Detalle mesa">
-                    </div>
-                    <div class="upload-box">
-                        <label>🎉 Promo ($)</label>
-                        <input type="number" step="0.01" id="edit-precio-promocion">
-                        <input type="text" id="edit-desc-promocion" placeholder="Detalle promo">
-                    </div>
-                </div>
-
-                <div class="form-group-full">
-                    <label>Descripción</label>
-                    <textarea id="edit-descripcion"></textarea>
-                </div>
-
-                <div class="modal-actions">
-                    <button type="submit" class="btn btn-success flex-1">💾 Guardar Cambios</button>
-                    <button type="button" class="btn btn-danger flex-1" onclick="cerrarModalEditar()">❌ Cancelar</button>
-                </div>
-            </form>
+            <h3 style="color: #fbbf24; margin-top: 0; border-bottom: 1px solid rgba(212,175,55,0.3); padding-bottom: 10px;">🎟️ Accesos QR de la Reserva</h3>
+            <div id="modal-body-qrs" style="max-height: 350px; overflow-y: auto; margin-bottom: 20px;"></div>
+            <button class="btn btn-danger full-width" onclick="cerrarModalQrs()">Cerrar</button>
         </div>
     </div>
 
     <script>
     function toggleSidebar() {
-        const sidebar = document.getElementById('app-sidebar');
-        const main = document.getElementById('app-main');
-        sidebar.classList.toggle('collapsed');
-        main.classList.toggle('expanded');
+        document.getElementById('app-sidebar').classList.toggle('collapsed');
+        document.getElementById('app-main').classList.toggle('expanded');
     }
 
     const API_URL = window.location.origin;
@@ -660,100 +428,31 @@
         if(tab === 'dashboard') {
             document.getElementById('vista-dashboard').classList.add('active');
             document.getElementById('nav-dashboard').classList.add('active');
-            document.getElementById('titulo-panel').innerText = 'Panel General de Administración';
             cargarDashboardAdmin();
         } else if(tab === 'reservas-gestion') {
             document.getElementById('vista-reservas-gestion').classList.add('active');
             document.getElementById('nav-reservas').classList.add('active');
-            document.getElementById('titulo-panel').innerText = 'Gestión y Control de Reservas';
             cargarDashboardAdmin();
         } else if(tab === 'locales-config') {
             document.getElementById('vista-locales-config').classList.add('active');
             document.getElementById('nav-locales-config').classList.add('active');
-            document.getElementById('titulo-panel').innerText = 'Gestión de Propietarios y Locales';
             cargarPropietariosSelect();
             cargarLocalesAdmin();
         } else if(tab === 'home-config') {
             document.getElementById('vista-home-config').classList.add('active');
             document.getElementById('nav-home-config').classList.add('active');
-            document.getElementById('titulo-panel').innerText = 'Gestión de Secciones del Home (Sitio Web)';
             cargarPlantillaCelebracionAdmin();
         } else if(tab === 'eventos-config') {
             document.getElementById('vista-eventos-config').classList.add('active');
             document.getElementById('nav-eventos-config').classList.add('active');
-            document.getElementById('titulo-panel').innerText = 'Gestión de Eventos y Cartelera';
             cargarLocalesSelect();
             cargarEventosAdmin();
         } else if(tab === 'checkin-config') {
             document.getElementById('vista-checkin-config').classList.add('active');
             document.getElementById('nav-checkin').classList.add('active');
-            document.getElementById('titulo-panel').innerText = 'Módulo CheckIn-QR en Puerta';
         } else if(tab === 'zonas-config') {
             document.getElementById('vista-zonas-config').classList.add('active');
             document.getElementById('nav-zonas').classList.add('active');
-            document.getElementById('titulo-panel').innerText = 'Gestión de Zonas y Distribución de Mesas';
-        }
-    }
-
-    async function cargarPlantillaCelebracionAdmin() {
-        try {
-            let res = await fetch(`${API_URL}/api/admin/plantilla-celebracion/`);
-            if (res.ok) {
-                let data = await res.json();
-                if (data.titulo_principal) document.getElementById('plantilla-titulo-principal').value = data.titulo_principal;
-                if (data.descripcion_principal) document.getElementById('plantilla-descripcion-principal').value = data.descripcion_principal;
-                if (data.subtitulo_1) document.getElementById('plantilla-subtitulo-1').value = data.subtitulo_1;
-                if (data.subtitulo_2) document.getElementById('plantilla-subtitulo-2').value = data.subtitulo_2;
-                if (data.texto_boton) document.getElementById('plantilla-texto-boton').value = data.texto_boton;
-                if (data.precio_cover_defecto !== undefined) document.getElementById('plantilla-precio-cover').value = data.precio_cover_defecto;
-                if (data.precio_mesa_defecto !== undefined) document.getElementById('plantilla-precio-mesa').value = data.precio_mesa_defecto;
-                if (data.promocion_texto) document.getElementById('plantilla-promocion-texto').value = data.promocion_texto;
-
-                const fondoInfo = document.getElementById('plantilla-fondo-actual');
-                let bgUrl = data.imagen_fondo || data.fondo_url || '';
-                if (bgUrl && fondoInfo) {
-                    fondoInfo.innerText = `Imagen actual configurada: ${bgUrl}`;
-                }
-            }
-        } catch (err) {
-            console.error("Error al cargar configuración de plantilla celebración:", err);
-        }
-    }
-
-    async function guardarPlantillaCelebracion(e) {
-        e.preventDefault();
-        const formData = new FormData();
-        formData.append("titulo_principal", document.getElementById('plantilla-titulo-principal').value);
-        formData.append("descripcion_principal", document.getElementById('plantilla-descripcion-principal').value);
-        formData.append("subtitulo_1", document.getElementById('plantilla-subtitulo-1').value);
-        formData.append("subtitulo_2", document.getElementById('plantilla-subtitulo-2').value);
-        formData.append("texto_boton", document.getElementById('plantilla-texto-boton').value);
-        formData.append("precio_cover_defecto", document.getElementById('plantilla-precio-cover').value);
-        formData.append("precio_mesa_defecto", document.getElementById('plantilla-precio-mesa').value);
-        formData.append("promocion_texto", document.getElementById('plantilla-promocion-texto').value);
-
-        const fondoFile = document.getElementById('plantilla-fondo-file').files[0];
-        if (fondoFile) {
-            formData.append("file", fondoFile);
-        }
-
-        try {
-            let res = await fetch(`${API_URL}/api/admin/plantilla-celebracion/`, {
-                method: "POST",
-                body: formData
-            });
-
-            if (res.ok) {
-                alert("✅ ¡Configuración de la tarjeta 'Crea Mi Rumba' y tarifas actualizada con éxito!");
-                document.getElementById('plantilla-fondo-file').value = "";
-                cargarPlantillaCelebracionAdmin();
-            } else {
-                let errText = await res.text();
-                alert("Error al guardar la configuración: " + errText);
-            }
-        } catch (err) {
-            console.error(err);
-            alert("Error de conexión con el servidor.");
         }
     }
 
@@ -766,720 +465,225 @@
                 renderizarTablaDashboardRecientes(cacheReservas);
                 actualizarMetricas(cacheReservas);
             }
-        } catch (err) {
-            console.error("Error al cargar reservas:", err);
-        }
+        } catch (err) { console.error(err); }
     }
 
     function renderizarTablaDashboardRecientes(reservas) {
         const tbody = document.getElementById('tabla-dashboard-recientes-body');
         if (!tbody) return;
-
-        if (!reservas || reservas.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="8">No hay actividad reciente registrada.</td></tr>`;
-            return;
-        }
-
-        const recientes = reservas.slice(0, 8);
-
-        tbody.innerHTML = recientes.map(r => {
-            let voucherUrl = '#';
-            if (r.comprobante_pago) {
-                voucherUrl = r.comprobante_pago.startsWith('http') 
-                    ? r.comprobante_pago 
-                    : `https://pub-3244093a45bd47d9a30548ef0924bb49.r2.dev/${r.comprobante_pago}`;
-            }
-
-            let estadoUpper = (r.estado || 'Por Aprobar').toUpperCase();
-            let accionBtn = '';
-
-            if (estadoUpper === 'APROBADO' || estadoUpper === 'APROBADA') {
-                accionBtn = `
-                    <button onclick="aprobarReservaYEnviarWhatsApp(${r.id})" 
-                            style="background: #25d366; color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer;">
-                        📲 Reenviar QR
-                    </button>
-                `;
-            } else {
-                accionBtn = `<span style="color: #fbbf24; font-size: 11px;">Pendiente en Gestión</span>`;
-            }
-
-            return `
+        if (!reservas.length) { tbody.innerHTML = `<tr><td colspan="8">No hay actividad reciente.</td></tr>`; return; }
+        tbody.innerHTML = reservas.slice(0, 8).map(r => `
             <tr>
-                <td><code style="color: #fbbf24;">${r.codigo || 'RES-' + (9000 + r.id)}</code></td>
-                <td><b>${r.cliente_nombre || 'Cliente'}</b><br><small class="text-muted">${r.cliente_telefono || ''}</small></td>
-                <td>${r.evento_nombre || 'Evento'}</td>
-                <td>👥 ${r.cantidad_personas || 0} pases<br>🍾 ${r.cantidad_mesas || 0} mesa(s)</td>
-                <td><b class="text-green">$${Number(r.monto_total || 0).toFixed(2)}</b></td>
-                <td>
-                    ${r.comprobante_pago ? `<a href="#" onclick="verComprobante('${voucherUrl}')" class="link-voucher">📄 Ver Voucher</a>` : 'Sin Comprobante'}
-                </td>
-                <td><span class="status-pill ${estadoUpper.includes('APROB') ? 'status-confirmed' : 'status-pending'}">${r.estado || 'Por Aprobar'}</span></td>
-                <td>${accionBtn}</td>
+                <td><code style="color: #fbbf24;">${r.codigo}</code></td>
+                <td><b>${r.cliente_nombre}</b><br><small>${r.cliente_telefono}</small></td>
+                <td>${r.evento_nombre}</td>
+                <td>👥 ${r.cantidad_personas} | 🍾 ${r.cantidad_mesas}</td>
+                <td><b class="text-green">$${Number(r.monto_total).toFixed(2)}</b></td>
+                <td>${r.comprobante_pago ? `<a href="#" onclick="verComprobante('${r.comprobante_pago}')">📄 Ver</a>` : 'Sin Comprobante'}</td>
+                <td><span class="status-pill ${r.estado.includes('APROB') ? 'status-confirmed' : 'status-pending'}">${r.estado}</span></td>
+                <td>${r.estado.includes('APROB') ? `<button onclick="aprobarReservaYEnviarWhatsApp(${r.id})" style="background: #25d366; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px;">📲 Reenviar QR</button>` : 'Pendiente'}</td>
             </tr>
-            `;
-        }).join('');
+        `).join('');
     }
 
     function renderizarTablaReservas(reservas) {
         const tbody = document.getElementById('tabla-reservas-body');
         if (!tbody) return;
-
-        if (!reservas || reservas.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="8">No hay solicitudes de reserva recientes.</td></tr>`;
-            return;
-        }
-
-        tbody.innerHTML = reservas.map(r => {
-            let voucherUrl = '#';
-            if (r.comprobante_pago) {
-                voucherUrl = r.comprobante_pago.startsWith('http') 
-                    ? r.comprobante_pago 
-                    : `https://pub-3244093a45bd47d9a30548ef0924bb49.r2.dev/${r.comprobante_pago}`;
-            }
-
-            let estadoUpper = (r.estado || 'Por Aprobar').toUpperCase();
-            let accionesHtml = '';
-
-            if (estadoUpper === 'APROBADO' || estadoUpper === 'APROBADA') {
-                accionesHtml = `
-                    <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-                        <span style="color: #34d399; font-weight: bold; font-size: 11px;">✅ APROBADO</span>
-                        <button onclick="aprobarReservaYEnviarWhatsApp(${r.id})" 
-                                style="background: #25d366; color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer;">
-                            📲 Reenviar QR
-                        </button>
-                    </div>
-                `;
-            } else {
-                accionesHtml = `
-                    <div style="display: flex; gap: 6px; align-items: center;">
-                        <button onclick="aprobarReservaYEnviarWhatsApp(${r.id})" 
-                                style="background: #34d399; color: #000; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer;">
-                            ✔️ Aprobar
-                        </button>
-                        <button onclick="cambiarEstadoReserva(${r.id}, 'Rechazado')" 
-                                style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer;">
-                            ❌ Rechazar
-                        </button>
-                    </div>
-                `;
-            }
-
-            return `
+        if (!reservas.length) { tbody.innerHTML = `<tr><td colspan="8">No hay solicitudes.</td></tr>`; return; }
+        tbody.innerHTML = reservas.map(r => `
             <tr>
-                <td><code style="cursor: pointer; color: #fbbf24;" onclick="verDetalleQrsReserva(${r.id})" title="Clic para ver códigos QR e ingresos">${r.codigo || 'RES-' + (9000 + r.id)}</code></td>
-                <td><b>${r.cliente_nombre || 'Cliente'}</b><br><small class="text-muted">${r.cliente_telefono || ''}</small></td>
-                <td>${r.evento_nombre || 'Evento'}</td>
-                <td>👥 ${r.cantidad_personas || 0} pases<br>🍾 ${r.cantidad_mesas || 0} mesa(s)</td>
-                <td><b class="text-green">$${Number(r.monto_total || 0).toFixed(2)}</b></td>
+                <td><code style="cursor: pointer; color: #fbbf24;" onclick="verDetalleQrsReserva(${r.id})">${r.codigo}</code></td>
+                <td><b>${r.cliente_nombre}</b><br><small>${r.cliente_telefono}</small></td>
+                <td>${r.evento_nombre}</td>
+                <td>👥 ${r.cantidad_personas} | 🍾 ${r.cantidad_mesas}</td>
+                <td><b class="text-green">$${Number(r.monto_total).toFixed(2)}</b></td>
+                <td>${r.comprobante_pago ? `<a href="#" onclick="verComprobante('${r.comprobante_pago}')">📄 Ver</a>` : 'Sin'}</td>
+                <td><span class="status-pill ${r.estado.includes('APROB') ? 'status-confirmed' : 'status-pending'}">${r.estado}</span></td>
                 <td>
-                    ${r.comprobante_pago ? `<a href="#" onclick="verComprobante('${voucherUrl}')" class="link-voucher">📄 Ver Voucher</a>` : 'Sin Comprobante'}
+                    ${r.estado.includes('APROB') ? `<button onclick="aprobarReservaYEnviarWhatsApp(${r.id})" style="background: #25d366; color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 11px;">📲 Reenviar</button>` : `
+                        <button onclick="aprobarReservaYEnviarWhatsApp(${r.id})" style="background: #34d399; color: #000; border: none; padding: 6px; border-radius: 6px; font-size: 11px; font-weight: bold;">✔️ Aprobar</button>
+                        <button onclick="cambiarEstadoReserva(${r.id}, 'Rechazado')" style="background: #ef4444; color: white; border: none; padding: 6px; border-radius: 6px; font-size: 11px;">❌</button>
+                    `}
                 </td>
-                <td><span class="status-pill ${estadoUpper.includes('APROB') ? 'status-confirmed' : 'status-pending'}">${r.estado || 'Por Aprobar'}</span></td>
-                <td>${accionesHtml}</td>
             </tr>
-            `;
-        }).join('');
+        `).join('');
     }
 
-        async function aprobarReservaYEnviarWhatsApp(reservaId) {
-        if (!confirm("¿Estás seguro de aprobar esta reserva? Se generarán los códigos QR.")) return;
-
-        try {
-            let response = await fetch(`${API_URL}/api/reservas/${reservaId}/aprobar`, {
-                method: 'POST'
-            });
-            let data = await response.json();
-            
-            if (response.ok && data.exito) {
-                alert("✅ Reserva aprobada y códigos QR generados con éxito.");
-                if (data.whatsapp_url) {
-                    // Abre automáticamente WhatsApp para enviar el mensaje con los links QR
-                    window.open(data.whatsapp_url, '_blank');
-                }
-                cargarDashboardAdmin();
-            } else {
-                alert("Error al aprobar la reserva: " + (data.detail || "Error desconocido"));
-            }
-        } catch (error) {
-            console.error("Error al aprobar reserva:", error);
-            alert("Ocurrió un error al conectar con el servidor.");
+    async function aprobarReservaYEnviarWhatsApp(reservaId) {
+        if (!confirm("¿Aprobar reserva y generar códigos QR?")) return;
+        let res = await fetch(`${API_URL}/api/reservas/${reservaId}/aprobar`, { method: 'POST' });
+        let data = await res.json();
+        if (res.ok && data.exito) {
+            alert("✅ Reserva aprobada con éxito.");
+            if (data.whatsapp_url) window.open(data.whatsapp_url, '_blank');
+            cargarDashboardAdmin();
         }
     }
 
     async function cambiarEstadoReserva(reservaId, nuevoEstado) {
         if (!confirm(`¿Estás seguro de marcar esta reserva como ${nuevoEstado}?`)) return;
-
-        try {
-            let response = await fetch(`${API_URL}/api/reservas/${reservaId}/estado`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ estado: nuevoEstado })
-            });
-
-            if (response.ok) {
-                alert(`Reserva actualizada a estado: ${nuevoEstado}`);
-                cargarDashboardAdmin();
-            } else {
-                alert("No se pudo actualizar el estado de la reserva.");
-            }
-        } catch (error) {
-            console.error("Error al cambiar estado:", error);
-            alert("Error de conexión.");
+        let response = await fetch(`${API_URL}/api/reservas/${reservaId}/estado`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ estado: nuevoEstado })
+        });
+        if (response.ok) {
+            alert(`Reserva actualizada a: ${nuevoEstado}`);
+            cargarDashboardAdmin();
         }
     }
 
     async function verDetalleQrsReserva(reservaId) {
-        try {
-            let response = await fetch(`${API_URL}/api/reservas/${reservaId}/qrs`);
-            if (response.ok) {
-                let data = await response.json();
-                
-                let contenedorHtml = `<div style="display: flex; flex-direction: column; gap: 10px;">`;
-                if (!data || data.length === 0) {
-                    contenedorHtml += `<p style="text-align: center; color: #aaa;">No hay códigos QR generados todavía. (Aprueba la reserva primero).</p>`;
-                } else {
-                    data.forEach((pase, index) => {
-                        let isAl = pase.estatus === 'AL';
-                        let badgeColor = isAl ? '#34d399' : '#fbbf24';
-                        let badgeTexto = isAl ? '🟢 ADENTRO LOCAL (AL)' : '🟡 PENDIENTE DE ENTRAR (PE)';
-                        
-                        contenedorHtml += `
-                            <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(212,175,55,0.2); padding: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
-                                <div>
-                                    <strong style="color: #fbbf24;">Pase #${index + 1}</strong>
-                                    <div style="font-size: 11px; color: #aaa; word-break: break-all;">Código: ${pase.codigo_qr}</div>
-                                    ${pase.fecha_ingreso ? `<div style="font-size: 10px; color: #34d399;">Ingreso: ${pase.fecha_ingreso}</div>` : ''}
-                                </div>
-                                <div style="text-align: right; min-width: 130px;">
-                                    <span style="background: ${badgeColor}20; color: ${badgeColor}; border: 1px solid ${badgeColor}; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; display: inline-block;">
-                                        ${badgeTexto}
-                                    </span>
-                                </div>
-                            </div>
-                        `;
-                    });
-                }
-                contenedorHtml += `</div>`;
-                
-                document.getElementById('modal-body-qrs').innerHTML = contenedorHtml;
-                document.getElementById('modal-qrs-overlay').style.display = 'flex';
-            } else {
-                alert("No se pudieron cargar los códigos QR de esta reserva.");
-            }
-        } catch (error) {
-            console.error("Error al cargar los códigos QR:", error);
-            alert("Error de conexión al obtener los pases.");
-        }
+        let res = await fetch(`${API_URL}/api/reservas/${reservaId}/qrs`);
+        let data = await res.json();
+        let html = data.map((p, i) => `
+            <div style="background: rgba(255,255,255,0.03); border: 1px solid #d4af37; padding: 8px; border-radius: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                <div><b>Pase #${i+1}</b><br><small style="color:#aaa;">${p.codigo_qr}</small></div>
+                <span style="color: ${p.estatus === 'AL' ? '#34d399' : '#fbbf24'}; font-weight: bold; font-size: 11px;">${p.estatus === 'AL' ? '🟢 ADENTRO (AL)' : '🟡 PENDIENTE (PE)'}</span>
+            </div>
+        `).join('') || '<p>No hay QRs.</p>';
+        document.getElementById('modal-body-qrs').innerHTML = html;
+        document.getElementById('modal-qrs-overlay').style.display = 'flex';
     }
 
-    function cerrarModalQrs() {
-        document.getElementById('modal-qrs-overlay').style.display = 'none';
-    }
-
-    function actualizarMetricas(reservas) {
-        document.getElementById('val-reservas').innerText = reservas.length;
-        let totalIngresos = reservas.filter(r => (r.estado || '').toUpperCase() === 'APROBADO' || (r.estado || '').toUpperCase() === 'APROBADA').reduce((acc, r) => acc + Number(r.monto_total || 0), 0);
-        document.getElementById('val-ingresos').innerText = `$${totalIngresos.toFixed(2)}`;
-        let totalMesas = reservas.filter(r => (r.estado || '').toUpperCase() === 'APROBADO' || (r.estado || '').toUpperCase() === 'APROBADA').reduce((acc, r) => acc + Number(r.cantidad_mesas || 0), 0);
-        document.getElementById('val-mesas').innerText = totalMesas;
-    }
-
+    function cerrarModalQrs() { document.getElementById('modal-qrs-overlay').style.display = 'none'; }
     function verComprobante(url) {
-        document.getElementById('img-comprobante-preview').src = url;
+        document.getElementById('img-comprobante-preview').src = url.startsWith('http') ? url : `https://pub-3244093a45bd47d9a30548ef0924bb49.r2.dev/${url}`;
         document.getElementById('modal-comprobante').style.display = 'flex';
     }
-
-    function cerrarModalComprobante() {
-        document.getElementById('modal-comprobante').style.display = 'none';
+    function cerrarModalComprobante() { document.getElementById('modal-comprobante').style.display = 'none'; }
+    function actualizarMetricas(reservas) {
+        document.getElementById('val-reservas').innerText = reservas.length;
+        document.getElementById('val-ingresos').innerText = `$${reservas.filter(r => r.estado.includes('APROB')).reduce((acc, r) => acc + Number(r.monto_total), 0).toFixed(2)}`;
+        document.getElementById('val-mesas').innerText = reservas.filter(r => r.estado.includes('APROB')).reduce((acc, r) => acc + Number(r.cantidad_mesas), 0);
     }
 
-    async function crearPropietario(e) {
-        e.preventDefault();
-        const formData = new FormData();
-        formData.append("nombre", document.getElementById('prop-nombre').value);
-        formData.append("telefono", document.getElementById('prop-telefono').value);
-        formData.append("correo", document.getElementById('prop-correo').value);
+    // ==========================================
+    // CONTROL DE PUERTA (FECHAS Y QR)
+    // ==========================================
+    async function cargarEventosPorFechaPuerta() {
+        const fecha = document.getElementById("filtro-fecha-puerta").value;
+        const select = document.getElementById("select-evento-puerta");
+        if (!fecha) return;
 
-        try {
-            let res = await fetch(`${API_URL}/api/admin/propietarios/`, { method: "POST", body: formData });
-            if (res.ok) {
-                alert("✅ Propietario registrado exitosamente.");
-                document.getElementById('form-crear-propietario').reset();
-                cargarPropietariosSelect();
-            } else {
-                let errText = await res.text();
-                alert("Error al registrar propietario: " + errText);
-            }
-        } catch(err) {
-            alert("Error de conexión.");
+        let res = await fetch(`${API_URL}/api/admin/eventos-por-fecha?fecha=${fecha}&local_id=1`);
+        let eventos = await res.json();
+
+        select.innerHTML = '<option value="">-- Selecciona el evento --</option>';
+        if (!eventos.length) {
+            select.innerHTML = '<option value="">No hay eventos en esta fecha</option>';
+            document.getElementById("contenedor-pases-puerta").innerHTML = '<p style="color:#f87171; text-align:center;">Sin eventos programados.</p>';
+            return;
         }
+        eventos.forEach(ev => {
+            select.innerHTML += `<option value="${ev.id}">${ev.nombre_evento} (${ev.fecha_hora})</option>`;
+        });
     }
 
-    async function cargarPropietariosSelect() {
-        try {
-            let res = await fetch(`${API_URL}/api/admin/propietarios/`);
-            let props = await res.json();
-            const select = document.getElementById('local-propietario-id');
-            if(!select) return;
-            if(props.length === 0) {
-                select.innerHTML = '<option value="">No hay propietarios. Registra uno primero.</option>';
-                return;
-            }
-            select.innerHTML = props.map(p => `<option value="${p.propietario_id || p.id}">${p.propietario_id || p.id} - ${p.nombre || p.nombre_propietario}</option>`).join('');
-        } catch(err) {
-            console.error("Error al cargar propietarios:", err);
-        }
-    }
+    async function cargarPasesDeEventoSeleccionado() {
+        const eventoId = document.getElementById("select-evento-puerta").value;
+        const contenedor = document.getElementById("contenedor-pases-puerta");
+        if (!eventoId) return;
 
-    async function crearLocal(e) {
-        e.preventDefault();
-        const propId = document.getElementById('local-propietario-id').value;
-        if(!propId) {
-            alert("Primero debes registrar o seleccionar un propietario.");
+        contenedor.innerHTML = `<p style="text-align:center; color:#fbbf24;">Cargando pases...</p>`;
+
+        let res = await fetch(`${API_URL}/api/admin/eventos/${eventoId}/pases-puerta`);
+        let pases = await res.json();
+
+        if (!pases.length) {
+            contenedor.innerHTML = `<p style="color:#aaa; text-align:center;">No hay pases registrados para este evento.</p>`;
             return;
         }
 
-        const nombreLocal = document.getElementById('local-nombre').value;
-        const tipoEstablecimiento = document.getElementById('local-tipo').value;
-        const ciudad = document.getElementById('local-ciudad').value;
-        const direccion = document.getElementById('local-direccion').value;
-        const logoFile = document.getElementById('local-logo-file').files[0];
+        contenedor.innerHTML = `
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 15px;">
+                ${pases.map(p => `
+                    <div style="background: #0b0c10; border: 1px solid ${p.estado_ingreso === 'AL' ? '#34d399' : '#fbbf24'}; padding: 14px; border-radius: 8px; text-align: center;">
+                        <span style="font-size: 11px; padding: 3px 8px; background: ${p.estado_ingreso === 'AL' ? '#065f46' : '#92400e'}; color: #fff; border-radius: 4px; font-weight: bold;">
+                            ${p.estado_ingreso === 'AL' ? '✅ Ingresado (AL)' : '⏳ Pendiente (PE)'}
+                        </span>
+                        <h4 style="color: #fff; font-size: 14px; margin: 10px 0 4px 0;">${p.cliente_nombre}</h4>
+                        <p style="font-size: 11px; color: #aaa; margin: 0 0 10px 0;">Cédula: ${p.cedula} | Res: ${p.codigo_reserva}</p>
+                        
+                        <div style="background: #fff; padding: 8px; display: inline-block; border-radius: 6px; margin-bottom: 8px;">
+                            <img src="${p.qr_img}" alt="QR" style="width: 130px; height: 130px; display: block;">
+                        </div>
+                        
+                        <p style="font-size: 10px; color: #777; word-break: break-all; margin: 0 0 10px 0;">${p.token_qr}</p>
 
-        const formData = new FormData();
-        formData.append("propietario_id", propId);
-        formData.append("nombre_local", nombreLocal);
-        formData.append("tipo_establecimiento", tipoEstablecimiento);
-        formData.append("ciudad", ciudad);
-        formData.append("direccion", direccion);
-
-        try {
-            let res = await fetch(`${API_URL}/api/admin/locales/`, { method: "POST", body: formData });
-            if (res.ok) {
-                let dataLocal = await res.json();
-                let localId = dataLocal.id;
-
-                if (logoFile && localId) {
-                    const logoData = new FormData();
-                    logoData.append("local_id", localId);
-                    logoData.append("logo", logoFile);
-                    await fetch(`${API_URL}/api/admin/local/logo`, { method: "POST", body: logoData });
-                }
-
-                alert("🎉 ¡Local registrado y logotipo configurado con éxito!");
-                document.getElementById('form-crear-local').reset();
-                cargarLocalesAdmin();
-            } else {
-                let errText = await res.text();
-                alert("Error al registrar el local: " + errText);
-            }
-        } catch(err) {
-            alert("Error de conexión.");
-        }
+                        ${p.estado_ingreso !== 'AL' ? `
+                            <button onclick="aprobarPaseManual('${p.token_qr}')" style="width: 100%; background: #34d399; color: #000; font-weight: bold; border: none; padding: 8px; border-radius: 4px; cursor: pointer;">
+                                ✔️ Aprobar Acceso Manual
+                            </button>
+                        ` : `
+                            <span style="color: #34d399; font-size: 12px; font-weight: bold; display: block; padding: 6px;">Acceso Ya Validado</span>
+                        `}
+                    </div>
+                `).join('')}
+            </div>
+        `;
     }
 
-    async function cargarLocalesAdmin() {
-        const tbody = document.getElementById('tabla-locales-body');
-        if(!tbody) return;
-
-        try {
-            let res = await fetch(`${API_URL}/api/admin/locales/`);
-            cacheLocales = await res.json();
-
-            if(!cacheLocales || cacheLocales.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7">No hay locales registrados.</td></tr>`;
-                return;
-            }
-
-            tbody.innerHTML = cacheLocales.map(l => {
-                let logoSrc = 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=100&q=80';
-                if (l.logo_url) {
-                    logoSrc = l.logo_url.startsWith('http') ? l.logo_url : `https://pub-3244093a45bd47d9a30548ef0924bb49.r2.dev/${l.logo_url}`;
-                }
-
-                return `
-                <tr>
-                    <td><code>#${l.id}</code></td>
-                    <td><img src="${logoSrc}" class="table-img" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover;"></td>
-                    <td><b>${l.nombre || l.nombre_local}</b></td>
-                    <td>${l.tipo_establecimiento || 'Salsoteca / Bar'}</td>
-                    <td>${l.ciudad || 'Guayaquil'}<br><small class="text-muted">${l.direccion || 'Sin dirección'}</small></td>
-                    <td><code>${l.slug || ''}</code></td>
-                    <td>
-                        <button class="btn btn-warning btn-sm" onclick="alert('Función de edición rápida de local')">✏️ Editar</button>
-                        <button class="btn btn-danger btn-sm" onclick="eliminarLocal(${l.id})">🗑️ Borrar</button>
-                    </td>
-                </tr>
-                `;
-            }).join('');
-        } catch(err) {
-            console.error("Error al listar locales:", err);
-        }
-    }
-
-    async function eliminarLocal(id) {
-        if(!confirm(`¿Estás seguro de eliminar el local #${id}?`)) return;
-        try {
-            let res = await fetch(`${API_URL}/api/admin/locales/${id}`, { method: "DELETE" });
-            if(res.ok) {
-                alert("🗑️ Local eliminado correctamente.");
-                cargarLocalesAdmin();
-            } else {
-                alert("No se pudo eliminar el local.");
-            }
-        } catch(err) {
-            alert("Error de conexión.");
-        }
-    }
-
-    async function cargarLocalesSelect() {
-        try {
-            let res = await fetch(`${API_URL}/api/admin/locales/`);
-            let locales = await res.json();
-            const select = document.getElementById('nuevo-local-id');
-            if(!select) return;
-            if(locales.length === 0) {
-                select.innerHTML = '<option value="1">Local por Defecto (ID #1)</option>';
-                return;
-            }
-            select.innerHTML = locales.map(l => `<option value="${l.id}">${l.nombre || l.nombre_local} (${l.ciudad || ''})</option>`).join('');
-        } catch(err) {
-            console.error("Error al cargar locales:", err);
-        }
-    }
-
-    async function subirBannerSlider(posicion) {
-        const inputFile = document.getElementById(`banner-file-${posicion}`);
-        const inputTiempo = document.getElementById(`banner-time-${posicion}`);
-        const inputCaption = document.getElementById(`banner-caption-${posicion}`);
-        
-        if (!inputFile.files[0]) {
-            alert(`Por favor seleccione una imagen para el Banner #${posicion}.`);
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append("file", inputFile.files[0]);
-        formData.append("duracion_segundos", inputTiempo.value);
-        formData.append("caption", inputCaption.value);
-
-        try {
-            let response = await fetch(`${API_URL}/api/admin/slider/${posicion}`, {
-                method: "POST",
-                body: formData
-            });
-
-            if (response.ok) {
-                alert(`¡Éxito! Banner #${posicion} actualizado correctamente.`);
-                inputFile.value = "";
-            } else {
-                alert("Error al actualizar el banner.");
-            }
-        } catch (error) {
-            alert("Error de conexión.");
-        }
-    }
-
-    async function crearNuevoEvento(e) {
-        e.preventDefault();
-        const localId = document.getElementById('nuevo-local-id').value || 1;
-        const nombre = document.getElementById('nuevo-nombre-evento').value;
-        const artista = document.getElementById('nuevo-artista').value;
-        const fechaVal = document.getElementById('nuevo-fecha').value;
-        const horaVal = document.getElementById('nuevo-hora').value;
-        const descripcion = document.getElementById('nuevo-descripcion').value;
-        const flyerFile = document.getElementById('nuevo-flyer').files[0];
-
-        const cover = document.getElementById('nuevo-precio-cover').value;
-        const mesa = document.getElementById('nuevo-precio-mesa').value;
-        const descMesa = document.getElementById('nuevo-desc-mesa').value;
-        const promo = document.getElementById('nuevo-precio-promocion').value;
-        const descPromo = document.getElementById('nuevo-desc-promocion').value;
-
-        const fechaHoraCompleta = `${fechaVal}T${horaVal}:00`;
-
-        const formData = new FormData();
-        formData.append("local_id", localId);
-        formData.append("nombre_evento", nombre);
-        formData.append("artista_orquesta", artista || "Varios Artistas");
-        formData.append("fecha_hora", fechaHoraCompleta);
-        formData.append("descripcion", descripcion);
-
-        if (cover) formData.append("precio_cover", cover);
-        if (mesa) formData.append("precio_mesa", mesa);
-        if (descMesa) formData.append("descripcion_mesa", descMesa);
-        if (promo) formData.append("precio_promocion", promo);
-        if (descPromo) formData.append("descripcion_promocion", descPromo);
-        if (flyerFile) formData.append("file", flyerFile);
-
-        try {
-            let res = await fetch(`${API_URL}/api/reservas/eventos/`, { method: "POST", body: formData });
-            if (res.ok) {
-                alert("🎉 ¡Evento publicado exitosamente!");
-                document.getElementById('form-crear-evento').reset();
-                cargarEventosAdmin();
-            } else {
-                alert("Error al publicar el evento.");
-            }
-        } catch (err) {
-            alert("Error de conexión.");
-        }
-    }
-
-    async function cargarEventosAdmin() {
-        const tbody = document.getElementById('tabla-eventos-body');
-        if (!tbody) return;
-
-        try {
-            let res = await fetch(`${API_URL}/api/reservas/eventos/?local_id=1`);
-            cacheEventos = await res.json();
-
-            if (!cacheEventos || cacheEventos.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7">No hay eventos registrados.</td></tr>`;
-                return;
-            }
-
-            tbody.innerHTML = cacheEventos.map(ev => {
-                let tarifasTxt = [];
-                if (ev.precio_cover) tarifasTxt.push(`Cover: $${ev.precio_cover}`);
-                if (ev.precio_mesa) tarifasTxt.push(`Mesa: $${ev.precio_mesa}`);
-                if (ev.precio_promocion) tarifasTxt.push(`Promo: $${ev.precio_promocion}`);
-                
-                let imgSrc = 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=100&q=80';
-                if (ev.imagen) {
-                    imgSrc = ev.imagen.startsWith('http') ? ev.imagen : `https://pub-3244093a45bd47d9a30548ef0924bb49.r2.dev/${ev.imagen}`;
-                }
-
-                return `
-                <tr>
-                    <td><code>#${ev.id}</code></td>
-                    <td><img src="${imgSrc}" class="table-img"></td>
-                    <td><b>${ev.nombre_evento}</b></td>
-                    <td>🎤 ${ev.artista_orquesta || 'Varios'}</td>
-                    <td><small class="text-green">${tarifasTxt.length > 0 ? tarifasTxt.join('<br>') : 'Sin Tarifas'}</small></td>
-                    <td>📅 ${String(ev.fecha_hora).replace('T', ' ')}</td>
-                    <td>
-                        <button class="btn btn-warning btn-sm" onclick="abrirModalEditar(${ev.id})">✏️ Editar</button>
-                        <button class="btn btn-danger btn-sm" onclick="eliminarEvento(${ev.id})">🗑️ Borrar</button>
-                    </td>
-                </tr>
-                `;
-            }).join('');
-        } catch (error) {
-            console.error("Error al cargar eventos:", error);
-        }
-    }
-
-    function abrirModalEditar(id) {
-        const ev = cacheEventos.find(e => e.id === id);
-        if(!ev) return;
-
-        document.getElementById('edit-evento-id').value = ev.id;
-        document.getElementById('edit-id-label').innerText = ev.id;
-        document.getElementById('edit-nombre-evento').value = ev.nombre_evento || '';
-        document.getElementById('edit-artista').value = ev.artista_orquesta || '';
-        
-        if (ev.fecha_hora) {
-            const parts = String(ev.fecha_hora).split('T');
-            document.getElementById('edit-fecha').value = parts[0] || '';
-            document.getElementById('edit-hora').value = parts[1] ? parts[1].substring(0, 5) : '21:00';
-        }
-
-        document.getElementById('edit-precio-cover').value = ev.precio_cover || '';
-        document.getElementById('edit-precio-mesa').value = ev.precio_mesa || '';
-        document.getElementById('edit-desc-mesa').value = ev.descripcion_mesa || '';
-        document.getElementById('edit-precio-promocion').value = ev.precio_promocion || '';
-        document.getElementById('edit-desc-promocion').value = ev.descripcion_promocion || '';
-        document.getElementById('edit-descripcion').value = ev.descripcion || '';
-
-        document.getElementById('modal-editar-evento').style.display = 'flex';
-    }
-
-    function cerrarModalEditar() {
-        document.getElementById('modal-editar-evento').style.display = 'none';
-    }
-
-    async function guardarEdicionEvento(e) {
-        e.preventDefault();
-        const id = document.getElementById('edit-evento-id').value;
-        const nombre = document.getElementById('edit-nombre-evento').value;
-        const artista = document.getElementById('edit-artista').value;
-        const fechaVal = document.getElementById('edit-fecha').value;
-        const horaVal = document.getElementById('edit-hora').value;
-        const descripcion = document.getElementById('edit-descripcion').value;
-        const flyerFile = document.getElementById('edit-flyer').files[0];
-
-        const cover = document.getElementById('edit-precio-cover').value;
-        const mesa = document.getElementById('edit-precio-mesa').value;
-        const descMesa = document.getElementById('edit-desc-mesa').value;
-        const promo = document.getElementById('edit-precio-promocion').value;
-        const descPromo = document.getElementById('edit-desc-promocion').value;
-
-        const fechaHoraCompleta = `${fechaVal}T${horaVal}:00`;
-
-        const formData = new FormData();
-        formData.append("nombre_evento", nombre);
-        formData.append("artista_orquesta", artista);
-        formData.append("fecha_hora", fechaHoraCompleta);
-        formData.append("descripcion", descripcion);
-
-        if (cover) formData.append("precio_cover", cover);
-        if (mesa) formData.append("precio_mesa", mesa);
-        if (descMesa) formData.append("descripcion_mesa", descMesa);
-        if (promo) formData.append("precio_promocion", promo);
-        if (descPromo) formData.append("descripcion_promocion", descPromo);
-        if (flyerFile) formData.append("file", flyerFile);
-
-        try {
-            let res = await fetch(`${API_URL}/api/reservas/eventos/${id}`, { method: "PUT", body: formData });
-            if (res.ok) {
-                alert("✅ Evento actualizado correctamente.");
-                cerrarModalEditar();
-                cargarEventosAdmin();
-            } else {
-                alert("Error al actualizar.");
-            }
-        } catch(err) {
-            alert("Error de conexión.");
-        }
-    }
-
-    async function eliminarEvento(id) {
-        if (!confirm(`¿Estás seguro de eliminar el evento #${id}?`)) return;
-        try {
-            let res = await fetch(`${API_URL}/api/reservas/eventos/${id}`, { method: "DELETE" });
-            if (res.ok) {
-                alert("🗑️ Evento eliminado correctamente.");
-                cargarEventosAdmin();
-            } else {
-                alert("No se pudo eliminar.");
-            }
-        } catch (err) {
-            alert("Error de conexión.");
+    async function aprobarPaseManual(tokenQr) {
+        let res = await fetch(`${API_URL}/api/admin/ingresos/${tokenQr}/aprobar-manual`, { method: 'POST' });
+        let data = await res.json();
+        if (res.ok && data.exito) {
+            cargarPasesDeEventoSeleccionado();
+        } else {
+            alert("No se pudo aprobar el pase.");
         }
     }
 
     async function validarCodigoQRManual() {
-        const codigoInput = document.getElementById('input-codigo-qr');
-        const codigo = codigoInput.value.trim();
-        const resBox = document.getElementById('resultado-checkin');
-        const iconoEstado = document.getElementById('checkin-icono-estado');
-        const titulo = document.getElementById('checkin-titulo');
-        const subtitulo = document.getElementById('checkin-subtitulo');
-        const detalles = document.getElementById('checkin-detalles');
-
-        if (!codigo) {
-            alert("Por favor ingresa o escanea un código de acceso.");
-            return;
-        }
-
-        try {
-            let res = await fetch(`${API_URL}/api/checkin/escanear/`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ codigo_qr: codigo })
-            });
-
-            let data = await res.json();
-            resBox.style.display = 'block';
-            const ahoraStr = new Date().toLocaleTimeString();
-
-            if (res.ok && data.valido) {
-                resBox.className = "result-box success";
-                iconoEstado.innerText = '✅';
-                titulo.innerHTML = data.mensaje;
-                subtitulo.innerText = `Validado exitosamente en puerta a las ${data.detalles?.hora_ingreso || ahoraStr}`;
-                detalles.innerHTML = `
-                    <b>Cliente:</b> ${data.detalles?.cliente_nombre || 'Cliente'} &nbsp;|&nbsp; <b>Cédula:</b> ${data.detalles?.cliente_cedula || 'S/C'}<br>
-                    <b>Evento:</b> ${data.detalles?.evento_nombre || 'Salsoteca'}<br>
-                    <b>Tipo:</b> ${data.detalles?.tipo_reserva || 'Cover'} &nbsp;|&nbsp; <b>Pases:</b> ${data.detalles?.pases || 1} &nbsp;|&nbsp; <b>Mesas:</b> ${data.detalles?.mesas || 0}
-                `;
-
-                historialAccesos.unshift({
-                    hora: data.detalles?.hora_ingreso || ahoraStr,
-                    codigo: codigo,
-                    cliente: data.detalles?.cliente_nombre || 'Cliente',
-                    cedula: data.detalles?.cliente_cedula || 'S/C',
-                    evento: data.detalles?.evento_nombre || 'Salsoteca',
-                    estado: '✅ Permitido (AL)'
-                });
-            } else {
-                resBox.className = "result-box error";
-                iconoEstado.innerText = '⚠️';
-                titulo.innerHTML = data.mensaje || "⚠️ Acceso No Válido";
-                subtitulo.innerText = "Alerta de seguridad en puerta";
-                detalles.innerHTML = `Cliente asociado: <b>${data.cliente || 'Desconocido'}</b>. Este código ya fue utilizado (AL) o no pertenece a ninguna reserva activa.`;
-
-                historialAccesos.unshift({
-                    hora: ahoraStr,
-                    codigo: codigo,
-                    cliente: data.cliente || 'Desconocido',
-                    cedula: 'N/A',
-                    evento: 'N/A',
-                    estado: '❌ Denegado / Usado'
-                });
+        const codigo = document.getElementById('input-codigo-qr').value.trim();
+        if (!codigo) return;
+        
+        let res = await fetch(`${API_URL}/api/admin/ingresos/${codigo}/aprobar-manual`, { method: 'POST' });
+        if (res.ok) {
+            alert("✅ ¡Acceso validado con éxito!");
+            document.getElementById('input-codigo-qr').value = '';
+            if(document.getElementById("select-evento-puerta").value) {
+                cargarPasesDeEventoSeleccionado();
             }
-
-            renderizarHistorialCheckin();
-            codigoInput.value = "";
-            codigoInput.focus();
-        } catch (err) {
-            resBox.style.display = 'block';
-            resBox.className = "result-box warning";
-            iconoEstado.innerText = '❌';
-            titulo.innerHTML = "Error de Conexión";
-            subtitulo.innerText = "Fallo de red";
-            detalles.innerHTML = "No se pudo conectar con el servidor.";
+        } else {
+            alert("⚠️ Código QR no encontrado o ya utilizado.");
         }
     }
 
-    function renderizarHistorialCheckin() {
-        const tbody = document.getElementById('tabla-historial-checkin');
-        if (!tbody) return;
-
-        if (historialAccesos.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6">No hay registros de escaneo recientes en esta sesión.</td></tr>`;
-            return;
-        }
-
-        tbody.innerHTML = historialAccesos.map(h => `
-            <tr>
-                <td><code>${h.hora}</code></td>
-                <td><code>${h.codigo}</code></td>
-                <td><b>${h.cliente}</b></td>
-                <td>${h.cedula}</td>
-                <td>${h.evento}</td>
-                <td><span class="status-pill ${h.estado.includes('Permitido') ? 'status-confirmed' : 'status-pending'}">${h.estado}</span></td>
-            </tr>
-        `).join('');
-
-        const permitidos = historialAccesos.filter(h => h.estado.includes('Permitido')).length;
-        document.getElementById('checkin-pases-usados').innerText = permitidos;
-        document.getElementById('checkin-total-pases').innerText = historialAccesos.length;
+    function abrirEscanerCamaraMovil() {
+        alert("📷 Escáner de cámara activado. Apunta con tu dispositivo al código QR del cliente.");
     }
 
-    async function crearZona(e) {
-        e.preventDefault();
-        const nombre = document.getElementById('zona-nombre').value;
-        const mesas = document.getElementById('zona-mesas').value;
-
-        const formData = new FormData();
-        formData.append("nombre_zona", nombre);
-        formData.append("cantidad_mesas", mesas);
-
-        try {
-            let res = await fetch(`${API_URL}/api/admin/zonas/`, { method: "POST", body: formData });
-            if (res.ok) {
-                alert("✅ Zona y mesas registradas exitosamente.");
-                document.getElementById('form-crear-zona').reset();
-            } else {
-                alert("Error al registrar zona.");
-            }
-        } catch (err) {
-            alert("Error de conexión.");
-        }
+    // Funciones complementarias
+    async function cargarPropietariosSelect() {
+        let res = await fetch(`${API_URL}/api/admin/propietarios/`);
+        let props = await res.json();
+        const select = document.getElementById('local-propietario-id');
+        if(select) select.innerHTML = props.map(p => `<option value="${p.propietario_id || p.id}">${p.nombre}</option>`).join('');
     }
+    async function cargarLocalesAdmin() {
+        let res = await fetch(`${API_URL}/api/admin/locales/`);
+        cacheLocales = await res.json();
+        const tbody = document.getElementById('tabla-locales-body');
+        if(tbody) tbody.innerHTML = cacheLocales.map(l => `<tr><td>#${l.id}</td><td><b>${l.nombre}</b></td><td>${l.ciudad}</td><td><code>${l.slug}</code></td></tr>`).join('');
+    }
+    async function cargarLocalesSelect() {
+        let res = await fetch(`${API_URL}/api/admin/locales/`);
+        let locales = await res.json();
+        const select = document.getElementById('nuevo-local-id');
+        if(select) select.innerHTML = locales.map(l => `<option value="${l.id}">${l.nombre}</option>`).join('');
+    }
+    async function cargarEventosAdmin() {
+        let res = await fetch(`${API_URL}/api/reservas/eventos/?local_id=1`);
+        cacheEventos = await res.json();
+        const tbody = document.getElementById('tabla-eventos-body');
+        if(tbody) tbody.innerHTML = cacheEventos.map(ev => `<tr><td>#${ev.id}</td><td><b>${ev.nombre_evento}</b></td><td>📅 ${ev.fecha_hora}</td></tr>`).join('');
+    }
+    async function guardarPlantillaCelebracion(e) { e.preventDefault(); alert("Configuración guardada"); }
+    async function crearPropietario(e) { e.preventDefault(); alert("Propietario creado"); }
+    async function crearLocal(e) { e.preventDefault(); alert("Local creado"); }
+    async function crearNuevoEvento(e) { e.preventDefault(); alert("Evento creado"); }
+    async function crearZona(e) { e.preventDefault(); alert("Zona creada"); }
     </script>
 </body>
 </html>

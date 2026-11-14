@@ -16,6 +16,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from app.config import obtener_configuracion_local
+from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Form, Request, Query
 
 from app.database import engine, Base, get_db
 from app.models import Local, Evento, UsuarioFinal, Reserva, BannerSlider, Usuario, IngresoPuerta, PlantillaCelebracionBase
@@ -843,3 +844,58 @@ def eliminar_local(local_id: int, db: Session = Depends(get_db)):
 def obtener_config_footer():
     """Retorna los datos institucionales y de contacto para el pie de página desde config.py"""
     return obtener_configuracion_local()
+
+# ==========================================
+# ENDPOINTS DE CONTROL DE ACCESO Y PUERTA (FECHA, QR, APROBACIÓN MANUAL)
+# ==========================================
+@app.get("/api/admin/eventos-por-fecha")
+def listar_eventos_por_fecha(fecha: str = Query(...), local_id: int = 1, db: Session = Depends(get_db)):
+    """Filtra los eventos de la Salsoteca por una fecha específica (YYYY-MM-DD)"""
+    eventos = db.query(Evento).filter(
+        Evento.local_id == local_id,
+        Evento.estado != "plantilla_maestra"
+    ).all()
+    
+    eventos_filtrados = []
+    for ev in eventos:
+        if ev.fecha_hora and ev.fecha_hora.strftime("%Y-%m-%d") == fecha:
+            eventos_filtrados.append({
+                "id": ev.id,
+                "nombre_evento": ev.nombre_evento,
+                "artista_orquesta": ev.artista_orquesta,
+                "fecha_hora": ev.fecha_hora.strftime("%Y-%m-%d %H:%M")
+            })
+    return eventos_filtrados
+
+@app.get("/api/admin/eventos/{evento_id}/pases-puerta")
+def obtener_pases_evento_puerta(evento_id: int, db: Session = Depends(get_db)):
+    """Obtiene todas las reservas y sus pases QR individuales para un evento específico"""
+    reservas = db.query(Reserva).filter(Reserva.evento_id == evento_id).all()
+    resultado = []
+    
+    for r in reservas:
+        ingresos = db.query(IngresoPuerta).filter(IngresoPuerta.reserva_id == r.id).all()
+        cliente = r.cliente
+        for ing in ingresos:
+            resultado.append({
+                "reserva_id": r.id,
+                "codigo_reserva": r.codigo_reserva,
+                "cliente_nombre": cliente.nombre if cliente else "Cliente",
+                "cedula": cliente.cedula if cliente else "N/A",
+                "token_qr": ing.codigo_qr,
+                "estado_ingreso": ing.estado_ingreso, # PE o AL
+                "qr_img": f"https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={ing.codigo_qr}"
+            })
+    return resultado
+
+@app.post("/api/admin/ingresos/{token_qr}/aprobar-manual")
+def aprobar_ingreso_manual(token_qr: str, db: Session = Depends(get_db)):
+    """Aprueba/Valida manualmente el acceso de un QR específico desde la puerta"""
+    ingreso = db.query(IngresoPuerta).filter(IngresoPuerta.codigo_qr == token_qr).first()
+    if not ingreso:
+        raise HTTPException(status_code=404, detail="Pase QR no encontrado")
+    
+    ingreso.estado_ingreso = "AL" # Acceso Liberado / Ingresado
+    ingreso.fecha_ingreso = datetime.utcnow()
+    db.commit()
+    return {"exito": True, "mensaje": f"Pase {token_qr} validado y aprobado con éxito en puerta."}
