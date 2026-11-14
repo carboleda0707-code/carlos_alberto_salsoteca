@@ -474,3 +474,38 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     actualizarBadgeCarrito();
 });
+
+
+// ==========================================
+// AUTOCOMPLETAR CLIENTE POR CÉDULA EN CHECKOUT
+// ==========================================
+document.addEventListener("DOMContentLoaded", () => {
+    const inputCedula = document.getElementById('checkout-cedula');
+    if (inputCedula) {
+        inputCedula.addEventListener('blur', async function() {
+            const cedula = this.value.trim();
+            if (cedula.length < 6) return; // Validación básica de longitud
+
+            try {
+                let response = await fetch(`/api/clientes/buscar/${cedula}`);
+                if (response.ok) {
+                    let data = await response.json();
+                    
+                    if (data.encontrado) {
+                        // Autocompletamos los campos para evitar que vuelva a escribirlos
+                        document.getElementById('checkout-nombre').value = data.nombre || '';
+                        document.getElementById('checkout-telefono').value = data.telefono || '';
+                        if (document.getElementById('checkout-email')) {
+                            document.getElementById('checkout-email').value = data.email || '';
+                        }
+                        
+                        // Notificación sutil en consola
+                        console.log("⚡ " + data.mensaje);
+                    }
+                }
+            } catch (error) {
+                console.error("Error al verificar la cédula:", error);
+            }
+        });
+    }
+});

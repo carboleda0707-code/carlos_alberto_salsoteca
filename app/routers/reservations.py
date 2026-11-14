@@ -2,6 +2,7 @@
 import os
 import re
 import uuid
+import json
 import urllib.parse
 from datetime import datetime
 from typing import Optional
@@ -11,19 +12,46 @@ from app.database import get_db
 from app import models, schemas
 from app.r2_storage import upload_file_to_r2
 
-router = APIRouter(prefix="/api/reservas", tags=["Reservas"])
+router = APIRouter(prefix="/api", tags=["Reservas y Clientes"])
+
+# ==========================================
+# GESTIÓN DE CLIENTES (BÚSQUEDA POR CÉDULA)
+# ==========================================
+
+@router.get("/clientes/buscar/{cedula}")
+def buscar_cliente_por_cedula(cedula: str, db: Session = Depends(get_db)):
+    """Busca un cliente registrado por su cédula o RUC para autocompletar el checkout"""
+    # Buscamos en la tabla UsuarioFinal usando telefono o cédula (según tu modelo de base de datos)
+    cliente = db.query(models.UsuarioFinal).filter(
+        (models.UsuarioFinal.telefono == cedula) | (models.UsuarioFinal.email.like(f"%{cedula}%"))
+    ).first()
+    
+    if cliente:
+        return {
+            "encontrado": True,
+            "nombre": cliente.nombre,
+            "telefono": cliente.telefono,
+            "email": cliente.email,
+            "mensaje": "¡Cliente encontrado!"
+        }
+    
+    return {
+        "encontrado": False,
+        "mensaje": "Cliente nuevo."
+    }
+
 
 # ==========================================
 # GESTIÓN DE EVENTOS Y CARTELERA
 # ==========================================
 
-@router.get("/eventos/")
+@router.get("/reservas/eventos/")
 def listar_eventos(local_id: int = 1, db: Session = Depends(get_db)):
     """Obtiene la lista de eventos activos para un local específico"""
     eventos = db.query(models.Evento).filter(models.Evento.local_id == local_id).all()
     return eventos
 
-@router.post("/eventos/")
+@router.post("/reservas/eventos/")
 async def crear_evento(
     local_id: int = Form(...),
     nombre_evento: str = Form(...),
@@ -46,7 +74,6 @@ async def crear_evento(
         file_extension = file.filename.split(".")[-1]
         imagen_nombre = f"evento_{uuid.uuid4()}.{file_extension}"
         
-        # Subir a Cloudflare R2
         upload_file_to_r2(
             file_obj=file.file,
             filename=imagen_nombre,
@@ -73,7 +100,7 @@ async def crear_evento(
     db.refresh(nuevo_evento)
     return {"mensaje": "Evento creado exitosamente con tarifas y R2", "id": nuevo_evento.id}
 
-@router.put("/eventos/{evento_id}")
+@router.put("/reservas/eventos/{evento_id}")
 async def actualizar_evento(
     evento_id: int,
     nombre_evento: str = Form(None),
@@ -93,14 +120,10 @@ async def actualizar_evento(
     if not evento:
         raise HTTPException(status_code=404, detail="Evento no encontrado")
 
-    if nombre_evento is not None:
-        evento.nombre_evento = nombre_evento
-    if artista_orquesta is not None:
-        evento.artista_orquesta = artista_orquesta
-    if fecha_hora is not None and fecha_hora != "":
-        evento.fecha_hora = fecha_hora
-    if descripcion is not None:
-        evento.descripcion = descripcion
+    if nombre_evento is not None: evento.nombre_evento = nombre_evento
+    if artista_orquesta is not None: evento.artista_orquesta = artista_orquesta
+    if fecha_hora is not None and fecha_hora != "": evento.fecha_hora = fecha_hora
+    if descripcion is not None: evento.descripcion = descripcion
 
     evento.precio_cover = precio_cover
     evento.precio_mesa = precio_mesa
@@ -123,7 +146,7 @@ async def actualizar_evento(
     db.refresh(evento)
     return {"mensaje": "Evento actualizado correctamente en R2", "id": evento.id}
 
-@router.delete("/eventos/{evento_id}")
+@router.delete("/reservas/eventos/{evento_id}")
 def eliminar_evento(evento_id: int, db: Session = Depends(get_db)):
     """Elimina un evento de la cartelera"""
     evento = db.query(models.Evento).filter(models.Evento.id == evento_id).first()
@@ -136,73 +159,109 @@ def eliminar_evento(evento_id: int, db: Session = Depends(get_db)):
 
 
 # ==========================================
-# GESTIÓN DE RESERVAS Y COMPROBANTES
+# CHECKOUT MASIVO DE CARRITO
 # ==========================================
 
-@router.post("/con_comprobante/")
-async def crear_reserva_con_comprobante(
-    evento_id: int = Form(...),
-    cliente_id: int = Form(1),
-    cliente_nombre: str = Form("Cliente Web"),
-    cliente_telefono: str = Form("0999999999"),
-    cantidad_personas: int = Form(1),  # Covers / Pases
-    cantidad_mesas: int = Form(0),      # Mesas apartadas
-    monto_total: float = Form(0.0),     # Valor total calculado en dinero
-    tipo_reserva: str = Form("Cover"),  # Ej: "2 Covers + 1 Mesa"
-    mostrar_en_cartelera: str = Form("true"), # Recibe la preferencia del checkbox web
-    file: UploadFile = File(...),
+@router.post("/checkout/carrito")
+async def checkout_carrito(
+    cedula: str = Form(...),
+    nombre: str = Form(...),
+    telefono: str = Form(...),
+    email: str = Form(None),
+    items_json: str = Form(...),
+    mostrar_en_cartelera: str = Form("true"),
+    comprobante: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
-    """Crea una nueva solicitud de reserva combinada enviando el comprobante directamente a Cloudflare R2"""
-    file_extension = file.filename.split(".")[-1]
-    nombre_limpio = f"comprobante_{uuid.uuid4()}.{file_extension}"
+    """Procesa el carrito de compras completo, registra al cliente, sube el comprobante a R2 y genera las reservas"""
+    try:
+        items = json.loads(items_json)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Formato de items JSON inválido.")
 
+    if not items:
+        raise HTTPException(status_code=400, detail="El carrito está vacío.")
+
+    # 1. Subir comprobante a R2
+    file_extension = comprobante.filename.split(".")[-1]
+    nombre_comprobante = f"comprobante_{uuid.uuid4()}.{file_extension}"
     upload_file_to_r2(
-        file_obj=file.file,
-        filename=nombre_limpio,
-        content_type=file.content_type
+        file_obj=comprobante.file,
+        filename=nombre_comprobante,
+        content_type=comprobante.content_type
     )
 
-    cliente = db.query(models.UsuarioFinal).filter(models.UsuarioFinal.telefono == cliente_telefono).first()
+    # 2. Gestionar Cliente (Búsqueda o Creación por Cédula / Teléfono)
+    cliente = db.query(models.UsuarioFinal).filter(
+        (models.UsuarioFinal.telefono == telefono) | (models.UsuarioFinal.email == email)
+    ).first()
+
     if not cliente:
         cliente = models.UsuarioFinal(
-            nombre=cliente_nombre,
-            telefono=cliente_telefono,
-            email=f"cliente_{int(datetime.utcnow().timestamp())}@salsoteca.com",
-            password_hash="temp_hash_web"
+            nombre=nombre,
+            telefono=telefono,
+            email=email or f"cliente_{int(datetime.utcnow().timestamp())}@salsoteca.com",
+            password_hash="guest_checkout"
         )
         db.add(cliente)
         db.commit()
         db.refresh(cliente)
+    else:
+        # Actualizar datos por si cambió de nombre u otro detalle
+        cliente.nombre = nombre
+        cliente.telefono = telefono
+        if email: cliente.email = email
+        db.commit()
 
-    codigo_aleatorio = f"RES-{int(datetime.utcnow().timestamp())}"
-    
-    # Convertir el string de JS ("true"/"false") a booleano real de Python
     bool_cartelera = str(mostrar_en_cartelera).lower() in ["true", "1", "yes", "on"]
+    reservas_creadas = []
 
-    nueva_reserva = models.Reserva(
-        evento_id=evento_id,
-        cliente_id=cliente.id,
-        cantidad_personas=cantidad_personas,
-        cantidad_mesas=cantidad_mesas,
-        monto_total=monto_total,
-        tipo_reserva=tipo_reserva,
-        comprobante_pago=nombre_limpio,
-        codigo_reserva=codigo_aleatorio,
-        estado_reserva="Por Aprobar",
-        mostrar_en_cartelera=bool_cartelera
-    )
+    for item in items:
+        evento_id = item.get("evento_id", 1)
+        cant_covers = item.get("cantidad_covers", 0)
+        cant_mesas = item.get("cantidad_mesas", 0)
+        subtotal = item.get("subtotal", 0.0)
+        
+        # Si es un evento personalizado creado por el cliente
+        if item.get("tipo") == "personalizado":
+            # Creamos el evento automáticamente en la BD
+            nuevo_evento_pers = models.Evento(
+                local_id=1,
+                nombre_evento=item.get("nombre_evento", "Mi Rumba"),
+                artista_orquesta=item.get("tipo_celebracion", "Celebración"),
+                fecha_hora=item.get("fecha_hora", datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')),
+                descripcion=f"Evento personalizado de {nombre}",
+                estado="aprobado"
+            )
+            db.add(nuevo_evento_pers)
+            db.commit()
+            db.refresh(nuevo_evento_pers)
+            evento_id = nuevo_evento_pers.id
 
-    db.add(nueva_reserva)
-    db.commit()
-    db.refresh(nueva_reserva)
+        codigo_reserva = f"RES-{int(datetime.utcnow().timestamp())}-{uuid.uuid4().hex[:4]}"
+        tipo_reserva_desc = f"{cant_covers} Covers + {cant_mesas} Mesas"
+
+        nueva_reserva = models.Reserva(
+            evento_id=evento_id,
+            cliente_id=cliente.id,
+            cantidad_personas=cant_covers,
+            cantidad_mesas=cant_mesas,
+            monto_total=subtotal,
+            tipo_reserva=tipo_reserva_desc,
+            comprobante_pago=nombre_comprobante,
+            codigo_reserva=codigo_reserva,
+            estado_reserva="Por Aprobar",
+            mostrar_en_cartelera=bool_cartelera
+        )
+        db.add(nueva_reserva)
+        db.commit()
+        db.refresh(nueva_reserva)
+        reservas_creadas.append(nueva_reserva.id)
 
     return {
-        "mensaje": "Reserva combinada creada exitosamente con comprobante en R2",
-        "reserva_id": nueva_reserva.id,
-        "monto_total": float(nueva_reserva.monto_total),
-        "estado": nueva_reserva.estado_reserva,
-        "comprobante": nombre_limpio
+        "exito": True,
+        "mensaje": "🎉 ¡Solicitudes de reserva procesadas con éxito! Las revisaremos y te enviaremos tus QR por WhatsApp.",
+        "reservas_ids": reservas_creadas
     }
 
 
@@ -210,17 +269,15 @@ async def crear_reserva_con_comprobante(
 # APROBACIÓN, QR INDIVIDUALES Y WHATSAPP WA.ME
 # ==========================================
 
-@router.post("/{reserva_id}/aprobar")
+@router.post("/reservas/{reserva_id}/aprobar")
 def aprobar_reserva_y_generar_qrs(reserva_id: int, db: Session = Depends(get_db)):
     """Aprueba la reserva, genera códigos QR individuales por cada pase (Estatus PE) y arma el enlace de WhatsApp"""
     reserva = db.query(models.Reserva).filter(models.Reserva.id == reserva_id).first()
     if not reserva:
         raise HTTPException(status_code=404, detail="Reserva no encontrada.")
 
-    # 1. Cambiar estatus a Aprobado
     reserva.estado_reserva = "APROBADO"
 
-    # 2. Verificar si ya existen pases generados para evitar duplicados al re-aprobar
     ingresos_existentes = db.query(models.IngresoPuerta).filter(models.IngresoPuerta.reserva_id == reserva.id).all()
     pases_generados = [ing.codigo_qr for ing in ingresos_existentes]
     total_pases = reserva.cantidad_personas or 1
@@ -231,14 +288,13 @@ def aprobar_reserva_y_generar_qrs(reserva_id: int, db: Session = Depends(get_db)
             nuevo_ingreso = models.IngresoPuerta(
                 reserva_id=reserva.id,
                 codigo_qr=codigo_qr_unico,
-                estado_ingreso="PE"  # PE: Pendiente de Entrar
+                estado_ingreso="PE"
             )
             db.add(nuevo_ingreso)
             pases_generados.append(codigo_qr_unico)
 
     db.commit()
 
-    # 3. Construir mensaje preformateado para WhatsApp con wa.me
     cliente_nombre = reserva.cliente.nombre if reserva.cliente and reserva.cliente.nombre else "Estimado Cliente"
     telefono_cliente = reserva.cliente.telefono if reserva.cliente and reserva.cliente.telefono else ""
     evento_nombre = reserva.evento.nombre_evento if getattr(reserva, "evento", None) else "Salsoteca Carlos Alberto"
@@ -253,7 +309,6 @@ def aprobar_reserva_y_generar_qrs(reserva_id: int, db: Session = Depends(get_db)
         f"📍 ¡Te esperamos para vivir la mejor noche salsera en Guayaquil!"
     )
 
-    # Normalizar teléfono ecuatoriano al formato internacional 593XXXXXXXXX para wa.me
     telefono_limpio = "".join(filter(str.isdigit, str(telefono_cliente)))
     if telefono_limpio.startswith("0") and len(telefono_limpio) == 10:
         telefono_limpio = "593" + telefono_limpio[1:]
@@ -271,7 +326,7 @@ def aprobar_reserva_y_generar_qrs(reserva_id: int, db: Session = Depends(get_db)
     }
 
 
-@router.get("/{reserva_id}/qrs")
+@router.get("/reservas/{reserva_id}/qrs")
 def obtener_qrs_reserva(reserva_id: int, db: Session = Depends(get_db)):
     """Obtiene la lista de pases QR y sus estatus (PE / AL) para el modal de administración"""
     ingresos = db.query(models.IngresoPuerta).filter(models.IngresoPuerta.reserva_id == reserva_id).all()
@@ -280,7 +335,7 @@ def obtener_qrs_reserva(reserva_id: int, db: Session = Depends(get_db)):
     for ing in ingresos:
         resultado.append({
             "codigo_qr": ing.codigo_qr,
-            "estatus": ing.estado_ingreso,  # "PE" o "AL"
+            "estatus": ing.estado_ingreso,
             "fecha_ingreso": ing.fecha_ingreso.strftime('%Y-%m-%d %H:%M:%S') if ing.fecha_ingreso else None
         })
         
