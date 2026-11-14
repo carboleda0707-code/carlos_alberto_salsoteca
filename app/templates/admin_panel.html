@@ -7,7 +7,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/diseno.css">
     <style>
-        /* Estilos optimizados para menú lateral colapsable / minimalista */
         :root {
             --sidebar-width: 260px;
             --sidebar-collapsed-width: 75px;
@@ -263,7 +262,6 @@
 
         <!-- CONTROL WEB (BANNERS Y TARJETA CREA MI RUMBA) -->
         <div id="vista-home-config" class="tab-content">
-            <!-- NUEVA SECCIÓN: CONFIGURACIÓN TARJETA CREA MI RUMBA Y PRECIOS -->
             <div class="section-card">
                 <h2>🎉 Configuración de Tarjeta "Crea Mi Rumba" y Tarifas Base (Home)</h2>
                 <p class="section-description" style="margin-bottom: 15px;">Personaliza la tarjeta informativa de la página principal, su imagen de fondo, los textos del botón y las tarifas base que se aplicarán automáticamente cuando el comensal cree su evento.</p>
@@ -613,7 +611,6 @@
     </div>
 
     <script>
-    // Función para contraer y expandir el menú lateral
     function toggleSidebar() {
         const sidebar = document.getElementById('app-sidebar');
         const main = document.getElementById('app-main');
@@ -664,7 +661,6 @@
         }
     }
 
-    // --- FUNCIONES DE CONFIGURACIÓN TARJETA CREA MI RUMBA ---
     async function cargarPlantillaCelebracionAdmin() {
         try {
             let res = await fetch(`${API_URL}/api/admin/plantilla-celebracion/`);
@@ -727,7 +723,6 @@
         }
     }
 
-    // --- FUNCIONES DEL DASHBOARD Y RESERVAS ---
     async function cargarDashboardAdmin() {
         try {
             let res = await fetch(`${API_URL}/api/admin/reservas/`);
@@ -758,6 +753,22 @@
                     : `https://pub-3244093a45bd47d9a30548ef0924bb49.r2.dev/${r.comprobante_pago}`;
             }
 
+            let estadoUpper = (r.estado || 'Por Aprobar').toUpperCase();
+            let accionesHtml = '';
+
+            if (estadoUpper === 'APROBADO' || estadoUpper === 'APROBADA') {
+                accionesHtml = `
+                    <button onclick="reenviarWhatsAppQR(${r.id})" 
+                            style="background: #25d366; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;">
+                        📲 Reenviar QR
+                    </button>
+                `;
+            } else {
+                accionesHtml = `
+                    <span class="text-muted" style="font-size: 11px;">Gestionar en Módulo</span>
+                `;
+            }
+
             return `
             <tr>
                 <td><code style="cursor: pointer; color: #fbbf24;" onclick="verDetalleQrsReserva(${r.id})" title="Clic para ver códigos QR e ingresos">${r.codigo || 'RES-' + (9000 + r.id)}</code></td>
@@ -769,13 +780,28 @@
                     ${r.comprobante_pago ? `<a href="#" onclick="verComprobante('${voucherUrl}')" class="link-voucher">📄 Ver Voucher</a>` : 'Sin Comprobante'}
                 </td>
                 <td><span class="status-pill status-pending">${r.estado || 'Por Aprobar'}</span></td>
-                <td>
-                    <button class="btn btn-success btn-sm" onclick="aprobarReservaYEnviarWhatsApp(${r.id})">Aprobar</button>
-                    <button class="btn btn-danger btn-sm" onclick="cambiarEstadoReserva(${r.id}, 'Rechazado')">Rechazar</button>
-                </td>
+                <td>${accionesHtml}</td>
             </tr>
             `;
         }).join('');
+    }
+
+    async function reenviarWhatsAppQR(reservaId) {
+        try {
+            let response = await fetch(`${API_URL}/api/reservas/${reservaId}/aprobar`, {
+                method: 'POST'
+            });
+            let data = await response.json();
+            
+            if (data.exito && data.whatsapp_url) {
+                window.open(data.whatsapp_url, '_blank');
+            } else {
+                alert("⚠️ No se pudo generar el enlace de WhatsApp.");
+            }
+        } catch (error) {
+            console.error("Error al reenviar QR:", error);
+            alert("Ocurrió un error al conectar con el servidor.");
+        }
     }
 
     async function verDetalleQrsReserva(reservaId) {
@@ -786,7 +812,7 @@
                 
                 let contenedorHtml = `<div style="display: flex; flex-direction: column; gap: 10px;">`;
                 if (!data || data.length === 0) {
-                    contenedorHtml += `<p style="text-align: center; color: #aaa;">No hay códigos QR generados todavía. (Aprueba la reserva primero).</p>`;
+                    contenedorHtml += `<p style="text-align: center; color: #aaa;">No hay códigos QR generados todavía. (Aprueba la reserva en Gestión de Reservas primero).</p>`;
                 } else {
                     data.forEach((pase, index) => {
                         let isAl = pase.estatus === 'AL';
@@ -824,73 +850,6 @@
 
     function cerrarModalQrs() {
         document.getElementById('modal-qrs-overlay').style.display = 'none';
-    }
-
-    async function aprobarReservaYEnviarWhatsApp(id) {
-    if (!confirm(`¿Estás seguro de aprobar la reserva #${id}, generar sus QR y abrir WhatsApp?`)) return;
-
-    try {
-        let res = await fetch(`${API_URL}/api/reservas/${id}/aprobar`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" }
-        });
-
-        if (res.ok) {
-            let data = await res.json();
-            
-            // 1. Abrir WhatsApp PRIMERO para evitar que el navegador bloquee el popup
-            if (data.whatsapp_url) {
-                let w = window.open(data.whatsapp_url, '_blank');
-                
-                // Si el navegador bloqueó el popup de todas formas, damos una alternativa con enlace
-                if (!w || w.closed || typeof w.closed == 'undefined') {
-                    if (confirm(`✨ ¡Reserva #${id} aprobada!\n\nTu navegador bloqueó la ventana emergente. ¿Deseas abrir el enlace de WhatsApp manualmente ahora?`)) {
-                        window.location.href = data.whatsapp_url;
-                    }
-                }
-            } else {
-                console.warn("El servidor no retornó whatsapp_url");
-            }
-
-            // 2. Mostrar la alerta después o recargar el panel
-            alert(`✨ ¡Reserva #${id} aprobada con éxito y códigos QR generados!`);
-            
-            // Recargar el listado/dashboard
-            if (typeof cargarDashboardAdmin === 'function') {
-                cargarDashboardAdmin();
-            } else {
-                location.reload();
-            }
-
-        } else {
-            alert("No se pudo aprobar la reserva en el servidor.");
-        }
-    } catch (err) {
-        console.error(err);
-        alert("Error de conexión al procesar la solicitud.");
-    }
-}
-
-    async function cambiarEstadoReserva(id, nuevoEstado) {
-        if (!confirm(`¿Estás seguro de cambiar el estado de la reserva #${id} a '${nuevoEstado}'?`)) return;
-
-        try {
-            let res = await fetch(`${API_URL}/api/admin/reservas/${id}/estado`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ estado: nuevoEstado })
-            });
-            
-            if (res.ok) {
-                alert(`✅ Reserva #${id} marcada como '${nuevoEstado}'.`);
-                cargarDashboardAdmin();
-            } else {
-                alert("No se pudo actualizar el estatus de la reserva.");
-            }
-        } catch (err) {
-            console.error(err);
-            alert("Error de conexión.");
-        }
     }
 
     function actualizarMetricas(reservas) {
