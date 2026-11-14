@@ -524,7 +524,7 @@ async def procesar_checkout_carrito(
     items_json: str = Form(...),
     mostrar_en_cartelera: str = Form("true"),
     comprobante: UploadFile = File(...),
-    file_flyer: Optional[UploadFile] = File(None), # <--- Recibir el flyer del cliente
+    file_flyer: Optional[UploadFile] = File(None), # <--- Captura el flyer enviado desde el frontend
     db: Session = Depends(get_db)
 ):
     try:
@@ -532,16 +532,16 @@ async def procesar_checkout_carrito(
         if not items:
             raise HTTPException(status_code=400, detail="El carrito está vacío.")
 
+        # 1. Guardar comprobante de pago
         file_extension = Path(comprobante.filename).suffix
         file_name = f"comprobante_{cedula}_{uuid.uuid4().hex[:6]}{file_extension}"
-        
         upload_file_to_r2(
             file_obj=comprobante.file,
             filename=file_name,
             content_type=comprobante.content_type
         )
 
-        # Si subió flyer personalizado, lo subimos a Cloudflare R2
+        # 2. Guardar el flyer personalizado si el cliente lo adjuntó
         imagen_evento_nombre = "evento_default.jpg"
         if file_flyer and file_flyer.filename:
             flyer_ext = Path(file_flyer.filename).suffix
@@ -576,6 +576,7 @@ async def procesar_checkout_carrito(
             codigo_aleatorio = f"RES-{int(datetime.utcnow().timestamp())}-{os.urandom(2).hex()}"
             evento_id_asignado = item.get("evento_id")
 
+            # Si el item es un evento personalizado creado por el cliente ("Crea Mi Rumba")
             if item.get("tipo") == "personalizado" or item.get("nombre_evento"):
                 nombre_ev = item.get("nombre_evento") or item.get("titulo") or "Celebración Especial"
                 tipo_cel = item.get("tipo_celebracion") or "Festejo"
@@ -595,7 +596,7 @@ async def procesar_checkout_carrito(
                     genero_musical="Celebración Privada",
                     fecha_hora=fecha_dt,
                     descripcion=f"Evento personalizado creado por {nombre} vía Crea Mi Rumba.",
-                    imagen=imagen_evento_nombre, # <--- Imagen real subida a R2
+                    imagen=imagen_evento_nombre, # <--- Guarda el nombre real del archivo en R2
                     estado="aprobado" if bool_cartelera else "programado",
                     precio_cover=10.00,
                     precio_mesa=50.00
@@ -625,7 +626,7 @@ async def procesar_checkout_carrito(
 
         return {
             "success": True,
-            "mensaje": "¡Compra procesada con éxito! Tu evento y flyer han sido guardados correctamente.",
+            "mensaje": "¡Compra procesada con éxito! Tu evento, flyer y reservas se han guardado correctamente.",
             "total_items": len(items),
             "monto_total": monto_total_global,
             "comprobante": file_name
