@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 import shutil
 import re
@@ -53,6 +54,12 @@ def read_root(request: Request):
 def panel_administracion(request: Request):
     print("--- [CHIVATO] Petición recibida en '/admin' (Panel de Administración) ---")
     return templates.TemplateResponse(request, "admin_panel.html")
+
+# Ruta para Términos y Ley de Protección de Datos
+@app.get("/terminos", response_class=HTMLResponse)
+def ver_terminos(request: Request):
+    """Renderiza el documento legal de términos, condiciones y ley de protección de datos"""
+    return templates.TemplateResponse("terminos.html", {"request": request})
 
 # ==========================================
 # ENDPOINTS: ADMINISTRADORES Y LOCALES / SUCURSALES
@@ -515,6 +522,7 @@ async def procesar_checkout_carrito(
     telefono: str = Form(...),
     email: Optional[str] = Form(None),
     items_json: str = Form(...),
+    mostrar_en_cartelera: str = Form("true"),
     comprobante: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
@@ -547,6 +555,7 @@ async def procesar_checkout_carrito(
 
         monto_total_global = 0.0
         reservas_creadas = []
+        bool_cartelera = str(mostrar_en_cartelera).lower() in ["true", "1", "yes", "on"]
 
         for item in items:
             subtotal_item = float(item.get("subtotal", 0.0))
@@ -565,7 +574,7 @@ async def procesar_checkout_carrito(
                 estado_reserva="Por Aprobar",
                 nombre_personalizado=item.get("nombre_personalizado"),
                 fecha_personalizada=item.get("fecha_personalizada"),
-                mostrar_en_cartelera=item.get("mostrar_en_cartelera", True)
+                mostrar_en_cartelera=bool_cartelera
             )
             db.add(nueva_reserva)
             reservas_creadas.append(nueva_reserva)
@@ -599,6 +608,7 @@ async def crear_reserva_con_comprobante(
     cantidad_mesas: int = Form(0),
     monto_total: float = Form(0.0),
     tipo_reserva: str = Form("Cover"),
+    mostrar_en_cartelera: str = Form("true"),
     file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
@@ -624,6 +634,7 @@ async def crear_reserva_con_comprobante(
         db.commit()
 
     codigo_aleatorio = f"RES-{int(datetime.utcnow().timestamp())}"
+    bool_cartelera = str(mostrar_en_cartelera).lower() in ["true", "1", "yes", "on"]
 
     nueva_reserva = Reserva(
         evento_id=evento_id,
@@ -634,7 +645,8 @@ async def crear_reserva_con_comprobante(
         tipo_reserva=tipo_reserva,
         comprobante_pago=nombre_limpio,
         codigo_reserva=codigo_aleatorio,
-        estado_reserva="Por Aprobar"
+        estado_reserva="Por Aprobar",
+        mostrar_en_cartelera=bool_cartelera
     )
 
     db.add(nueva_reserva)

@@ -149,6 +149,7 @@ async def crear_reserva_con_comprobante(
     cantidad_mesas: int = Form(0),      # Mesas apartadas
     monto_total: float = Form(0.0),     # Valor total calculado en dinero
     tipo_reserva: str = Form("Cover"),  # Ej: "2 Covers + 1 Mesa"
+    mostrar_en_cartelera: str = Form("true"), # Recibe la preferencia del checkbox web
     file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
@@ -175,6 +176,9 @@ async def crear_reserva_con_comprobante(
         db.refresh(cliente)
 
     codigo_aleatorio = f"RES-{int(datetime.utcnow().timestamp())}"
+    
+    # Convertir el string de JS ("true"/"false") a booleano real de Python
+    bool_cartelera = str(mostrar_en_cartelera).lower() in ["true", "1", "yes", "on"]
 
     nueva_reserva = models.Reserva(
         evento_id=evento_id,
@@ -185,7 +189,8 @@ async def crear_reserva_con_comprobante(
         tipo_reserva=tipo_reserva,
         comprobante_pago=nombre_limpio,
         codigo_reserva=codigo_aleatorio,
-        estado_reserva="Por Aprobar"
+        estado_reserva="Por Aprobar",
+        mostrar_en_cartelera=bool_cartelera
     )
 
     db.add(nueva_reserva)

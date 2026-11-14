@@ -380,7 +380,17 @@ async function enviarCheckoutCarrito(event) {
     formData.append("telefono", document.getElementById("checkout-telefono").value);
     formData.append("email", document.getElementById("checkout-email")?.value || "");
     formData.append("items_json", JSON.stringify(carrito));
-    
+
+    // Validación obligatoria de los Términos y Ley de Protección de Datos
+    if (!document.getElementById("aceptar_terminos")?.checked) {
+        alert("⚠️ Debes aceptar los Términos y la Ley de Protección de Datos para continuar.");
+        return;
+    }
+
+    // Preferencia de visualización en cartelera
+    const mostrarEnCartelera = document.getElementById("mostrar_en_cartelera")?.checked ? "true" : "false";
+    formData.append("mostrar_en_cartelera", mostrarEnCartelera);
+
     const archivoInput = document.getElementById("checkout-comprobante");
     if (archivoInput.files.length > 0) {
         formData.append("comprobante", archivoInput.files[0]);
@@ -430,10 +440,8 @@ async function agregarEventoPersonalizadoAlCarrito(event) {
         return;
     }
 
-    // Calculamos el subtotal utilizando las variables globales de precio
     const subtotal = (cantPersonas * PRECIO_COVER_PLANTILLA) + (cantMesas * PRECIO_MESA_PLANTILLA);
 
-    // Guardamos temporalmente en el carrito local o enviamos directamente
     const itemPersonalizado = {
         titulo: `${tipoCelebracion}: ${nombreEvento}`,
         tipo: 'personalizado',
