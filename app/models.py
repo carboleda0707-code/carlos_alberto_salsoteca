@@ -14,6 +14,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 from .database import Base
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Boolean
 
 # --- TABLA INTERMEDIA PARA MUCHAS MESAS EN UNA RESERVA ---
 reserva_mesas = Table(
@@ -151,21 +152,21 @@ class PlantillaCelebracionBase(Base):
     __tablename__ = "plantilla_celebracion_base"
 
     id = Column(Integer, primary_key=True, index=True)
-    local_id = Column(Integer, ForeignKey("lugares.id", ondelete="CASCADE"), default=1)
-    titulo_base = Column(String(150), default="Gran Celebración en Salsoteca Carlos Alberto")
-    imagen_base = Column(String(255), nullable=True)
-    precio_cover_defecto = Column(Numeric(10, 2), default=10.00)
-    precio_mesa_defecto = Column(Numeric(10, 2), default=50.00)
-    descripcion_base = Column(Text, nullable=True)
+    local_id = Column(Integer, default=1)
+    titulo_base = Column(String, default="Tu Evento")
+    imagen_base = Column(String, nullable=True)
+    precio_cover_defecto = Column(Float, default=10.00)
+    precio_mesa_defecto = Column(Float, default=50.00)
+    descripcion_base = Column(String, nullable=True)
     
-    # Nuevos campos dinámicos para automatización desde el Admin Panel
-    titulo_principal = Column(String(150), default="🎷 Cartelera de la Semana")
-    descripcion_principal = Column(Text, default="Reserva tus pases y mesas con anticipación para asegurar tu ingreso directo con código QR verificado.")
-    subtitulo_1 = Column(String(150), default="🎂 ¿Celebras tu Cumpleaños?")
-    subtitulo_2 = Column(String(150), default="Configura tu festejo a medida.")
-    texto_boton = Column(String(50), default="🎉 Crear Mi Rumba")
-    promocion_texto = Column(String(255), nullable=True)
-    imagen_fondo = Column(String(255), nullable=True)
+    # Nuevas columnas que faltaban en la base de datos de producción:
+    titulo_principal = Column(String, default="🎷 Cartelera de la Semana")
+    descripcion_principal = Column(String, nullable=True)
+    subtitulo_1 = Column(String, default="🎂 ¿Celebras tu Cumpleaños?")
+    subtitulo_2 = Column(String, default="Configura tu festejo a medida.")
+    texto_boton = Column(String, default="🎉 Crear Mi Rumba")
+    promocion_texto = Column(String, nullable=True)
+    imagen_fondo = Column(String, nullable=True)
 
 
 class PrecioEventoMesa(Base):
