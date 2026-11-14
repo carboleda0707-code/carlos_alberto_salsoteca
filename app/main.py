@@ -563,8 +563,42 @@ async def procesar_checkout_carrito(
             
             codigo_aleatorio = f"RES-{int(datetime.utcnow().timestamp())}-{os.urandom(2).hex()}"
             
+            evento_id_asignado = item.get("evento_id")
+
+            # Si el item es un evento personalizado creado por el cliente ("Crea Mi Rumba")
+            if item.get("tipo") == "personalizado" or item.get("nombre_evento"):
+                nombre_ev = item.get("nombre_evento") or item.get("titulo") or "Celebración Especial"
+                tipo_cel = item.get("tipo_celebracion") or "Festejo"
+                fecha_str = item.get("fecha_hora") or datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+                
+                try:
+                    fecha_limpia = fecha_str.replace('T', ' ')
+                    if len(fecha_limpia) == 16: fecha_limpia += ":00"
+                    fecha_dt = datetime.strptime(fecha_limpia, "%Y-%m-%d %H:%M:%S")
+                except:
+                    fecha_dt = datetime.utcnow()
+
+                # Crear el evento automáticamente en la tabla eventos
+                nuevo_evento_personalizado = Evento(
+                    local_id=1,
+                    nombre_evento=nombre_ev,
+                    artista_orquesta=f"Celebración: {tipo_cel} de {nombre}",
+                    genero_musical="Celebración Privada",
+                    fecha_hora=fecha_dt,
+                    descripcion=f"Evento personalizado creado por {nombre} vía Crea Mi Rumba.",
+                    imagen="evento_default.jpg",
+                    estado="aprobado" if bool_cartelera else "programado",
+                    precio_cover=10.00,
+                    precio_mesa=50.00
+                )
+                db.add(nuevo_evento_personalizado)
+                db.commit()
+                db.refresh(nuevo_evento_personalizado)
+                
+                evento_id_asignado = nuevo_evento_personalizado.id
+
             nueva_reserva = Reserva(
-                evento_id=item.get("evento_id"),
+                evento_id=evento_id_asignado,
                 cliente_id=cliente.id,
                 cantidad_personas=item.get("cantidad_covers", item.get("cantidad_personas", 1)),
                 cantidad_mesas=item.get("cantidad_mesas", 0),
@@ -583,7 +617,7 @@ async def procesar_checkout_carrito(
 
         return {
             "success": True,
-            "mensaje": "¡Compra procesada con éxito! Tus reservas se encuentran en estatus 'Por Aprobar'.",
+            "mensaje": "¡Compra procesada con éxito! Tu evento ha sido guardado y las reservas se encuentran en estatus 'Por Aprobar'.",
             "total_items": len(items),
             "monto_total": monto_total_global,
             "comprobante": file_name
@@ -744,21 +778,21 @@ def actualizar_estado_reserva(
     cedula_txt = cliente.cedula if cliente and cliente.cedula else "No registrada"
 
     texto_whatsapp = (
-        f"¡Hola *{cliente_nombre}*! 🎶✨\n\n"
-        f"¡Excelentes noticias! Tu reserva para *{evento_nombre}* ha sido *APROBADA* ✅.\n\n"
+        f"¡Hola *{cliente_nombre}*! \n\n"
+        f"¡Excelentes noticias! Tu reserva para *{evento_nombre}* ha sido *APROBADA*.\n\n"
         f"📅 *Fecha:* {fecha_evento}\n"
         f"🆔 *Cédula:* {cedula_txt}\n"
         f"📋 *Código de Reserva:* `{reserva.codigo_reserva}`\n"
         f"• Pases: {reserva.cantidad_personas} | Mesas: {reserva.cantidad_mesas}\n"
         f"• Total Cancelado: ${reserva.monto_total}\n\n"
-        f"🎟️ *Tus códigos QR de acceso individual en puerta (Estatus: PE - Pendiente):*\n"
+        f"🎟️ *Listado de QR para que compartas con tus invitados (Estatus: PE - Pendiente):*\n"
     )
 
     for idx, item in enumerate(qr_links, 1):
-        texto_whatsapp += f"Pase #{idx}: `{item['token']}` - {item['qr_img']}\n"
+        texto_whatsapp += f"Pase #{idx}: {item['qr_img']}\n"
 
     texto_whatsapp += (
-        f"\n¡Muchas gracias por preferirnos! Presenta estos códigos QR al ingresar al local. ¡Te esperamos para disfrutar! 🎷🔥"
+        f"\n¡Muchas gracias por preferirnos! Presenta estos códigos QR al ingresar al local. ¡Te esperamos para disfrutar! 🎷"
     )
 
     whatsapp_url = f"https://wa.me/{telefono_limpio}?text={urllib.parse.quote(texto_whatsapp)}" if telefono_limpio else ""
