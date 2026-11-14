@@ -834,25 +834,40 @@
             method: "POST",
             headers: { "Content-Type": "application/json" }
         });
-        
+
         if (res.ok) {
             let data = await res.json();
-            alert(`✨ ¡Reserva #${id} aprobada con éxito!`);
             
-            // Abre WhatsApp automáticamente si el backend envió el enlace
+            // 1. Abrir WhatsApp PRIMERO para evitar que el navegador bloquee el popup
             if (data.whatsapp_url) {
-                window.open(data.whatsapp_url, '_blank');
+                let w = window.open(data.whatsapp_url, '_blank');
+                
+                // Si el navegador bloqueó el popup de todas formas, damos una alternativa con enlace
+                if (!w || w.closed || typeof w.closed == 'undefined') {
+                    if (confirm(`✨ ¡Reserva #${id} aprobada!\n\nTu navegador bloqueó la ventana emergente. ¿Deseas abrir el enlace de WhatsApp manualmente ahora?`)) {
+                        window.location.href = data.whatsapp_url;
+                    }
+                }
             } else {
                 console.warn("El servidor no retornó whatsapp_url");
             }
+
+            // 2. Mostrar la alerta después o recargar el panel
+            alert(`✨ ¡Reserva #${id} aprobada con éxito y códigos QR generados!`);
             
-            cargarDashboardAdmin();
+            // Recargar el listado/dashboard
+            if (typeof cargarDashboardAdmin === 'function') {
+                cargarDashboardAdmin();
+            } else {
+                location.reload();
+            }
+
         } else {
-            alert("No se pudo aprobar la reserva.");
+            alert("No se pudo aprobar la reserva en el servidor.");
         }
     } catch (err) {
         console.error(err);
-        alert("Error de conexión.");
+        alert("Error de conexión al procesar la solicitud.");
     }
 }
 
