@@ -214,15 +214,14 @@ def aprobar_reserva_y_generar_qrs(reserva_id: int, db: Session = Depends(get_db)
     # 1. Cambiar estatus a Aprobado
     reserva.estado_reserva = "APROBADO"
 
-    # 2. Generar un código QR individual por cada pase (cantidad_personas)
-    pases_generados = []
+    # 2. Verificar si ya existen pases generados para evitar duplicados al re-aprobar
+    ingresos_existentes = db.query(models.IngresoPuerta).filter(models.IngresoPuerta.reserva_id == reserva.id).all()
+    pases_generados = [ing.codigo_qr for ing in ingresos_existentes]
     total_pases = reserva.cantidad_personas or 1
-    
-    for i in range(total_pases):
-        codigo_qr_unico = f"QR-{reserva.codigo_reserva}-{i+1}-{uuid.uuid4().hex[:4]}"
-        
-        existe = db.query(models.IngresoPuerta).filter(models.IngresoPuerta.codigo_qr == codigo_qr_unico.strip()).first()
-        if not existe:
+
+    if not pases_generados:
+        for i in range(total_pases):
+            codigo_qr_unico = f"QR-{reserva.codigo_reserva}-{i+1}-{uuid.uuid4().hex[:4]}"
             nuevo_ingreso = models.IngresoPuerta(
                 reserva_id=reserva.id,
                 codigo_qr=codigo_qr_unico,
@@ -234,19 +233,27 @@ def aprobar_reserva_y_generar_qrs(reserva_id: int, db: Session = Depends(get_db)
     db.commit()
 
     # 3. Construir mensaje preformateado para WhatsApp con wa.me
-    cliente_nombre = reserva.cliente.nombre if reserva.cliente else "Estimado Cliente"
+    cliente_nombre = reserva.cliente.nombre if reserva.cliente and reserva.cliente.nombre else "Estimado Cliente"
     telefono_cliente = reserva.cliente.telefono if reserva.cliente and reserva.cliente.telefono else ""
-    
+    evento_nombre = reserva.evento.nombre_evento if getattr(reserva, "evento", None) else "Salsoteca Carlos Alberto"
+
     lista_qrs_texto = "\n".join([f"🎟️ Pase #{i+1}: `{qr}`" for i, qr in enumerate(pases_generados)])
-    
+
     mensaje_whatsapp = (
-        f"🎉 ¡Hola {cliente_nombre}! Tu reserva en la *Salsoteca Carlos Alberto* ({reserva.codigo_reserva}) ha sido *APROBADA*.\n\n"
+        f"🎉 ¡Hola *{cliente_nombre}*! Tu reserva en la *Salsoteca Carlos Alberto* "
+        f"para *{evento_nombre}* ({reserva.codigo_reserva}) ha sido *APROBADA*.\n\n"
         f"Aquí tienes tus accesos QR individuales (Estatus: PE - Pendiente de Entrar) para presentarlos en puerta:\n"
         f"{lista_qrs_texto}\n\n"
         f"📍 ¡Te esperamos para vivir la mejor noche salsera en Guayaquil!"
     )
 
-    telefono_limpio = "".join(filter(str.isdigit, telefono_cliente))
+    # Normalizar teléfono ecuatoriano al formato internacional 593XXXXXXXXX para wa.me
+    telefono_limpio = "".join(filter(str.isdigit, str(telefono_cliente)))
+    if telefono_limpio.startswith("0") and len(telefono_limpio) == 10:
+        telefono_limpio = "593" + telefono_limpio[1:]
+    elif not telefono_limpio.startswith("593") and len(telefono_limpio) == 9:
+        telefono_limpio = "593" + telefono_limpio
+
     mensaje_codificado = urllib.parse.quote(mensaje_whatsapp)
     whatsapp_url = f"https://wa.me/{telefono_limpio}?text={mensaje_codificado}" if telefono_limpio else ""
 
@@ -254,7 +261,7 @@ def aprobar_reserva_y_generar_qrs(reserva_id: int, db: Session = Depends(get_db)
         "exito": True,
         "mensaje": "Reserva aprobada con éxito, códigos QR generados.",
         "whatsapp_url": whatsapp_url,
-        "total_pases": total_pases
+        "total_pases": len(pases_generados)
     }
 
 

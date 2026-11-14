@@ -827,31 +827,34 @@
     }
 
     async function aprobarReservaYEnviarWhatsApp(id) {
-        if (!confirm(`¿Estás seguro de aprobar la reserva #${id}, generar sus QR y abrir WhatsApp?`)) return;
+    if (!confirm(`¿Estás seguro de aprobar la reserva #${id}, generar sus QR y abrir WhatsApp?`)) return;
 
-        try {
-            let res = await fetch(`${API_URL}/api/reservas/${id}/aprobar`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" }
-            });
+    try {
+        let res = await fetch(`${API_URL}/api/reservas/${id}/aprobar`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" }
+        });
+        
+        if (res.ok) {
+            let data = await res.json();
+            alert(`✨ ¡Reserva #${id} aprobada con éxito!`);
             
-            if (res.ok) {
-                let data = await res.json();
-                alert(`✨ ¡Reserva #${id} aprobada y códigos QR individuales generados con éxito!`);
-                
-                if (data.whatsapp_url) {
-                    window.open(data.whatsapp_url, '_blank');
-                }
-                
-                cargarDashboardAdmin();
+            // Abre WhatsApp automáticamente si el backend envió el enlace
+            if (data.whatsapp_url) {
+                window.open(data.whatsapp_url, '_blank');
             } else {
-                alert("No se pudo aprobar la reserva.");
+                console.warn("El servidor no retornó whatsapp_url");
             }
-        } catch (err) {
-            console.error(err);
-            alert("Error de conexión.");
+            
+            cargarDashboardAdmin();
+        } else {
+            alert("No se pudo aprobar la reserva.");
         }
+    } catch (err) {
+        console.error(err);
+        alert("Error de conexión.");
     }
+}
 
     async function cambiarEstadoReserva(id, nuevoEstado) {
         if (!confirm(`¿Estás seguro de cambiar el estado de la reserva #${id} a '${nuevoEstado}'?`)) return;
